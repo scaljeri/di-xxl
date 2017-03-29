@@ -1,0 +1,9 @@
+di.min.js
+old-test
+node_modules
+.idea
+/target/
+/doc/
+/.coveralls.yml
+coverage
+dist
