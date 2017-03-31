@@ -4,7 +4,7 @@ import * as fixtures from './di-fixtures-inject';
 import {beforeEach, describe, it} from "mocha";
 
 let should = chai.should();
-
+/*
 function testContract(contract, match) {
     contract.should.exist;
     contract.classRef.should.equals(match.classRef);
@@ -47,3 +47,4 @@ describe("DI", () => {
     });
   });
 });
+*/

@@ -3,24 +3,20 @@ const CONTRACTS = new Map();
 function addContract(classRef) {
 
 }
-export function Injectable(...params) {
+export function Injectable(contractName, options = {}) {
     return function decorator(target) {
-        if (!target.__di) {
-            target.__di = {};
-        }
+        CONTRACTS.set(contractName, {
+            inject: CONTRACTS.get(target) || [],
+            options: options
+        });
 
-        target.__di.contractStr = params[0];
-        target.__di.ns = params[1] || 'global';
+        CONTRACTS.delete(target);
     }
 }
 
 export function Inject(...contracts) {
     return function (target) {
-        if (!target.__di) {
-            target.__di = {};
-        }
-
-        target.__di.contracts = contracts;
+        CONTRACTS.set(target, contracts)
     }
 }
 
@@ -61,6 +57,29 @@ export class DI {
         this._injectPropName = options.injectPropertyName || 'inject';
 
         this.reset();
+    }
+
+    /** Get all contracts
+     *
+     * @param {String} ns optional namespace. If the namespace is omitted, only contracts without a namespace are returned.
+     * @returns {Map} contracts
+     */
+
+
+    getContracts(ns = null) {
+        if (ns === null) {
+            return CONTRACTS;
+        } else {
+            const output =  new Map();
+
+            CONTRACTS.forEach((value, key)=> {
+                if(value.indexOf(`${ns}.`) === 0) {
+                    output.set(key, value);
+                }
+            });
+
+            return output;
+        }
     }
 
     /**

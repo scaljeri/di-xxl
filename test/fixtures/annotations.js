@@ -1,17 +1,24 @@
 import {Injectable, Inject} from '../../di';
 
-@Injectable('$bar', 'global')
-@Inject('$foo')
+@Injectable('test:$bar', {singleton: true})
+@Inject('test:$baz')
 export class Bar {
     constructor( $foo) {
 
     }
 }
 
-@Injectable('$foo')
-@Inject('$bar')
-export class Foo {
-    constructor($bar, $foo) {
+@Injectable('test:$baz', {writable: true})
+@Inject('test:$bar')
+export class Baz {
+    constructor( $foo) {
 
+    }
+}
+
+@Injectable('$foo')
+@Inject('test:$bar', 'test:$baz')
+export class Foo {
+    constructor(value) {
     }
 }
