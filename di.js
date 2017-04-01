@@ -6,8 +6,10 @@ function addContract(classRef) {
 export function Injectable(contractName, options = {}) {
     return function decorator(target) {
         CONTRACTS.set(contractName, {
+            classRef: target,
             inject: CONTRACTS.get(target) || [],
-            options: options
+            options: options,
+            name: contractName
         });
 
         CONTRACTS.delete(target);
@@ -47,16 +49,15 @@ export class DI {
      *
      * @class DI
      * @constructor
-     * @param {Object} [options] configuration
-     *      @param {String} [options.injectPropertyName] list of contracts
+     * @param {String} [namespace] optional namespace
      **/
-    constructor(ns = 'global', options = {}) {
-        if (typeof ns === 'object') {
-            options = ns;
-        }
-        this._injectPropName = options.injectPropertyName || 'inject';
+    constructor(ns = null) {
+        this._ns = ns;
+        this.depCheck = [];
+    }
 
-        this.reset();
+    get ns() {
+        return this._ns;
     }
 
     /** Get all contracts
@@ -203,6 +204,20 @@ export class DI {
         this.contracts = {};
     }
 
+    getContractFor(contract, ns = null) {
+        if (!ns) {
+            [ns, contract] = contract.match(/^(?:([^.]+)\.)?(.*)$/).slice(1, 3);
+
+            if (!ns) {
+                ns = this.ns;
+            }
+        }
+
+        contract = (ns ? `${ns}.` : '') + contract;
+
+        return CONTRACTS.get(contract);
+    }
+
     /**
      * Returns an instance for the given contract. Use <tt>params</tt> attribute to overwrite the default
      * parameters for this contract. If <tt>params</tt> is defined, the singleton will be (re)created and its
@@ -219,7 +234,7 @@ export class DI {
      **/
     getInstance(contractStr, ...params) {
         let instance = null
-            , contract = this.contracts[contractStr];
+            , contract = this.getContractFor(contractStr);
 
         if (contract) {
             if (contract.options.singleton) {
@@ -231,7 +246,7 @@ export class DI {
                     instance = this.createFactory(contractStr, params);
                 }
                 else {
-                    instance = this.createInstance(contractStr, params);
+                    instance = this.createInstance(contract, params);
                 }
             }
 
@@ -332,7 +347,7 @@ export class DI {
             baseParams = contract.params.map((param) => this.contracts[param] ? param : undefined);
         }
         else {
-            baseParams = contract.params;
+            baseParams = contract.params || []; // Annotated classed don't have params
         }
 
         for (let index = 0; index < baseParams.length; index++) {
@@ -364,20 +379,21 @@ export class DI {
      * @example
      var storage = App.di.createInstance("data", ["compress", true, "websql"]) ;
      **/
-    createInstance(contractStr, params) {
+    createInstance(contract, params) {
         let cr, instance
-            , self = this
-            , contract = this.contracts[contractStr];
+            , self = this;
 
         function Dependency() {
-            cr.apply(this, self.createInstanceList(contractStr, params));
+            cr.apply(this, self.createInstanceList(contract, params));
         }
 
         cr = contract.classRef;
 
-        this.depCheck.push(contractStr);
+        this.depCheck.push(contract.name);
         Dependency.prototype = cr.prototype;   // Fix instanceof
+
         instance = new Dependency();           // done
+
         this.depCheck.pop();
 
         return instance;
@@ -390,9 +406,9 @@ export class DI {
      * In this case, the constructor would, for example, look like this:
      *    function constructor(instance, array, instance) { .. }
      * */
-    createInstanceList(contractStr, params) {
+    createInstanceList(contract, params) {
         let constParams = []
-            , mergedParams = this.mergeParams(this.contracts[contractStr], params);
+            , mergedParams = this.mergeParams(contract, params);
 
         mergedParams.forEach((item) => {
             if (Array.isArray(item)) {
