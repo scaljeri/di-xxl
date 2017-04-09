@@ -1,6 +1,6 @@
 import chai from 'chai';
 import {DI} from '../di';
-import * as fixtures from './di-fixtures-inject';
+//import * as fixtures from './di-fixtures-inject';
 import {beforeEach, describe, it} from "mocha";
 
 let should = chai.should();

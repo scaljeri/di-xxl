@@ -1,24 +1,69 @@
 const CONTRACTS = new Map();
 
-function addContract(classRef) {
+export const DI_TYPES = {
+    INJECT: 1,  // Inject as constructor arguments
+    AUGMENT: 2  // Augment instance with injectables
+};
 
+function extractContracts(classRef) {
+    let args = classRef.toString().match(/(?:(?:^function|constructor)[^\(]*\()([^\)]+)/);
+
+    return args === null ? [] : args.slice(-1)[0].replace(/\s/g, '').split(',');
 }
-export function Injectable(contractName, options = {}) {
+
+function splitContract(name) {
+    return ((name + '') || '').match(/^(?:([^.:]+)[.:])?(.*)$/).splice(1, 3);
+}
+
+function createName(contract) {
+    return (contract.ns ? `${contract.ns}.` : '') + contract.name;
+}
+
+/*
+ Examples
+ @Injectable()
+ @Injectable('$foo')
+ @Injectable({
+     name: '$foo'
+ })
+ @Injectable({
+    name: '$foo',
+    type: DI_TYPES.AUGMENT,
+    params: ['$baz'],
+    singleton: true,
+    append: true        // how param inheritance works
+ })
+ @Injectable({
+    name: '$foo',
+    type: DI_TYPES.INJECT,
+    params: ['$baz']
+ })
+ */
+export function Injectable() {
+    const contract = arguments[0] ? (typeof arguments[0] === 'string' ? {name: arguments[0]} : arguments[0]) : {};
+
     return function decorator(target) {
-        CONTRACTS.set(contractName, {
-            classRef: target,
-            inject: CONTRACTS.get(target) || [],
-            options: options,
-            name: contractName
-        });
+        contract.classRef = target;
 
-        CONTRACTS.delete(target);
-    }
-}
+        if (!contract.name) {
+            contract.name = target.name.charAt(0).toLowerCase() + target.name.substring(1);
+        } else {
+            const [ns, name] = splitContract(contract.name);
+            if (ns) {
+                contract.ns = ns;
+                contract.name = name;
+            }
+        }
 
-export function Inject(...contracts) {
-    return function (target) {
-        CONTRACTS.set(target, contracts)
+        if (contract.append === undefined) {
+            contract.append = true;
+        }
+
+        if (contract.type === DI_TYPES.INJECT && !contract.params) {
+            contract.params = extractContracts(target);
+        }
+
+        CONTRACTS.set(createName(contract).toLowerCase(), contract);
     }
 }
 
@@ -71,10 +116,10 @@ export class DI {
         if (ns === null) {
             return CONTRACTS;
         } else {
-            const output =  new Map();
+            const output = new Map();
 
-            CONTRACTS.forEach((value, key)=> {
-                if(value.indexOf(`${ns}.`) === 0) {
+            CONTRACTS.forEach((value, key) => {
+                if (value.ns === ns) {
                     output.set(key, value);
                 }
             });
@@ -103,9 +148,7 @@ export class DI {
      App.di.registerType("$ajax", App.AJAX, [], { singleton: true }) ;
      App.di.registerType("$util", App.Util, ["compress", true, ["$wsql", "ls"] ], { singleton: true } ) ;
      **/
-    register(contractStr, classRef, params = [], options = {}) {
-        let paramsOrigin = 'input';
-
+    register(name, classRef, params = [], options = {}) {
         if (Array.isArray(classRef)) {
             options = params;
             params = classRef;
@@ -122,6 +165,11 @@ export class DI {
             params = [];
         }
 
+        const contract = { name, classRef, params,
+            singleton: options.singleton === true,
+            append: options.append
+        };
+
         // --debug-start--
         if (!classRef) {
             if (!options.factoryFor) {
@@ -133,37 +181,15 @@ export class DI {
         }
         // --debug-end--
 
-        let contract = {
-            classRef: classRef,
-            name: contractStr,
-            options: options,
-            params: params
-        };
+        Injectable(contract)(contract.classRef);
 
-        this.prepareContract(contract);
-
-        if (options.augment) {
-            this.augment(options);
-        }
+        return this;
 
 
-        if (params.length === 0 && classRef && options.autoDetect !== false) {
-            params = params.length === 0 ? this.extractContracts(classRef) : params;
-            paramsOrigin = 'auto';
-        }
-
-        if (options.augment === true) {
-            classRef = this.augment(classRef, options);
-        }
-
-        this.contracts[contractStr] = {
-            classRef: classRef
-            , params: params
-            , paramsOrigin: paramsOrigin
-            , options: options || {}
-        };
+        // TODO factoryFor
 
         // Prepare factory if not manually defined
+        /*
         if (!options.factoryFor && !this.contracts[`${contractStr}Factory`]) {
             this.contracts[`${contractStr}Factory`] = {
                 options: {
@@ -174,7 +200,8 @@ export class DI {
             };
         }
 
-        return this;
+        return this; // Chainable
+        */
     }
 
     /**
@@ -204,18 +231,18 @@ export class DI {
         this.contracts = {};
     }
 
-    getContractFor(contract, ns = null) {
+    getContractFor(contractName, ns = null) {
         if (!ns) {
-            [ns, contract] = contract.match(/^(?:([^.]+)\.)?(.*)$/).slice(1, 3);
+            [ns, contractName] = splitContract(contractName);
 
             if (!ns) {
                 ns = this.ns;
             }
         }
 
-        contract = (ns ? `${ns}.` : '') + contract;
+        contractName = (ns ? `${ns}.` : '') + contractName;
 
-        return CONTRACTS.get(contract);
+        return CONTRACTS.get(contractName.toLowerCase());
     }
 
     /**
@@ -233,33 +260,38 @@ export class DI {
      ajax = App.di.getInstance("ajax", "rest", true) ;
      **/
     getInstance(contractStr, ...params) {
-        let instance = null
+        let instance = contractStr
             , contract = this.getContractFor(contractStr);
 
         if (contract) {
-            if (contract.options.singleton) {
-                instance = this.getSingletonInstance(contractStr, params);
+            if (contract.singleton) {
+                instance = this.getSingletonInstance(contract, params);
             }
             else //create a new instance every time
             {
-                if (contract.options.factoryFor) {
-                    instance = this.createFactory(contractStr, params);
+                if (contract.factoryFor) {
+                    instance = this.createFactory(contract, params);
                 }
                 else {
                     instance = this.createInstance(contract, params);
                 }
             }
 
-            if (Array.isArray(contract.options.augment)) {
-                this.depCheck.push(contractStr);
-                contract.options.augment.forEach((contractStr) => {
-                    instance[contractStr] = this.getInstance(contractStr);
-                });
-                this.depCheck.pop();
-            }
+            /*
+             if (Array.isArray(contract.options.augment)) {
+             this.depCheck.push(contractStr);
+             contract.options.augment.forEach((contractStr) => {
+             instance[contractStr] = this.getInstance(contractStr);
+             });
+             this.depCheck.pop();
+             } */
         }
 
         return instance;
+    }
+
+    splitContract(contractName) {
+        return ((contractName + '') || '').match(/^(?:([^.:]+)[.:])?(.*)$/).splice(1, 3);
     }
 
     /**
@@ -268,6 +300,7 @@ export class DI {
      * @private
      * @param contract
      */
+    // TODO: Remove this
     prepareContract(contract) {
         let options = contract.options
             , classRefStr = contract.classRef.toString();
@@ -339,25 +372,24 @@ export class DI {
      * @param params
      */
     mergeParams(contract, params = []) {
-        let baseParams
+        let baseParams = contract.params || []
             , indexParams = 0
             , mergedParams = [];
 
-        if (contract.paramsOrigin === 'auto') {   // Remove all non contract parameters
-            baseParams = contract.params.map((param) => this.contracts[param] ? param : undefined);
-        }
-        else {
-            baseParams = contract.params || []; // Annotated classed don't have params
+        // If the params are extracted from the constructor function, the non-contract arguments
+        // need to be removed, because they are just argument names
+        if (contract.type === DI_TYPES.INJECT) {
+            baseParams = contract.params.map(param => this.getContractFor(param) ? param : undefined);
         }
 
         for (let index = 0; index < baseParams.length; index++) {
-            if (baseParams[index] === undefined || (contract.options.writable && params[indexParams] !== undefined)) {
+            if (baseParams[index] === undefined || (!contract.append && params[indexParams] !== undefined)) {
                 mergedParams.push(params[indexParams++]);
             }
             else {
                 mergedParams.push(baseParams[index]);
 
-                if (contract.options.writable) {
+                if (!contract.append) {
                     indexParams++;
                 }
             }
@@ -379,24 +411,58 @@ export class DI {
      * @example
      var storage = App.di.createInstance("data", ["compress", true, "websql"]) ;
      **/
-    createInstance(contract, params) {
-        let cr, instance
-            , self = this;
+    createInstance(contract, params = []) {
+        //const instance = Reflect.construct(contract.classRef, this.createInstanceList(contract, params));
+        let instance;
 
-        function Dependency() {
-            cr.apply(this, self.createInstanceList(contract, params));
+        if (contract.type === DI_TYPES.INJECT) {
+            // When dependencies are injected into the constructor
+            // circular dependencies cannot exist
+            this.depCheck.push(contract.name);
+            params = this.createInstanceList(this.mergeParams(contract, params)).reduce((list, item)=> {
+                list.push(item.instance);
+                return list;
+            }, []);
+            instance = new contract.classRef(...params);
+            this.depCheck.pop();
+
+        } else {
+            // TODO: merge params with defaults
+            instance = new contract.classRef(...params);
+            this.createInstanceList(contract.params).forEach(injectable => {
+                if (injectable.ns) {
+                    if (!instance[injectable.ns]) {
+                        instance[injectable.ns] = {};
+                    }
+                    instance[injectable.ns][injectable.name] = injectable.instance;
+                } else {
+                    instance[injectable.name] = injectable.instance;
+                }
+            });
         }
 
-        cr = contract.classRef;
-
-        this.depCheck.push(contract.name);
-        Dependency.prototype = cr.prototype;   // Fix instanceof
-
-        instance = new Dependency();           // done
-
-        this.depCheck.pop();
-
         return instance;
+    }
+
+    getInjectablesdFor(contract) {
+        const proto = {};
+
+        (contract.inject || []).forEach(dep => {
+            const [ns, name] = this.splitContract(dep);
+            const instance = this.getInstance(dep);
+
+            if (ns) {
+                if (!proto[ns]) {
+                    proto[ns] = {};
+                }
+
+                proto[ns][name] = instance;
+            } else {
+                proto[name] = instance;
+            }
+        });
+
+        return proto;
     }
 
     /** @private
@@ -406,37 +472,37 @@ export class DI {
      * In this case, the constructor would, for example, look like this:
      *    function constructor(instance, array, instance) { .. }
      * */
-    createInstanceList(contract, params) {
-        let constParams = []
-            , mergedParams = this.mergeParams(contract, params);
+    createInstanceList(params = []) {
+        let instances = [];
 
-        mergedParams.forEach((item) => {
+        params.forEach((item) => {
             if (Array.isArray(item)) {
-                constParams.push(item.reduce(
+                instances.push(item.reduce(
                     (list, c) => {
-                        list.push(this.contracts[c] ? this.getInstance(c) : c);
+                        let [ns, name] = this.splitContract(c);
+                        list.push({ns: (ns || this.ns), name, instance: this.getInstance(this.getContractFor(c))});
                         return list;
                     }, []));
             }
             else {
-                constParams.push(this.createInstanceIfContract(item));
+                let [ns, name] = this.splitContract(item);
+                instances.push({ns: (ns || this.ns), name, instance: this.getInstance(item)});
             }
         });
 
-        return constParams;
+        return instances;
     }
 
     /** @private
      *
      * Create or reuse a singleton instance
      */
-    getSingletonInstance(contractStr, params) {
-        let contract = this.contracts[contractStr]
-            , mergedParams = this.mergeParams(contract, params);
+    getSingletonInstance(contract, params) {
+        const mergedParams = this.mergeParams(contract, params);
 
         if (contract.instance === undefined || (params && params.length > 0)) {
             contract.params = mergedParams;
-            contract.instance = this.createInstance(contractStr);
+            contract.instance = this.createInstance(contract);
         }
 
         return contract.instance;
@@ -447,6 +513,8 @@ export class DI {
      * @param contract
      * @returns {*}
      */
+    // TODO: Remove this but the error is still needed!
+    /*
     createInstanceIfContract(contractStr) {                                     // is a contract
         let problemContract
             , constParam = contractStr;
@@ -466,8 +534,9 @@ export class DI {
         }
 
         return constParam;
-    }
+    } */
 
+    /*
     extractContracts(classRef) {
         let args = classRef.toString().match(/(?:(?:^function|constructor)[^\(]*\()([^\)]+)/);
 
@@ -513,6 +582,7 @@ export class DI {
 
         return newClassRef;
     }
+    */
 }
 
 
