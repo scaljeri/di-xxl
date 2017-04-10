@@ -149,6 +149,8 @@ export class DI {
      App.di.registerType("$util", App.Util, ["compress", true, ["$wsql", "ls"] ], { singleton: true } ) ;
      **/
     register(name, classRef, params = [], options = {}) {
+        const [ns, contractMame] = this.splitContract(name);
+
         if (Array.isArray(classRef)) {
             options = params;
             params = classRef;
@@ -165,7 +167,9 @@ export class DI {
             params = [];
         }
 
-        const contract = { name, classRef, params,
+        const contract = { classRef, params,
+            name: contractMame,
+            ns: ns,
             singleton: options.singleton === true,
             append: options.append
         };
@@ -291,7 +295,8 @@ export class DI {
     }
 
     splitContract(contractName) {
-        return ((contractName + '') || '').match(/^(?:([^.:]+)[.:])?(.*)$/).splice(1, 3);
+        const [ns, name] = ((contractName + '') || '').match(/^(?:([^.:]+)[.:])?(.*)$/).splice(1, 3);
+        return [(ns || this.ns), name];
     }
 
     /**

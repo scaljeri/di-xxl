@@ -27,7 +27,7 @@ describe("DI - Annotation - basics", () => {
         it('should have all settings extracted from @Injectable', () => {
             let contract = di.getContractFor('foo');
             contract.should.exist;
-            validateContract(contract, 'foo', fixtures.Foo, true);
+            validateContract(contract, 'foo', fixtures.Foo, true, [], 'singleton');
         });
 
         it('should be the correct instance', () => {

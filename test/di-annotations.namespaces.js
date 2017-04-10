@@ -27,7 +27,7 @@ describe("DI - Annotation - Namespace", () => {
         it('should have a correct contract', ()=> {
             let contract = di.getContractFor('Baz');
             contract.should.exist;
-            validateContract(contract, 'baz', fixtures.Baz, true, ['foo', 'ns.$bar']);
+            validateContract(contract, 'baz', fixtures.Baz, true, ['foo', 'ns.$bar'], 'ns');
 
         });
 
@@ -50,7 +50,7 @@ describe("DI - Annotation - Namespace", () => {
         it('should have a correct contract', ()=> {
             let contract = di.getContractFor('ns.Baz');
             contract.should.exist;
-            validateContract(contract, 'baz', fixtures.Baz, true, ['foo', 'ns.$bar']);
+            validateContract(contract, 'baz', fixtures.Baz, true, ['foo', 'ns.$bar'], 'ns');
 
         });
 

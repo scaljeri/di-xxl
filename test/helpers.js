@@ -1,4 +1,4 @@
-export function validateContract(contract, name, classRef, append, params = []) {
+export function validateContract(contract, name, classRef, append, params = [], ns = undefined) {
     contract.should.exist;
     contract.name.should.equals(name);
     contract.classRef.should.equals(classRef);
@@ -6,5 +6,9 @@ export function validateContract(contract, name, classRef, append, params = []) 
 
     if (contract.params) {
         contract.params.should.eql(params);
+    }
+
+    if (contract.ns) {
+        contract.ns.should.equal(ns);
     }
 }
