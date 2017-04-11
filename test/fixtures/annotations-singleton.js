@@ -1,4 +1,4 @@
-import {Injectable, DI_TYPES} from '../../di';
+import {Injectable, DI} from '../../di';
 
 @Injectable({
     ns: 'singleton',
@@ -20,7 +20,7 @@ export class Bar {
     ns: 'singleton',
     name: '$bar',
     singleton: true,
-    type: DI_TYPES.INJECT
+    inject: DI.ACTIONS.CONSTRCUTOR
 })
 export class Baz {
     constructor(foo) {

@@ -11,8 +11,8 @@ export class Bar {
 }
 
 export class Baz {
-    constructor(foo) {
-        this.fooo = foo;
+    constructor($bar) {
+        this.$bar = $bar;
     }
 }
 

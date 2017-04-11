@@ -1,10 +1,5 @@
 const CONTRACTS = new Map();
 
-export const DI_TYPES = {
-    INJECT: 1,  // Inject as constructor arguments
-    AUGMENT: 2  // Augment instance with injectables
-};
-
 function extractContracts(classRef) {
     let args = classRef.toString().match(/(?:(?:^function|constructor)[^\(]*\()([^\)]+)/);
 
@@ -59,7 +54,7 @@ export function Injectable() {
             contract.append = true;
         }
 
-        if (contract.type === DI_TYPES.INJECT && !contract.params) {
+        if (contract.inject === DI.ACTIONS.CONSTRUCTOR && !contract.params) {
             contract.params = extractContracts(target);
         }
 
@@ -68,6 +63,12 @@ export function Injectable() {
 }
 
 export class DI {
+    static get ACTIONS() {
+        return {
+            CONSTRUCTOR: 1,
+            INSTANCE: 2
+        }
+    }
     /**
      * DI makes classes accessible by a contract. Instances are created when requested and dependencies are injected into the constructor,
      * facilitating lazy initialization and loose coupling between classes.
@@ -164,14 +165,15 @@ export class DI {
         if (!Array.isArray(params)) // no params defined
         {
             options = params;
-            params = [];
+            params = null;
         }
 
-        const contract = { classRef, params,
+        let contract = { classRef, params,
             name: contractMame,
             ns: ns,
             singleton: options.singleton === true,
-            append: options.append
+            append: options.append,
+            inject: options.inject || DI.ACTIONS.INSTANCE
         };
 
         // --debug-start--
@@ -187,25 +189,20 @@ export class DI {
 
         Injectable(contract)(contract.classRef);
 
-        return this;
-
-
-        // TODO factoryFor
-
         // Prepare factory if not manually defined
-        /*
-        if (!options.factoryFor && !this.contracts[`${contractStr}Factory`]) {
-            this.contracts[`${contractStr}Factory`] = {
-                options: {
-                    factoryFor: contractStr
-                    , writable: options.writable
-                },
-                params: []
+        if (!contract.factoryFor && !this.getContractFor(`${contractMame}Factory`)) {
+            contract = { classRef, params,
+                name: `${contractMame}Factory`,
+                ns: ns,
+                factoryFor: contractMame,
+                singleton: options.singleton === true,
+                append: options.append
             };
+
+            Injectable(contract)();
         }
 
         return this; // Chainable
-        */
     }
 
     /**
@@ -337,15 +334,11 @@ export class DI {
      * @param initialParams
      * @returns {function()}
      */
-    createFactory(contractStr, initialParams) {
-        let contract = this.contracts[contractStr]
-            , factoryContract = {
-            options: contract.options
-            , params: this.mergeParams(contract, initialParams)
-        };
+    createFactory(contract, params) {
+        //const initialParams = this.mergeParams(contract, params);
 
         return (...params) => {
-            return this.getInstance(factoryContract.options.factoryFor, ...this.mergeParams(factoryContract, params));
+            return this.getInstance(contract.factoryFor, ...this.mergeParams(contract, params));
         };
     }
 
@@ -383,7 +376,7 @@ export class DI {
 
         // If the params are extracted from the constructor function, the non-contract arguments
         // need to be removed, because they are just argument names
-        if (contract.type === DI_TYPES.INJECT) {
+        if (contract.inject === DI.ACTIONS.CONSTRUCTOR) {
             baseParams = contract.params.map(param => this.getContractFor(param) ? param : undefined);
         }
 
@@ -420,7 +413,7 @@ export class DI {
         //const instance = Reflect.construct(contract.classRef, this.createInstanceList(contract, params));
         let instance;
 
-        if (contract.type === DI_TYPES.INJECT) {
+        if (contract.inject === DI.ACTIONS.CONSTRUCTOR) {
             // When dependencies are injected into the constructor
             // circular dependencies cannot exist
             this.depCheck.push(contract.name);

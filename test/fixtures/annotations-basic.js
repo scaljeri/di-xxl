@@ -1,4 +1,4 @@
-import {Injectable, DI_TYPES} from '../../di';
+import {Injectable, DI} from '../../di';
 
 @Injectable()
 export class Foo {
@@ -15,7 +15,7 @@ export class Bar {
 }
 
 @Injectable({
-    type: DI_TYPES.INJECT
+    inject: DI.ACTIONS.CONSTRUCTOR
 })
 export class Baz {
     constructor(foo) {
