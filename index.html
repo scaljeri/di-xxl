@@ -1,0 +1,75 @@
+<!doctype html>
+
+<html>
+<head>
+    <link rel="stylesheet" href="libs/sandbox.css">
+    <link rel="stylesheet" href="main.css">
+
+    <script src="bundle.js"></script>
+
+    <style>
+    </style>
+    <script>
+
+    </script>
+<head>
+
+<body>
+    <a href="./coverage/lcov-report/index.html">Coverage report</a><br>
+    <a href="./esdoc/index.html">Documentation</a><br>
+
+    <!-- HTML -->
+
+    <div id="sandbox">sandbox console loading...</div>
+
+    <p>
+        The code below has already been executed:<br>
+
+        <pre>
+            var di = new DI();
+            function Bar(val1, $foo, val2) { this.args = arguments; }
+            function Foo(a) { this.args = arguments; }
+
+            di.register('$foo', Foo, [10], {singleton: true});
+            di.register('$bar', Bar, {writable: true});
+            di.register('$baz', Bar);
+
+            var bar = di.getInstance('$bar', 99, 100);
+            var baz = di.getInstance('$baz', 99, 100);
+            var foo = di.getInstance('$foo');
+        </pre>
+    </p>
+
+    <!-- Templates -->
+
+    <!-- The sandbox template: -->
+    <script type="text/template" id="tplSandbox">
+        <pre class="output"></pre>
+        <div class="input">
+            <textarea rows="1" placeholder="<%= placeholder %>"></textarea>
+        </div>
+    </script>
+
+    <!-- The command/result template (NB whitespace/line breaks matter inside <pre> tag): -->
+    <script type="text/template" id="tplCommand"><% if (! _hidden) { %><span class="command"><%= command %></span>
+    <span class="prefix"><%= this.resultPrefix %></span><span class="<%= _class %>"><%= result %></span>
+<% } %></script>
+
+    <script src="libs/underscore.min.js"></script>
+    <script src="libs/backbone.min.js"></script>
+    <script src="libs/backbone-localStorage.min.js"></script>
+    <script src="libs/jquery.min.js"></script>
+    <script src="libs/sandbox-console.js"></script>
+
+    <!-- When ready, create the model and view -->
+    <script type="text/javascript">
+        jQuery(document).ready(function($) {
+            // Create the sandbox:
+            window.sandbox = new Sandbox.View({
+                el : $('#sandbox'),
+                model: new Sandbox.Model()
+            });
+        });
+    </script>
+</body>
+<html>
