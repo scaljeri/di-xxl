@@ -1,6 +1,5 @@
 import {Injectable, Inject} from '../../di';
 
-/*
 @Injectable('test.$bar', {singleton: true})
 export class Bar {
     constructor() {
@@ -22,7 +21,6 @@ export class Foo {
     constructor(value) {
     }
 }
-*/
 
 @Injectable('$foo', {params: [10, 20]})
 export class Foo {
