@@ -233,3 +233,7 @@ or
 
 [code-climate-url]: https://codeclimate.com/github/scaljeri/javascript-dependency-injection/badges/gpa.svg
 [code-climate-image]: https://codeclimate.com/github/scaljeri/javascript-dependency-injection
+
+** TODO
+./node_modules/.bin/babel main.js > out.js
+./node_modules/.bin/browserify out.js -o bundle.js -t [ babelify --presets [ es2015 stage-0 ] ]
