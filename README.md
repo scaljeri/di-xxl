@@ -215,6 +215,12 @@ or
 #### Documentation ####
 
     $> npm run doc
+    
+### Run in the browser
+If you want to run this library in the browser, and you have, for example, included it in
+main.js, you can browserify it using [babelify](https://github.com/babel/babelify) as follows:
+
+    $> ./node_modules/.bin/browserify main.js -o bundle.js -t [ babelify --presets [ es2015 stage-0 ] ]
 
 [travis-url]: https://travis-ci.org/scaljeri/javascript-dependency-injection.png
 [travis-image]: https://travis-ci.org/scaljeri/javascript-dependency-injection
