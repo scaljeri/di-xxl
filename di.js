@@ -1,13 +1,16 @@
 const CONTRACTS = new Map();
 
+/* *** Private helpers ***/
 function extractContracts(classRef) {
     let args = classRef.toString().match(/(?:(?:^function|constructor)[^\(]*\()([^\)]+)/);
 
     return args === null ? [] : args.slice(-1)[0].replace(/\s/g, '').split(',');
 }
 
-function splitContract(name) {
-    return ((name + '') || '').match(/^(?:([^.:]+)[.:])?(.*)$/).splice(1, 3);
+function splitContract(contractName, baseNs) {
+    const [ns, name] = ((contractName + '') || '').match(/^(?:([^.:]+)[.:])?(.*)$/).splice(1, 3);
+
+    return [(ns || baseNs), name];
 }
 
 function createName(contract) {
@@ -19,56 +22,75 @@ function createName(contract) {
  @Injectable()
  @Injectable('$foo')
  @Injectable({
-     name: '$foo'
+ name: '$foo'
  })
  @Injectable({
-    name: '$foo',
-    type: DI_TYPES.AUGMENT,
-    params: ['$baz'],
-    singleton: true,
-    append: true        // how param inheritance works
+ name: '$foo',
+ type: DI_TYPES.AUGMENT,
+ params: ['$baz'],
+ singleton: true,
+ append: true        // how param inheritance works
  })
  @Injectable({
-    name: '$foo',
-    type: DI_TYPES.INJECT,
-    params: ['$baz']
+ name: '$foo',
+ type: DI_TYPES.INJECT,
+ params: ['$baz']
  })
  */
+// NOTE: Get parent name: Object.getPrototypeOf(Bar.prototype.constructor).name
 export function Injectable() {
-    const contract = arguments[0] ? (typeof arguments[0] === 'string' ? {name: arguments[0]} : arguments[0]) : {};
+    const settings = arguments[0] ? (typeof arguments[0] === 'string' ? {name: arguments[0]} : arguments[0]) : {};
 
-    return function decorator(target) {
-        contract.classRef = target;
+    return function decorator(classRef) {
+        let contract = Object.assign(CONTRACTS.get(classRef) || {inject: []}, settings);
 
-        if (!contract.name) {
-            contract.name = target.name.charAt(0).toLowerCase() + target.name.substring(1);
-        } else {
+        contract.classRef = classRef;
+
+        if (!contract.name) { // class BarFoo {} --> { name: 'barFoo' }
+            contract.name = classRef.name.charAt(0).toLowerCase() + classRef.name.substring(1);
+        } else { // 'namespace.bar' --> { ns: 'namespace', name: 'bar'}
             const [ns, name] = splitContract(contract.name);
+            contract.name = name;
+
             if (ns) {
                 contract.ns = ns;
-                contract.name = name;
             }
         }
 
-        if (contract.append === undefined) {
-            contract.append = true;
-        }
-
-        if (contract.inject === DI.ACTIONS.CONSTRUCTOR && !contract.params) {
-            contract.params = extractContracts(target);
+        if (contract.constructor === true && Object.keys(contract.inject).length === 0) {
+            extractContracts(classRef).forEach(param => {
+                contract.inject.push({contractName: param});
+            });
         }
 
         CONTRACTS.set(createName(contract).toLowerCase(), contract);
     }
 }
 
+export function Inject(contractName) {
+    return function decorator(classRef, argument, config) {
+        let contract = CONTRACTS.get(classRef.constructor) || {inject: []};
+
+        //contract.classRef = classRef;
+        //let x = new classRef();
+        contract.inject.push({propertyName: argument, contractName, config});
+
+        console.log(classRef.constructor);
+        CONTRACTS.set(classRef.constructor, contract);
+
+        config.writable = true;
+        return config;
+    }
+}
+
 export class DI {
-    static get ACTIONS() {
+    static get MODES() {
         return {
-            CONSTRUCTOR: 1,
-            INSTANCE: 2
+            CAPTURING: 1,
+            BUBBLING: 2
         }
     }
+
     /**
      * DI makes classes accessible by a contract. Instances are created when requested and dependencies are injected into the constructor,
      * facilitating lazy initialization and loose coupling between classes.
@@ -97,8 +119,9 @@ export class DI {
      * @constructor
      * @param {String} [namespace] optional namespace
      **/
-    constructor(ns = null) {
+    constructor(ns = null, config = {}) {
         this._ns = ns;
+        this.mode = config.mode || DI.MODES.BUBBLING;
         this.depCheck = [];
     }
 
@@ -150,7 +173,7 @@ export class DI {
      App.di.registerType("$util", App.Util, ["compress", true, ["$wsql", "ls"] ], { singleton: true } ) ;
      **/
     register(name, classRef, params = [], options = {}) {
-        const [ns, contractMame] = this.splitContract(name);
+        const [ns, contractMame] = splitContract(name, this.ns);
 
         if (Array.isArray(classRef)) {
             options = params;
@@ -168,7 +191,8 @@ export class DI {
             params = null;
         }
 
-        let contract = { classRef, params,
+        let contract = {
+            classRef, params,
             name: contractMame,
             ns: ns,
             singleton: options.singleton === true,
@@ -191,7 +215,8 @@ export class DI {
 
         // Prepare factory if not manually defined
         if (!contract.factoryFor && !this.getContractFor(`${contractMame}Factory`)) {
-            contract = { classRef, params,
+            contract = {
+                classRef, params,
                 name: `${contractMame}Factory`,
                 ns: ns,
                 factoryFor: contractMame,
@@ -232,18 +257,48 @@ export class DI {
         this.contracts = {};
     }
 
-    getContractFor(contractName, ns = null) {
-        if (!ns) {
-            [ns, contractName] = splitContract(contractName);
+    /**
+     * A contract can be search for using two different modes, BUBBLING or CAPTURING.
+     * For example, a contract like this `aaa.bbb.ccc.$foo` (namespace = aaa.bbb.ccc, contract name = $foo)
+     * will be search in BUBBLING mode as follows
+     *     aaa.bbb.ccc.$foo
+     *     aaa.bbb.$foo
+     *     aaa.$foo
+     *     $foo
+     *
+     * In CAPTURING mode, it is the other way around
+     *
+     *     $foo
+     *     aaa.$foo
+     *     aaa.bbb.$foo
+     *     aaa.bbb.ccc.$foo
+     *
+     * @param contractStr
+     * @returns {*}
+     */
+    getContractFor(contractStr) {
+        let contract, nsList, nsPart,
+            isBubbling = this.mode !== DI.MODES.CAPTURING,
+            [ns, contractName] = splitContract(contractStr.toLowerCase(), this.ns);
 
-            if (!ns) {
-                ns = this.ns;
+        if (isBubbling) {
+            nsPart = ns;
+        } else {
+            nsList = (ns || '').split('.');
+            nsPart = '';
+        }
+
+        while (!contract && nsPart !== null && (!nsList || nsList.length)) {
+            contract = CONTRACTS.get((nsPart.length ? `${nsPart}.` : '') + contractName);
+
+            if (isBubbling) {
+                nsPart = (nsPart.length ? nsPart.substr(0, nsPart.lastIndexOf('.')) : null);
+            } else {
+                nsPart = (nsPart.length ? '.' : '') + nsList.shift();
             }
         }
 
-        contractName = (ns ? `${ns}.` : '') + contractName;
-
-        return CONTRACTS.get(contractName.toLowerCase());
+        return contract;
     }
 
     /**
@@ -289,11 +344,6 @@ export class DI {
         }
 
         return instance;
-    }
-
-    splitContract(contractName) {
-        const [ns, name] = ((contractName + '') || '').match(/^(?:([^.:]+)[.:])?(.*)$/).splice(1, 3);
-        return [(ns || this.ns), name];
     }
 
     /**
@@ -369,32 +419,33 @@ export class DI {
      * @param contract
      * @param params
      */
-    mergeParams(contract, params = []) {
-        let baseParams = contract.params || []
-            , indexParams = 0
-            , mergedParams = [];
+    /*
+     mergeParams(contract, params = []) {
+     let baseParams = contract.params || []
+     , indexParams = 0
+     , mergedParams = [];
 
-        // If the params are extracted from the constructor function, the non-contract arguments
-        // need to be removed, because they are just argument names
-        if (contract.inject === DI.ACTIONS.CONSTRUCTOR) {
-            baseParams = contract.params.map(param => this.getContractFor(param) ? param : undefined);
-        }
+     // If the params are extracted from the constructor function, the non-contract arguments
+     // need to be removed, because they are just argument names
+     if (contract.inject === DI.ACTIONS.CONSTRUCTOR) {
+     baseParams = contract.params.map(param => this.getContractFor(param) ? param : undefined);
+     }
 
-        for (let index = 0; index < baseParams.length; index++) {
-            if (baseParams[index] === undefined || (!contract.append && params[indexParams] !== undefined)) {
-                mergedParams.push(params[indexParams++]);
-            }
-            else {
-                mergedParams.push(baseParams[index]);
+     for (let index = 0; index < baseParams.length; index++) {
+     if (baseParams[index] === undefined || (!contract.append && params[indexParams] !== undefined)) {
+     mergedParams.push(params[indexParams++]);
+     }
+     else {
+     mergedParams.push(baseParams[index]);
 
-                if (!contract.append) {
-                    indexParams++;
-                }
-            }
-        }
+     if (!contract.append) {
+     indexParams++;
+     }
+     }
+     }
 
-        return mergedParams.concat(params.slice(indexParams));
-    }
+     return mergedParams.concat(params.slice(indexParams));
+     } */
 
     /**
      * @private
@@ -409,58 +460,28 @@ export class DI {
      * @example
      var storage = App.di.createInstance("data", ["compress", true, "websql"]) ;
      **/
-    createInstance(contract, params = []) {
-        //const instance = Reflect.construct(contract.classRef, this.createInstanceList(contract, params));
+    createInstance(contract, params) {
         let instance;
 
-        if (contract.inject === DI.ACTIONS.CONSTRUCTOR) {
-            // When dependencies are injected into the constructor
-            // circular dependencies cannot exist
-            this.depCheck.push(contract.name);
-            params = this.createInstanceList(this.mergeParams(contract, params)).reduce((list, item)=> {
-                list.push(item.instance);
-                return list;
-            }, []);
-            instance = new contract.classRef(...params);
-            this.depCheck.pop();
-
-        } else {
-            // TODO: merge params with defaults
-            instance = new contract.classRef(...params);
-            this.createInstanceList(contract.params).forEach(injectable => {
-                if (injectable.ns) {
-                    if (!instance[injectable.ns]) {
-                        instance[injectable.ns] = {};
-                    }
-                    instance[injectable.ns][injectable.name] = injectable.instance;
-                } else {
-                    instance[injectable.name] = injectable.instance;
-                }
-            });
+        if (!params.length) {
+            params = contract.params || [];
         }
 
+        if (params.length > 0) {
+            // When dependencies are injected into the constructor
+            // circular dependencies should not happen
+            this.depCheck.push(contract.name);
+            params = contract.params.reduce((list, param) => {
+                list.push(this.getInstance(param));
+                return list;
+            }, []);
+            this.depCheck.pop();
+        }
+
+        //instance = Reflect.construct(contract.classRef, params);
+        instance = this.inject(new contract.classRef(...params), contract);
+
         return instance;
-    }
-
-    getInjectablesdFor(contract) {
-        const proto = {};
-
-        (contract.inject || []).forEach(dep => {
-            const [ns, name] = this.splitContract(dep);
-            const instance = this.getInstance(dep);
-
-            if (ns) {
-                if (!proto[ns]) {
-                    proto[ns] = {};
-                }
-
-                proto[ns][name] = instance;
-            } else {
-                proto[name] = instance;
-            }
-        });
-
-        return proto;
     }
 
     /** @private
@@ -470,26 +491,24 @@ export class DI {
      * In this case, the constructor would, for example, look like this:
      *    function constructor(instance, array, instance) { .. }
      * */
-    createInstanceList(params = []) {
-        let instances = [];
+    /*
+     createInstanceList(params = []) {
+     return params.reduce((list, param)=> {
+     list.push(this.getInstance(param));
 
-        params.forEach((item) => {
-            if (Array.isArray(item)) {
-                instances.push(item.reduce(
-                    (list, c) => {
-                        let [ns, name] = this.splitContract(c);
-                        list.push({ns: (ns || this.ns), name, instance: this.getInstance(this.getContractFor(c))});
-                        return list;
-                    }, []));
-            }
-            else {
-                let [ns, name] = this.splitContract(item);
-                instances.push({ns: (ns || this.ns), name, instance: this.getInstance(item)});
-            }
+     return list;
+     }, []);
+     }
+     */
+
+    inject(instance, contract) {
+        (contract.inject || []).forEach(item => {
+            instance[item.propertyName] = this.getInstance(item.contractName);
         });
 
-        return instances;
+        return instance;
     }
+
 
     /** @private
      *
@@ -513,74 +532,74 @@ export class DI {
      */
     // TODO: Remove this but the error is still needed!
     /*
-    createInstanceIfContract(contractStr) {                                     // is a contract
-        let problemContract
-            , constParam = contractStr;
+     createInstanceIfContract(contractStr) {                                     // is a contract
+     let problemContract
+     , constParam = contractStr;
 
-        if (typeof(contractStr) === 'string' && this.contracts[contractStr])   // is 'contract' just a contructor parameter or a contract?
-        {
-            if (this.depCheck.indexOf(contractStr) === -1)                     // check for circular dependency
-            {
-                constParam = this.getInstance(contractStr);                    // create the instance
-                this.depCheck.pop();                                           // done, remove dependency from the list
-            }
-            else { // circular dependency detected!! --> STOP, someone did something stupid -> fix needed!!
-                problemContract = this.depCheck[0];
-                this.depCheck.length = 0;                                      // cleanup
-                throw Error("Circular dependency detected for contract " + problemContract);
-            }
-        }
+     if (typeof(contractStr) === 'string' && this.contracts[contractStr])   // is 'contract' just a contructor parameter or a contract?
+     {
+     if (this.depCheck.indexOf(contractStr) === -1)                     // check for circular dependency
+     {
+     constParam = this.getInstance(contractStr);                    // create the instance
+     this.depCheck.pop();                                           // done, remove dependency from the list
+     }
+     else { // circular dependency detected!! --> STOP, someone did something stupid -> fix needed!!
+     problemContract = this.depCheck[0];
+     this.depCheck.length = 0;                                      // cleanup
+     throw Error("Circular dependency detected for contract " + problemContract);
+     }
+     }
 
-        return constParam;
-    } */
+     return constParam;
+     } */
 
     /*
-    extractContracts(classRef) {
-        let args = classRef.toString().match(/(?:(?:^function|constructor)[^\(]*\()([^\)]+)/);
+     extractContracts(classRef) {
+     let args = classRef.toString().match(/(?:(?:^function|constructor)[^\(]*\()([^\)]+)/);
 
-        return args === null ? [] : args.slice(-1)[0].replace(/\s/g, '').split(',');
-    }
+     return args === null ? [] : args.slice(-1)[0].replace(/\s/g, '').split(',');
+     }
 
-    augment(classRef, options) {
-        let di = this
-            , newClassRef = classRef
-            , contractList = classRef.toString().match(/@inject\s*:*\s*([^\n]+)/);
+     augment(classRef, options) {
+     let di = this
+     , newClassRef = classRef
+     , contractList = classRef.toString().match(/@inject\s*:*\s*([^\n]+)/);
 
-        if (contractList) {
-            options.augment = contractList[1].split(/,\s+|\s+?/);
-        }
-        else {
-            let className = classRef.toString().match(/\s([^(]+)/)[1];
-            newClassRef = new Function('return function ' + className + '(){ function _classCallCheck() {}; return ' + classRef.toString() + '.apply(this, arguments);}')();
-            newClassRef.prototype = Object.create(classRef.prototype); // Fix instanceof
+     if (contractList) {
+     options.augment = contractList[1].split(/,\s+|\s+?/);
+     }
+     else {
+     let className = classRef.toString().match(/\s([^(]+)/)[1];
+     newClassRef = new Function('return function ' + className + '(){ function _classCallCheck() {}; return ' + classRef.toString() + '.apply(this, arguments);}')();
+     newClassRef.prototype = Object.create(classRef.prototype); // Fix instanceof
 
-            Object.getOwnPropertyNames(classRef.prototype).forEach((name) => {
-                if (name !== 'constructor') {
-                    let functionArgs = classRef.prototype[name].toString().match(/\(([^)]+)/)[1].split(/,\s?/);
+     Object.getOwnPropertyNames(classRef.prototype).forEach((name) => {
+     if (name !== 'constructor') {
+     let functionArgs = classRef.prototype[name].toString().match(/\(([^)]+)/)[1].split(/,\s?/);
 
-                    newClassRef.prototype[name] = function () {
-                        let index = 0
-                            , contracts = []
-                            , contract = true
-                            , inputArgs = Array.prototype.slice.call(arguments);
+     newClassRef.prototype[name] = function () {
+     let index = 0
+     , contracts = []
+     , contract = true
+     , inputArgs = Array.prototype.slice.call(arguments);
 
-                        while (contract) {
-                            contract = di.getInstance(functionArgs[index++]);
+     while (contract) {
+     contract = di.getInstance(functionArgs[index++]);
 
-                            if (contract) {
-                                contracts.push(contract);
-                            }
-                        }
+     if (contract) {
+     contracts.push(contract);
+     }
+     }
 
-                        return classRef.prototype[name].apply(this, contracts.concat(inputArgs));
-                    }
-                }
-            });
-        }
+     return classRef.prototype[name].apply(this, contracts.concat(inputArgs));
+     }
+     }
+     });
+     }
 
-        return newClassRef;
-    }
-    */
+     return newClassRef;
+     }
+     */
 }
 
 

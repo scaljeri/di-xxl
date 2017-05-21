@@ -1,14 +1,9 @@
-export function validateContract(contract, name, classRef, append, params = [], ns = undefined) {
-    contract.should.exist;
-    contract.name.should.equals(name);
-    contract.classRef.should.equals(classRef);
-    contract.append.should.equals(append);
+import chai from 'chai';
+import assertArrays from 'chai-arrays';
+import {beforeEach, describe, it} from "mocha";
+import {DI} from '../di';
 
-    if (contract.params) {
-        contract.params.should.eql(params);
-    }
+let should = chai.should();
+chai.use(assertArrays);
 
-    if (contract.ns) {
-        contract.ns.should.equal(ns);
-    }
-}
+export {DI, chai, should, beforeEach, describe, it};

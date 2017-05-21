@@ -39,7 +39,9 @@
     "sinon-chai": "2.9.0"
   },
   "dependencies": {
+    "babel-preset-stage-2": "^6.24.1",
     "babelify": "^7.3.0",
-    "browserify": "^14.3.0"
+    "browserify": "^14.3.0",
+    "chai-arrays": "^1.0.0"
   }
 }
