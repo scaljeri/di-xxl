@@ -1,7 +1,7 @@
 import {DI, chai, should} from './helpers';
 import * as fixtures from './fixtures/interfaces';
 
-describe('DI - Decorators', () => {
+describe.only('DI - Decorators', () => {
     const di = new DI('decorator');
     let contract;
 
@@ -76,22 +76,44 @@ describe('DI - Decorators', () => {
         });
     });
 
-    describe('Create instance', () => {
+    describe.only('Create instance', () => {
         let instance;
 
-        describe('Foo', () => {
+        describe.only('Foo - #map', () => {
             before(()=> {
-                let x = new fixtures.Foo({$model: 10});
+                //let x = new fixtures.Foo({$model: 10});
+                di.map({
+                    iService: 'Maz'
+                });
+
                 instance = di.getInstance('$foo');
             });
 
-            it('should exist', ()=> {
+            it.only('should exist', ()=> {
                should.exist(instance);
             });
 
             it('should have an injectable', ()=> {
                 instance.service.should.exist;
             })
-        })
+        });
+
+        describe('Foo - #map', () => {
+            before(()=> {
+                let x = new fixtures.Foo({$model: 10});
+                instance = di.getInstance('$foo');
+                di.map({
+                    iService: 'Maz'
+                });
+            });
+
+            it('should exist', ()=> {
+                should.exist(instance);
+            });
+
+            it('should have an injectable', ()=> {
+                instance.service.should.exist;
+            })
+        });
     });
 });

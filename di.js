@@ -1,6 +1,9 @@
-const CONTRACTS = new Map();
+const CONTRACTS = new Map(),
+    MAPPER = new Map(),
+    NAMESPACES = new Map();
 
 /* *** Private helpers ***/
+// OBSOLETE??
 function extractContracts(classRef) {
     let args = classRef.toString().match(/(?:(?:^function|constructor)[^\(]*\()([^\)]+)/);
 
@@ -15,6 +18,10 @@ function splitContract(contractName, baseNs) {
 
 function createName(contract) {
     return (contract.ns ? `${contract.ns}.` : '') + contract.name;
+}
+
+function registerNamespace(ns) {
+
 }
 
 /*
@@ -84,10 +91,10 @@ export function Inject(contractName) {
 }
 
 export class DI {
-    static get MODES() {
+    static get DIRECTIONS() {
         return {
-            CAPTURING: 1,
-            BUBBLING: 2
+            PARENT_TO_CHILD: 1,
+            CHILD_TO_PARENT: 2
         }
     }
 
@@ -121,7 +128,8 @@ export class DI {
      **/
     constructor(ns = null, config = {}) {
         this._ns = ns;
-        this.mode = config.mode || DI.MODES.BUBBLING;
+        this.direction = config.lookup || DI.DIRECTIONS.PARENT_TO_CHILD;
+        this.isStrict = config.strict; // TODO: needed??
         this.depCheck = [];
     }
 
@@ -134,8 +142,6 @@ export class DI {
      * @param {String} ns optional namespace. If the namespace is omitted, only contracts without a namespace are returned.
      * @returns {Map} contracts
      */
-
-
     getContracts(ns = null) {
         if (ns === null) {
             return CONTRACTS;
@@ -257,6 +263,40 @@ export class DI {
         this.contracts = {};
     }
 
+    static traverseNs(currentNs, ns) {
+        let nsList, nsPart,
+            isBubbling = this.mode !== DI.MODES.CAPTURING,
+            currentNsArr = NAMESPACES[currentNs],
+            nsArr = NAMESPACES[ns];
+
+        if (isBubbling) {
+            return nsArr[currentNsArr.length] ? `${currentNs}.${ns[NAMESPACES[currentNs.length]]}` : '';//}(currentNs ? currentNs.substr(0, currentNs.lastIndexOf('.')) : null);
+
+        } else {
+            let currentNsArr = currentNs.split('.'),
+                nsArr = ns.split('.');
+
+            return currentNsArr.push(ns.split('.')[currentNsArr.length]).join('.');
+        }
+
+        while (!contract && nsPart !== null && (!nsList || nsList.length)) {
+            contract = CONTRACTS.get((nsPart.length ? `${nsPart}.` : '') + contractName);
+
+            if (isBubbling) {
+                nsPart = (nsPart.length ? nsPart.substr(0, nsPart.lastIndexOf('.')) : null);
+            } else {
+                nsPart = (nsPart.length ? '.' : '') + nsList.shift();
+            }
+        }
+
+        return contract;
+
+    }
+
+    traverseNs(currentNs) {
+        return DI.traverseNs(currentNs, this.ns);
+    }
+
     /**
      * A contract can be search for using two different modes, BUBBLING or CAPTURING.
      * For example, a contract like this `aaa.bbb.ccc.$foo` (namespace = aaa.bbb.ccc, contract name = $foo)
@@ -276,29 +316,50 @@ export class DI {
      * @param contractStr
      * @returns {*}
      */
-    getContractFor(contractStr) {
-        let contract, nsList, nsPart,
-            isBubbling = this.mode !== DI.MODES.CAPTURING,
+    getContractFor(contractStr, ns, position) {
+        let contract,
+            isBubbling = (this.direction !== DI.DIRECTIONS.PARENT_TO_CHILD),
+            contractName = contractStr;
+
+        if (!ns) { // init
             [ns, contractName] = splitContract(contractStr.toLowerCase(), this.ns);
 
-        if (isBubbling) {
-            nsPart = ns;
+            contract = CONTRACTS.get(`${ns}.${contractStr}`);
+
+            if (!contract) {
+                ns = ns.split('.');
+                position = isBubbling ? ns.length - 2 : 0;
+
+                return this.getContractFor(contractName, ns.split('.'), position);
+            }
         } else {
-            nsList = (ns || '').split('.');
-            nsPart = '';
-        }
+            contract = CONTRACTS.get(`${ns.slice(0, position).join('.')}.${contractName}`);
 
-        while (!contract && nsPart !== null && (!nsList || nsList.length)) {
-            contract = CONTRACTS.get((nsPart.length ? `${nsPart}.` : '') + contractName);
+            if (!contract) {
+                const nextPos = position + (isBubbling ? -1 : 1);
 
-            if (isBubbling) {
-                nsPart = (nsPart.length ? nsPart.substr(0, nsPart.lastIndexOf('.')) : null);
-            } else {
-                nsPart = (nsPart.length ? '.' : '') + nsList.shift();
+                return ns.length === nextPos ? contractStr : this.getContractFor(contractName, ns, nextPos);
             }
         }
 
-        return contract;
+        return contract || contractName;
+    }
+
+    getMapForNs(ns = '') {
+        return MAPPER.get(ns);
+    }
+
+
+    static map(config, ns = '') {
+        const map = MAPPER.get(ns) || {};
+
+        MAPPER.set(ns, Object.assign(map, config));
+    }
+
+    map(config) {
+        DI.map(config, this.ns);
+
+        return this;
     }
 
     /**
@@ -315,9 +376,10 @@ export class DI {
      var ajax = App.di.getInstance("ajax") ;
      ajax = App.di.getInstance("ajax", "rest", true) ;
      **/
-    getInstance(contractStr, ...params) {
+    getInstance(contractStr, config = {}) {
         let instance = contractStr
-            , contract = this.getContractFor(contractStr);
+            , contract = this.getContractFor(contractStr, config.parents);
+
 
         if (contract) {
             if (contract.singleton) {
@@ -329,7 +391,7 @@ export class DI {
                     instance = this.createFactory(contract, params);
                 }
                 else {
-                    instance = this.createInstance(contract, params);
+                    instance = this.createInstance(contract, config.params);
                 }
             }
 
@@ -343,7 +405,7 @@ export class DI {
              } */
         }
 
-        return instance;
+        return instance || contractStr;
     }
 
     /**
@@ -460,26 +522,31 @@ export class DI {
      * @example
      var storage = App.di.createInstance("data", ["compress", true, "websql"]) ;
      **/
-    createInstance(contract, params) {
-        let instance;
+    createInstance(contract, params = []) {
+        let instance = contract.classRef(...params);
 
-        if (!params.length) {
-            params = contract.params || [];
+        if (contract.inject) {
+            contract.inject.forEach(dep => {
+                instance.dep = this.getInstance(dep, {parent: contract});
+            })
         }
 
-        if (params.length > 0) {
-            // When dependencies are injected into the constructor
-            // circular dependencies should not happen
-            this.depCheck.push(contract.name);
-            params = contract.params.reduce((list, param) => {
-                list.push(this.getInstance(param));
-                return list;
-            }, []);
-            this.depCheck.pop();
-        }
 
-        //instance = Reflect.construct(contract.classRef, params);
-        instance = this.inject(new contract.classRef(...params), contract);
+        /*
+         if (params.length > 0) {
+         // When dependencies are injected into the constructor
+         // circular dependencies should not happen
+         this.depCheck.push(contract.name);
+         params = contract.params.reduce((list, param) => {
+         list.push(this.getInstance(param));
+         return list;
+         }, []);
+         this.depCheck.pop();
+         }
+
+         //instance = Reflect.construct(contract.classRef, params);
+         instance = this.inject(new contract.classRef(...params), contract);
+         */
 
         return instance;
     }
