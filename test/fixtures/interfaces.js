@@ -10,9 +10,11 @@ export class Foo {
     service;
 
     // new Foo({$model: modelInstance});
-    constructor($model) {
-        this.model = $model;
+    constructor() {
     }
+    /*constructor(model) {
+        this.model = $model;
+    } */
 }
 
 @Injectable({

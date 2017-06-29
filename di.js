@@ -313,24 +313,26 @@ export class DI {
      *     aaa.bbb.$foo
      *     aaa.bbb.ccc.$foo
      *
-     * @param contractStr
+     * @param contractStr name of the contract (e.g. 'a.b.c.$foo')
+     * @param traverse should the namespace be search if contract does not exist (default: true)
      * @returns {*}
      */
-    getContractFor(contractStr, ns, position) {
-        let contract,
+    getContractFor(contractStr, traverse = true) {
+        let contract, contractName = contractStr,
             isBubbling = (this.direction !== DI.DIRECTIONS.PARENT_TO_CHILD),
-            contractName = contractStr;
+            ns = arguments[2],
+            position = arguments[3];
 
         if (!ns) { // init
             [ns, contractName] = splitContract(contractStr.toLowerCase(), this.ns);
 
             contract = CONTRACTS.get(`${ns}.${contractStr}`);
 
-            if (!contract) {
+            if (!contract && traverse) { // search?
                 ns = ns.split('.');
                 position = isBubbling ? ns.length - 2 : 0;
 
-                return this.getContractFor(contractName, ns.split('.'), position);
+                return this.getContractFor(contractName, true, ns, position);
             }
         } else {
             contract = CONTRACTS.get(`${ns.slice(0, position).join('.')}.${contractName}`);
@@ -376,22 +378,22 @@ export class DI {
      var ajax = App.di.getInstance("ajax") ;
      ajax = App.di.getInstance("ajax", "rest", true) ;
      **/
-    getInstance(contractStr, config = {}) {
-        let instance = contractStr
-            , contract = this.getContractFor(contractStr, config.parents);
+    getInstance(contractStr, config) {
+        let instance
+            , contract = this.getContractFor(contractStr);
 
 
         if (contract) {
             if (contract.singleton) {
-                instance = this.getSingletonInstance(contract, params);
+                instance = this.getSingletonInstance(contract, config);
             }
             else //create a new instance every time
             {
                 if (contract.factoryFor) {
-                    instance = this.createFactory(contract, params);
+                    instance = this.createFactory(contract, config);
                 }
                 else {
-                    instance = this.createInstance(contract, config.params);
+                    instance = this.createInstance(contract, config);
                 }
             }
 
@@ -522,31 +524,23 @@ export class DI {
      * @example
      var storage = App.di.createInstance("data", ["compress", true, "websql"]) ;
      **/
-    createInstance(contract, params = []) {
-        let instance = contract.classRef(...params);
+    createInstance(contract, config = {_deps: {}}) {
+        let instance;
 
-        if (contract.inject) {
-            contract.inject.forEach(dep => {
-                instance.dep = this.getInstance(dep, {parent: contract});
-            })
+        if (contract.classRef) {
+            instance = new contract.classRef(...(config.params || []));
+
+            if (contract.inject) {
+                config._deps[`${contract.ns}.${contract.name}`] = instance;
+
+                contract.inject.forEach(dep => {
+                    if (!config._deps[dep.contractName]) {
+                        config._deps[dep.contractName] = instance[dep.propertyName] =
+                            this.getInstance(dep.contractName, { _deps: Object.create(config._deps)});
+                    }
+                })
+            }
         }
-
-
-        /*
-         if (params.length > 0) {
-         // When dependencies are injected into the constructor
-         // circular dependencies should not happen
-         this.depCheck.push(contract.name);
-         params = contract.params.reduce((list, param) => {
-         list.push(this.getInstance(param));
-         return list;
-         }, []);
-         this.depCheck.pop();
-         }
-
-         //instance = Reflect.construct(contract.classRef, params);
-         instance = this.inject(new contract.classRef(...params), contract);
-         */
 
         return instance;
     }

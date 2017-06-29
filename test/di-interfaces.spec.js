@@ -70,7 +70,7 @@ describe.only('DI - Decorators', () => {
                 contract.classRef.should.eqls(fixtures.Bar);
             });
 
-            it('should have an empty inject array', ()=> {
+            it('should have an empty inject array', () => {
                 contract.inject.should.be.empty;
             });
         });
@@ -80,7 +80,7 @@ describe.only('DI - Decorators', () => {
         let instance;
 
         describe.only('Foo - #map', () => {
-            before(()=> {
+            before(() => {
                 //let x = new fixtures.Foo({$model: 10});
                 di.map({
                     iService: 'Maz'
@@ -89,17 +89,23 @@ describe.only('DI - Decorators', () => {
                 instance = di.getInstance('$foo');
             });
 
-            it.only('should exist', ()=> {
-               should.exist(instance);
+            it('should exist', () => {
+                should.exist(instance);
             });
 
-            it('should have an injectable', ()=> {
-                instance.service.should.exist;
+            describe('Injectable', () => {
+                it('should exist', () => {
+                    instance.service.should.exist;
+                });
+
+                it('should the correct type', () => {
+                    instance.service.should.be.instanceOf(fixtures.Maz);
+                });
             })
         });
 
         describe('Foo - #map', () => {
-            before(()=> {
+            before(() => {
                 let x = new fixtures.Foo({$model: 10});
                 instance = di.getInstance('$foo');
                 di.map({
@@ -107,11 +113,11 @@ describe.only('DI - Decorators', () => {
                 });
             });
 
-            it('should exist', ()=> {
+            it('should exist', () => {
                 should.exist(instance);
             });
 
-            it('should have an injectable', ()=> {
+            it('should have an injectable', () => {
                 instance.service.should.exist;
             })
         });

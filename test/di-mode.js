@@ -1,7 +1,7 @@
 import {DI} from './helpers';
 import * as fixtures from './fixtures/modes';
 
-describe('DI - Modes', () => {
+xdescribe('DI - Modes', () => {
     let di;
     let contract;
 
