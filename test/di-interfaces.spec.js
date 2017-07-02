@@ -2,7 +2,7 @@ import {DI, chai, should} from './helpers';
 import * as fixtures from './fixtures/interfaces';
 
 describe.only('DI - Decorators', () => {
-    const di = new DI('decorator');
+    const di = new DI();
     let contract;
 
     before(() => {
@@ -11,7 +11,7 @@ describe.only('DI - Decorators', () => {
     describe('Verify Contract', () => {
         describe('Foo', () => {
             before(() => {
-                contract = di.getContractFor('$foo');
+                contract = di.getContract('decorator.$foo');
             });
 
             it('should exist', () => {
@@ -45,8 +45,8 @@ describe.only('DI - Decorators', () => {
                 it('should hold a configuration', () => {
                     item = inject[0];
 
-                    item.propertyName.should.eqls('service');
-                    item.contractName.should.eqls('iService');
+                    item.propertyName.should.equals('service');
+                    item.contractName.should.equals('decorator.iService');
                     item.config.configurable.should.not.be.ok;
                     item.config.enumerable.should.be.ok;
                 });
@@ -55,7 +55,7 @@ describe.only('DI - Decorators', () => {
 
         describe('Bar', () => {
             before(() => {
-                contract = di.getContractFor('bar');
+                contract = di.getContract('decorator.bar');
             });
 
             it('should exist', () => {
@@ -76,17 +76,36 @@ describe.only('DI - Decorators', () => {
         });
     });
 
-    describe.only('Create instance', () => {
+    describe('Create instance', () => {
         let instance;
 
-        describe.only('Foo - #map', () => {
+        describe('Foo', () => {
             before(() => {
-                //let x = new fixtures.Foo({$model: 10});
-                di.map({
-                    iService: 'Maz'
+                instance = di.getInstance('decorator.$foo');
+            });
+
+            it('should exist', () => {
+                should.exist(instance);
+            });
+
+            describe('Injectable', () => {
+                it('should exist', () => {
+                    instance.service.should.exist;
                 });
 
-                instance = di.getInstance('$foo');
+                it('should the correct type', () => {
+                    instance.service.should.eqls('iService');
+                });
+            });
+        });
+
+        describe('Foo - #map', () => {
+            before(() => {
+                di.map({
+                    iService: 'decorator.Maz'
+                });
+
+                instance = di.getInstance('decorator.$foo');
             });
 
             it('should exist', () => {
@@ -101,25 +120,17 @@ describe.only('DI - Decorators', () => {
                 it('should the correct type', () => {
                     instance.service.should.be.instanceOf(fixtures.Maz);
                 });
-            })
-        });
 
-        describe('Foo - #map', () => {
-            before(() => {
-                let x = new fixtures.Foo({$model: 10});
-                instance = di.getInstance('$foo');
-                di.map({
-                    iService: 'Maz'
+                describe('Verify Contract', () => {
+                    before(() => {
+                        contract = di.getContract('decorator.$foo');
+                    });
+
+                    it('should not be altered', () => {
+                        contract.inject[0].contractName.should.eqls('iService');
+                    });
                 });
             });
-
-            it('should exist', () => {
-                should.exist(instance);
-            });
-
-            it('should have an injectable', () => {
-                instance.service.should.exist;
-            })
         });
     });
 });

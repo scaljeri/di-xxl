@@ -2,28 +2,6 @@ const CONTRACTS = new Map(),
     MAPPER = new Map(),
     NAMESPACES = new Map();
 
-/* *** Private helpers ***/
-// OBSOLETE??
-function extractContracts(classRef) {
-    let args = classRef.toString().match(/(?:(?:^function|constructor)[^\(]*\()([^\)]+)/);
-
-    return args === null ? [] : args.slice(-1)[0].replace(/\s/g, '').split(',');
-}
-
-function splitContract(contractName, baseNs) {
-    const [ns, name] = ((contractName + '') || '').match(/^(?:([^.:]+)[.:])?(.*)$/).splice(1, 3);
-
-    return [(ns || baseNs), name];
-}
-
-function createName(contract) {
-    return (contract.ns ? `${contract.ns}.` : '') + contract.name;
-}
-
-function registerNamespace(ns) {
-
-}
-
 /*
  Examples
  @Injectable()
@@ -70,7 +48,7 @@ export function Injectable() {
             });
         }
 
-        CONTRACTS.set(createName(contract).toLowerCase(), contract);
+        CONTRACTS.set(fullNameFor(contract).toLowerCase(), contract);
     }
 }
 
@@ -126,15 +104,9 @@ export class DI {
      * @constructor
      * @param {String} [namespace] optional namespace
      **/
-    constructor(ns = null, config = {}) {
-        this._ns = ns;
-        this.direction = config.lookup || DI.DIRECTIONS.PARENT_TO_CHILD;
-        this.isStrict = config.strict; // TODO: needed??
-        this.depCheck = [];
-    }
-
-    get ns() {
-        return this._ns;
+    constructor(config = {}) {
+        this.direction = (config.lookup || DI.DIRECTIONS.PARENT_TO_CHILD);
+        this.config = config;
     }
 
     /** Get all contracts
@@ -179,7 +151,7 @@ export class DI {
      App.di.registerType("$util", App.Util, ["compress", true, ["$wsql", "ls"] ], { singleton: true } ) ;
      **/
     register(name, classRef, params = [], options = {}) {
-        const [ns, contractMame] = splitContract(name, this.ns);
+        const [ns, contractMame] = splitContract(name);
 
         if (Array.isArray(classRef)) {
             options = params;
@@ -263,40 +235,6 @@ export class DI {
         this.contracts = {};
     }
 
-    static traverseNs(currentNs, ns) {
-        let nsList, nsPart,
-            isBubbling = this.mode !== DI.MODES.CAPTURING,
-            currentNsArr = NAMESPACES[currentNs],
-            nsArr = NAMESPACES[ns];
-
-        if (isBubbling) {
-            return nsArr[currentNsArr.length] ? `${currentNs}.${ns[NAMESPACES[currentNs.length]]}` : '';//}(currentNs ? currentNs.substr(0, currentNs.lastIndexOf('.')) : null);
-
-        } else {
-            let currentNsArr = currentNs.split('.'),
-                nsArr = ns.split('.');
-
-            return currentNsArr.push(ns.split('.')[currentNsArr.length]).join('.');
-        }
-
-        while (!contract && nsPart !== null && (!nsList || nsList.length)) {
-            contract = CONTRACTS.get((nsPart.length ? `${nsPart}.` : '') + contractName);
-
-            if (isBubbling) {
-                nsPart = (nsPart.length ? nsPart.substr(0, nsPart.lastIndexOf('.')) : null);
-            } else {
-                nsPart = (nsPart.length ? '.' : '') + nsList.shift();
-            }
-        }
-
-        return contract;
-
-    }
-
-    traverseNs(currentNs) {
-        return DI.traverseNs(currentNs, this.ns);
-    }
-
     /**
      * A contract can be search for using two different modes, BUBBLING or CAPTURING.
      * For example, a contract like this `aaa.bbb.ccc.$foo` (namespace = aaa.bbb.ccc, contract name = $foo)
@@ -317,49 +255,79 @@ export class DI {
      * @param traverse should the namespace be search if contract does not exist (default: true)
      * @returns {*}
      */
-    getContractFor(contractStr, traverse = true) {
+    static findContract(contractStr) {
         let contract, contractName = contractStr,
             isBubbling = (this.direction !== DI.DIRECTIONS.PARENT_TO_CHILD),
             ns = arguments[2],
             position = arguments[3];
 
-        if (!ns) { // init
-            [ns, contractName] = splitContract(contractStr.toLowerCase(), this.ns);
-
-            contract = CONTRACTS.get(`${ns}.${contractStr}`);
-
-            if (!contract && traverse) { // search?
-                ns = ns.split('.');
-                position = isBubbling ? ns.length - 2 : 0;
-
-                return this.getContractFor(contractName, true, ns, position);
-            }
-        } else {
-            contract = CONTRACTS.get(`${ns.slice(0, position).join('.')}.${contractName}`);
-
-            if (!contract) {
-                const nextPos = position + (isBubbling ? -1 : 1);
-
-                return ns.length === nextPos ? contractStr : this.getContractFor(contractName, ns, nextPos);
-            }
+        if (ns === undefined) {
+            [ns, contractName] = splitContract(contractStr.toLowerCase());
+            ns = `${ns.length ? '.' : ''}${ns}`.replace('..', '.').split('.');
+            position = ns.length;
         }
 
-        return contract || contractName;
+        contractStr = `${(ns.slice(0, position).join('.'))}.${contractName}`
+            .replace(/^\./, '');
+
+        // Not working, namespace is incorrect
+        const map = getMapFor(ns.slice(0, position), contractName);
+        //const map = (MAPPER.get(ns.join('.')) || {})[contractStr.toLowerCase()];
+
+        if (map) {
+            [ns, contractName] = splitContract(map.toLowerCase());
+            ns = `.${ns}`.replace('..', '.').split('.');
+            position = ns.length;
+
+            contractStr = `${(ns.slice(0, position).join('.'))}.${contractName}`
+                .replace(/^\./, '');
+        }
+
+        //ns = ns.split('.');
+        contract = CONTRACTS.get(contractStr);
+
+        if (!contract && ns.length > 1) {
+            const nextPos = arguments[2] ? (position + (isBubbling ? -1 : 1)) : 0;
+
+            return ns.length === nextPos ? contractStr : DI.findContract(contractName, true, ns, nextPos);
+        }
+
+        return contract;
     }
 
-    getMapForNs(ns = '') {
-        return MAPPER.get(ns);
+    static getContract(contractName) {
+        return CONTRACTS.get(contractName.toLowerCase())
+    }
+
+    getContract(contractName) {
+        return DI.getContract(contractName);
+    }
+
+    static getMap(ns = '') {
+        return MAPPER.get(ns.toLowerCase());
+    }
+
+    getMap(ns) {
+        return DI.getMap(ns);
     }
 
 
-    static map(config, ns = '') {
-        const map = MAPPER.get(ns) || {};
+    static map(maps) {
+        let key, map, ns, contractName;
 
-        MAPPER.set(ns, Object.assign(map, config));
+        for (key in maps) {
+            [ns, contractName] = splitContract(key);
+            map = (MAPPER.get(ns.toLowerCase()) || {});
+
+            map[contractName.toLowerCase()] = maps[key];
+            MAPPER.set(ns.toLowerCase(), map);
+        }
+
+        return this;
     }
 
-    map(config) {
-        DI.map(config, this.ns);
+    map(maps) {
+        DI.map(maps);
 
         return this;
     }
@@ -378,9 +346,10 @@ export class DI {
      var ajax = App.di.getInstance("ajax") ;
      ajax = App.di.getInstance("ajax", "rest", true) ;
      **/
-    getInstance(contractStr, config) {
-        let instance
-            , contract = this.getContractFor(contractStr);
+    getInstance(contractStr, config = {}) {
+        let instance = contractStr
+            // if `config._deps` is present, its a child, part of an inject list
+            , contract = contractStr.name ? contractStr : DI.findContract(contractStr);
 
 
         if (contract) {
@@ -407,7 +376,7 @@ export class DI {
              } */
         }
 
-        return instance || contractStr;
+        return instance;
     }
 
     /**
@@ -524,22 +493,30 @@ export class DI {
      * @example
      var storage = App.di.createInstance("data", ["compress", true, "websql"]) ;
      **/
-    createInstance(contract, config = {_deps: {}}) {
-        let instance;
+    createInstance(contract, config = {}) {
+        let deps = (config.deps || {}),
+            instance,
+            fullName = fullNameFor(contract),
+            localMap = config.map || {};
+
+        // Make sure the original contract is not altered
+        contract = Object.assign({}, contract, config);
 
         if (contract.classRef) {
-            instance = new contract.classRef(...(config.params || []));
+            instance = new contract.classRef(...(contract.params || []));
 
-            if (contract.inject) {
-                config._deps[`${contract.ns}.${contract.name}`] = instance;
+            deps[fullName] = {instance, contract};
+        }
 
-                contract.inject.forEach(dep => {
-                    if (!config._deps[dep.contractName]) {
-                        config._deps[dep.contractName] = instance[dep.propertyName] =
-                            this.getInstance(dep.contractName, { _deps: Object.create(config._deps)});
-                    }
-                })
-            }
+        // Fix inject list
+        if (contract.inject.length) {
+            contract.inject.forEach(dep => {
+                const contract = DI.findContract(localMap[dep.contractName] || dep.contractName),
+                    fullName = fullNameFor(contract);
+
+                instance[dep.propertyName] = fullName ?
+                    (deps[fullName] || (deps[fullName] = this.getInstance(contract, {deps}))) : dep.contractName;
+            });
         }
 
         return instance;
@@ -562,6 +539,7 @@ export class DI {
      }
      */
 
+    /*
     inject(instance, contract) {
         (contract.inject || []).forEach(item => {
             instance[item.propertyName] = this.getInstance(item.contractName);
@@ -569,6 +547,7 @@ export class DI {
 
         return instance;
     }
+    */
 
 
     /** @private
@@ -663,4 +642,30 @@ export class DI {
      */
 }
 
+
+/* *** Private helpers ***/
+// OBSOLETE??
+/*
+function extractContracts(classRef) {
+    let args = classRef.toString().match(/(?:(?:^function|constructor)[^\(]*\()([^\)]+)/);
+
+    return args === null ? [] : args.slice(-1)[0].replace(/\s/g, '').split(',');
+}
+*/
+function splitContract(contractName) {
+    const splitted = contractName.split(/\.|:/);
+    const name = splitted.pop();
+
+    return [(splitted.join('.') || ''), name];
+}
+
+function fullNameFor(contract) {
+    return contract ? (typeof contract === 'string' ? contract : (contract.ns ? `${contract.ns}.` : '') + contract.name) : null;
+}
+
+function getMapFor(ns, name) {
+    ns = ns.join('.').replace(/^\.+/, '');
+
+    return (MAPPER.get(ns) || {})[name.toLowerCase()];
+}
 

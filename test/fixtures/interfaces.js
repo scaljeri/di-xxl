@@ -2,11 +2,10 @@ import {Injectable, Inject} from '../../di';
 
 @Injectable({
     ns: 'decorator',
-    name: '$foo',
-    params: ['maz']
+    name: '$foo'
 })
 export class Foo {
-    @Inject('iService')
+    @Inject('decorator.iService')
     service;
 
     // new Foo({$model: modelInstance});
@@ -29,7 +28,9 @@ export class Bar extends Foo {}
 })
 export class Baz extends Foo {}
 
-@Injectable()
+@Injectable({
+    ns: 'decorator'
+})
 export class Maz {
     constructor() { this.args = arguments; }
 }

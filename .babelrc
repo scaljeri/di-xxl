@@ -1,6 +1,17 @@
 {
   "presets": [
-      "es2015",
-      "stage-0"
-   ]
+    "es2015",
+    "stage-0"
+  ],
+  "plugins": [
+    "transform-decorators-legacy",
+    "transform-class-properties"
+  ],
+  "env": {
+    "test": {
+      "plugins": [
+        "istanbul"
+      ]
+    }
+  }
 }
