@@ -1,28 +1,24 @@
 {
-  "description": "These are just examples for demonstration, nothing prescriptive",
-  "nyc": {
-    "check-coverage": true,
+    "check-coverage": false,
     "lines": 99,
     "statements": 99,
     "functions": 99,
     "branches": 99,
     "include": [
-      "./di.js"
-    ],
-    "exclude": [
-      "test/*.spec.js"
+      "./di.js",
+      "./test/di-interfaces.spec.js"
     ],
     "reporter": [
       "lcov",
       "text-summary"
     ],
-    "require": [
-    ],
+    "require": [],
     "extension": [
       ".js"
     ],
-    "cache": true,
-    "all": true,
+    "cache": false,
+    "all": false,
+    "sourceMap": true,
+    "instrument": true,
     "report-dir": "./coverage"
-  }
 }
