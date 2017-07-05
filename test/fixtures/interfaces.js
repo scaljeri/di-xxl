@@ -10,6 +10,7 @@ export class Foo {
 
     // new Foo({$model: modelInstance});
     constructor() {
+        this.args = arguments;
     }
     /*constructor(model) {
         this.model = $model;
@@ -29,7 +30,8 @@ export class Bar extends Foo {}
 export class Baz extends Foo {}
 
 @Injectable({
-    ns: 'decorator'
+    ns: 'decorator',
+    singleton: true
 })
 export class Maz {
     constructor() { this.args = arguments; }

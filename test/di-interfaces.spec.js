@@ -1,7 +1,7 @@
 import {DI, chai, should} from './helpers';
 import * as fixtures from './fixtures/interfaces';
 
-describe.only('DI - Decorators', () => {
+describe('DI - Decorators', () => {
     const di = new DI();
     let contract;
 

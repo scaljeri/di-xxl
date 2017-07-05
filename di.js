@@ -366,7 +366,11 @@ export class DI {
 
         if (contract) {
             if (contract.singleton) {
-                instance = this.getSingletonInstance(contract, config);
+                if (!contract.instance) {
+                    instance = contract.instance = this.createInstance(contract, config);
+                } else {
+                    instance = contract.instance;
+                }
             }
             else //create a new instance every time
             {
@@ -560,22 +564,6 @@ export class DI {
         return instance;
     }
     */
-
-
-    /** @private
-     *
-     * Create or reuse a singleton instance
-     */
-    getSingletonInstance(contract, params) {
-        const mergedParams = this.mergeParams(contract, params);
-
-        if (contract.instance === undefined || (params && params.length > 0)) {
-            contract.params = mergedParams;
-            contract.instance = this.createInstance(contract);
-        }
-
-        return contract.instance;
-    }
 
     /** @private
      *
