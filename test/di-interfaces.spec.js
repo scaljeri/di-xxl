@@ -90,19 +90,19 @@ describe.only('DI - Decorators', () => {
 
             describe('Injectable', () => {
                 it('should exist', () => {
-                    instance.service.should.exist;
+                   instance.service.should.exist;
                 });
 
                 it('should the correct type', () => {
-                    instance.service.should.eqls('iService');
+                    instance.service.should.eqls('decorator.iService');
                 });
             });
         });
 
         describe('Foo - #map', () => {
             before(() => {
-                di.map({
-                    iService: 'decorator.Maz'
+                di.connect({
+                    'decorator.iService': 'decorator.Maz'
                 });
 
                 instance = di.getInstance('decorator.$foo');
@@ -127,7 +127,7 @@ describe.only('DI - Decorators', () => {
                     });
 
                     it('should not be altered', () => {
-                        contract.inject[0].contractName.should.eqls('iService');
+                        contract.inject[0].contractName.should.eqls('decorator.iService');
                     });
                 });
             });

@@ -1,6 +1,5 @@
 const CONTRACTS = new Map(),
-    MAPPER = new Map(),
-    NAMESPACES = new Map();
+    CONNECTIONS = new Map();
 
 /*
  Examples
@@ -107,6 +106,35 @@ export class DI {
     constructor(config = {}) {
         this.direction = (config.lookup || DI.DIRECTIONS.PARENT_TO_CHILD);
         this.config = config;
+        this.connections = new Map();
+    }
+
+    static connect(list, connections = CONNECTIONS) {
+        let key, map, ns, contractName;
+
+        for (key in list) {
+            [ns, contractName] = splitContract(key);
+            map = (connections.get(ns.toLowerCase()) || {});
+
+            map[contractName.toLowerCase()] = list[key];
+            connections.set(ns.toLowerCase(), map);
+        }
+
+        return this;
+    }
+
+    connect(list) {
+        DI.connect(list, this.connections);
+    }
+
+    static getConnection(ns, contractName, connections = CONNECTIONS) {
+        ns = typeof ns === 'string' ? ns : ns.join('.');
+
+        return (connections.get(ns) || {})[contractName.toLowerCase()];
+    }
+
+    getConnection(ns, contractName) {
+        return DI.getConnection(ns, contractName, this.connections) || DI.getConnection(ns, contractName)
     }
 
     /** Get all contracts
@@ -258,43 +286,47 @@ export class DI {
     static findContract(contractStr) {
         let contract, contractName = contractStr,
             isBubbling = (this.direction !== DI.DIRECTIONS.PARENT_TO_CHILD),
-            ns = arguments[2],
-            position = arguments[3];
+            ns = arguments[1],
+            position = arguments[2];
 
         if (ns === undefined) {
             [ns, contractName] = splitContract(contractStr.toLowerCase());
-            ns = `${ns.length ? '.' : ''}${ns}`.replace('..', '.').split('.');
-            position = ns.length;
+            ns = ns.split('.');
+            position = isBubbling ? ns.length : 0;
         }
 
         contractStr = `${(ns.slice(0, position).join('.'))}.${contractName}`
             .replace(/^\./, '');
 
-        // Not working, namespace is incorrect
-        const map = getMapFor(ns.slice(0, position), contractName);
-        //const map = (MAPPER.get(ns.join('.')) || {})[contractStr.toLowerCase()];
+        const map = this.getConnection(ns.slice(0, position), contractName);
 
         if (map) {
             [ns, contractName] = splitContract(map.toLowerCase());
-            ns = `.${ns}`.replace('..', '.').split('.');
-            position = ns.length;
+            ns = ns.split('.');
+            position = isBubbling ? ns.length : 0;
 
             contractStr = `${(ns.slice(0, position).join('.'))}.${contractName}`
                 .replace(/^\./, '');
         }
 
-        //ns = ns.split('.');
         contract = CONTRACTS.get(contractStr);
 
-        if (!contract && ns.length > 1) {
-            const nextPos = arguments[2] ? (position + (isBubbling ? -1 : 1)) : 0;
+        if (!contract && ns.length) {
+            const nextPos = (position + (isBubbling ? -1 : 1))
 
-            return ns.length === nextPos ? contractStr : DI.findContract(contractName, true, ns, nextPos);
+            if (nextPos >= 0 && nextPos <= ns.length) {
+                return DI.findContract.call(this, contractName, ns, nextPos);
+            }
         }
 
         return contract;
     }
 
+    getProjection(ns, contract) {
+
+    }
+
+    
     static getContract(contractName) {
         return CONTRACTS.get(contractName.toLowerCase())
     }
@@ -304,33 +336,13 @@ export class DI {
     }
 
     static getMap(ns = '') {
-        return MAPPER.get(ns.toLowerCase());
+        return CONNECTIONS.get(ns.toLowerCase());
     }
 
     getMap(ns) {
         return DI.getMap(ns);
     }
 
-
-    static map(maps) {
-        let key, map, ns, contractName;
-
-        for (key in maps) {
-            [ns, contractName] = splitContract(key);
-            map = (MAPPER.get(ns.toLowerCase()) || {});
-
-            map[contractName.toLowerCase()] = maps[key];
-            MAPPER.set(ns.toLowerCase(), map);
-        }
-
-        return this;
-    }
-
-    map(maps) {
-        DI.map(maps);
-
-        return this;
-    }
 
     /**
      * Returns an instance for the given contract. Use <tt>params</tt> attribute to overwrite the default
@@ -349,7 +361,7 @@ export class DI {
     getInstance(contractStr, config = {}) {
         let instance = contractStr
             // if `config._deps` is present, its a child, part of an inject list
-            , contract = contractStr.name ? contractStr : DI.findContract(contractStr);
+            , contract = contractStr.name ? contractStr : DI.findContract.call(this, contractStr);
 
 
         if (contract) {
@@ -511,10 +523,10 @@ export class DI {
         // Fix inject list
         if (contract.inject.length) {
             contract.inject.forEach(dep => {
-                const contract = DI.findContract(localMap[dep.contractName] || dep.contractName),
+                const contract = DI.findContract.call(this, (localMap[dep.contractName] || dep.contractName)),
                     fullName = fullNameFor(contract);
 
-                instance[dep.propertyName] = fullName ?
+                instance[dep.propertyName] = contract ?
                     (deps[fullName] || (deps[fullName] = this.getInstance(contract, {deps}))) : dep.contractName;
             });
         }
@@ -661,11 +673,5 @@ function splitContract(contractName) {
 
 function fullNameFor(contract) {
     return contract ? (typeof contract === 'string' ? contract : (contract.ns ? `${contract.ns}.` : '') + contract.name) : null;
-}
-
-function getMapFor(ns, name) {
-    ns = ns.join('.').replace(/^\.+/, '');
-
-    return (MAPPER.get(ns) || {})[name.toLowerCase()];
 }
 
