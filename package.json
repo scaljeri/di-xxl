@@ -8,7 +8,7 @@
     "doc": "./node_modules/.bin/esdoc -c esdoc.json && open esdoc/index.html",
     "old-test": "./node_modules/.bin/babel-node ./node_modules/.bin/isparta cover ./node_modules/.bin/_mocha -- --recursive",
     "prepublish": "npm run build",
-    "test": "cross-env NODE_ENV=test  nyc --require babel-register mocha",
+    "test": "cross-env NODE_ENV=test nyc mocha",
     "t1": "cross-env NODE_ENV=test nyc --reporter=lcov --reporter=text mocha test/*.js --compilers js:babel-core/register",
     "t2": "./node_modules/.bin/babel-node ./node_modules/.bin/mocha --compilers js:babel-core/register"
   },

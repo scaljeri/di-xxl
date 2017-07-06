@@ -5,14 +5,19 @@
     "functions": 99,
     "branches": 99,
     "include": [
-      "./di.js",
-      "./test/di-interfaces.spec.js"
+      "./di.js"
+    ],
+    "exclude": [
+        "./node_modules/**/*.js",
+        "./test/**/*.js"
     ],
     "reporter": [
       "lcov",
       "text-summary"
     ],
-    "require": [],
+    "require": [
+        "babel-register"
+    ],
     "extension": [
       ".js"
     ],
