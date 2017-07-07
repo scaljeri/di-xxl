@@ -27,6 +27,7 @@ export function Injectable() {
 
     return function decorator(classRef) {
         let contract = Object.assign(CONTRACTS.get(classRef) || {inject: []}, settings);
+        CONTRACTS.delete(classRef); // Needed because a class can be registered multiple times
 
         contract.classRef = classRef;
 
@@ -34,10 +35,10 @@ export function Injectable() {
             contract.name = classRef.name.charAt(0).toLowerCase() + classRef.name.substring(1);
         } else { // 'namespace.bar' --> { ns: 'namespace', name: 'bar'}
             const [ns, name] = splitContract(contract.name);
-            contract.name = name;
+            contract.name = name.toLowerCase();
 
             if (ns) {
-                contract.ns = ns;
+                contract.ns = ns.toLowerCase();
             }
         }
 
@@ -59,7 +60,6 @@ export function Inject(contractName) {
         //let x = new classRef();
         contract.inject.push({propertyName: argument, contractName, config});
 
-        console.log(classRef.constructor);
         CONTRACTS.set(classRef.constructor, contract);
 
         config.writable = true;
@@ -172,62 +172,10 @@ export class DI {
      App.di.registerType("$ajax", App.AJAX, [], { singleton: true }) ;
      App.di.registerType("$util", App.Util, ["compress", true, ["$wsql", "ls"] ], { singleton: true } ) ;
      **/
-    register(name, classRef, params = [], options = {}) {
-        const [ns, contractMame] = splitContract(name);
+    register(config) {
+        Injectable(config)(config.classRef);
 
-        if (Array.isArray(classRef)) {
-            options = params;
-            params = classRef;
-            classRef = null;
-        }
-        else if (classRef && typeof classRef === 'object') {
-            options = classRef;
-            classRef = null;
-        }
-
-        if (!Array.isArray(params)) // no params defined
-        {
-            options = params;
-            params = null;
-        }
-
-        let contract = {
-            classRef, params,
-            name: contractMame,
-            ns: ns,
-            singleton: options.singleton === true,
-            append: options.append,
-            inject: options.inject || DI.ACTIONS.INSTANCE
-        };
-
-        // --debug-start--
-        if (!classRef) {
-            if (!options.factoryFor) {
-                console.warn(`#register(${contractStr}): 'classRef' is not defined`);
-            }
-        }
-        else if (typeof(classRef) !== 'function') {
-            console.warn(`#register(${contractStr}): 'classRef' is not a function`);
-        }
-        // --debug-end--
-
-        Injectable(contract)(contract.classRef);
-
-        // Prepare factory if not manually defined
-        if (!contract.factoryFor && !this.getContractFor(`${contractMame}Factory`)) {
-            contract = {
-                classRef, params,
-                name: `${contractMame}Factory`,
-                ns: ns,
-                factoryFor: contractMame,
-                singleton: options.singleton === true,
-                append: options.append
-            };
-
-            Injectable(contract)();
-        }
-
-        return this; // Chainable
+        return this;
     }
 
     /**
@@ -337,14 +285,9 @@ export class DI {
                     instance = contract.instance;
                 }
             }
-            else //create a new instance every time
+            else
             {
-                if (contract.factoryFor) {
-                    instance = this.createFactory(contract, config);
-                }
-                else {
-                    instance = this.createInstance(contract, config);
-                }
+                instance = this.createInstance(contract, config);
             }
         }
 

@@ -19,7 +19,7 @@ describe('Modes', () => {
             contract = di.findContract('a.b.c.$yFoo');
 
             contract.ns.should.equals('a.b');
-            contract.name.should.equals('$yFoo');
+            contract.name.should.equals('$yfoo');
         });
     });
 
@@ -37,7 +37,7 @@ describe('Modes', () => {
             contract = di.findContract('a.b.c.$yFoo');
 
             contract.ns.should.equals('a.b');
-            contract.name.should.equals('$yFoo');
+            contract.name.should.equals('$yfoo');
         })
     });
 });
