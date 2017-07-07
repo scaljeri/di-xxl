@@ -1,5 +1,5 @@
 import {DI, chai, should} from './helpers';
-import * as fixtures from './fixtures/interfaces';
+import * as fixtures from './fixtures/decorators';
 
 describe('DI - Singletons', () => {
     const di = new DI();

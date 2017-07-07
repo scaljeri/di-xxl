@@ -8,13 +8,9 @@ export class Foo {
     @Inject('decorator.iService')
     service;
 
-    // new Foo({$model: modelInstance});
     constructor() {
         this.args = arguments;
     }
-    /*constructor(model) {
-        this.model = $model;
-    } */
 }
 
 @Injectable({
@@ -31,8 +27,18 @@ export class Baz extends Foo {}
 
 @Injectable({
     ns: 'decorator',
-    singleton: true
+    singleton: true,
+    role: 'x'
 })
 export class Maz {
     constructor() { this.args = arguments; }
+}
+
+@Injectable({ns: 'decorator'})
+export class BooArgs {
+    // new Foo({$model: modelInstance});
+    constructor({val1, val2}) {
+        this.val1 = val1;
+        this.val2 = val2;
+    }
 }

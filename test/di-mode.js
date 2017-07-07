@@ -1,29 +1,43 @@
-import {DI} from './helpers';
+import {DI, chai, should} from './helpers';
 import * as fixtures from './fixtures/modes';
 
-xdescribe('DI - Modes', () => {
+describe('Modes', () => {
     let di;
     let contract;
 
-    describe('BUBBLING', () => {
+    describe('Parent 2 Child', () => {
         before(() => {
-            di = new DI('a.b.c', {mode: DI.MODES.BUBBLING});
-            contract = di.getContractFor('$xFoo');
+            di = new DI({lookup: DI.DIRECTIONS.PARENT_TO_CHILD});
+            contract = di.findContract('a.b.c.$xFoo');
         });
 
-        it('should return the contract for ns `a.b.c`', () => {
-            contract.classRef.should.eqls(fixtures.CFoo);
+        it('should find a contract', () => {
+            contract.classRef.should.eqls(fixtures.AFoo);
+        });
+
+        it('should find a contract in between', () => {
+            contract = di.findContract('a.b.c.$yFoo');
+
+            contract.ns.should.equals('a.b');
+            contract.name.should.equals('$yFoo');
         });
     });
 
-    describe('CAPTURING', () => {
+    describe('Child 2 Parent', () => {
         before(() => {
-            di = new DI('a.b.c', {mode: DI.MODES.CAPTURING});
-            contract = di.getContractFor('$xFoo');
+            di = new DI({lookup: DI.DIRECTIONS.CHILD_TO_PARENT});
+            contract = di.findContract('a.b.c.$xFoo');
         });
 
-        it('should return the contract without the ns', () => {
-            contract.classRef.should.eqls(fixtures.AFoo);
+        it('should find a contract', () => {
+            contract.classRef.should.eqls(fixtures.CFoo);
         });
+
+        it('should find a contract in between', () => {
+            contract = di.findContract('a.b.c.$yFoo');
+
+            contract.ns.should.equals('a.b');
+            contract.name.should.equals('$yFoo');
+        })
     });
 });

@@ -8,7 +8,7 @@ export class CFoo {}
 
 @Injectable({
     ns: 'a',
-    inherit: '$xfoo'
+    name: '$xfoo'
 })
 export class BFoo {}
 
@@ -17,3 +17,9 @@ export class BFoo {}
     ns: ''
 })
 export class AFoo {}
+
+@Injectable({
+    ns: 'a.b',
+    name: '$yFoo'
+})
+export class EFoo {}
