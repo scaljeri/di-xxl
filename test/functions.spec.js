@@ -1,15 +1,14 @@
 import {DI, chai, should} from './helpers';
 import * as fixtures from './fixtures/decorators';
 
-describe('Pure functions', () => {
+describe('Functions - ACTIONS.INVOKE', () => {
     const di = new DI();
     let instance,
         inject = {propertyName: 'test', contractName: 'register.maz'},
         myFunc = function(){
             const x = {args: arguments[0]};
             return x;
-            },
-        ref = { x: 10 };
+            };
 
     before(() => {
         di.register({
@@ -22,7 +21,6 @@ describe('Pure functions', () => {
             .register({
                 ns: 'register',
                 name: 'maz',
-                asIs: true,
                 ref: fixtures.Bar
             });
 

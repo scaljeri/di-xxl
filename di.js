@@ -337,7 +337,7 @@ export class DI {
         parentContract = Object.assign({map: {}, params: [], accept: [], reject: []}, contract, config);
 
         if (parentContract.ref) {
-            if (!contract.action || contract.action === DI.ACTIONS.CREATE) {
+            if ((!parentContract.action || parentContract.action === DI.ACTIONS.CREATE) && typeof parentContract.ref === 'function') {
                 instance = Array.isArray(parentContract.params) ?
                     new parentContract.ref(...(parentContract.params || [])) : new parentContract.ref(parentContract.params);
             } else if (contract.action === DI.ACTIONS.INVOKE) {
