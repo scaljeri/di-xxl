@@ -25,14 +25,14 @@ const CONTRACTS = new Map(),
 export function Injectable() {
     const settings = arguments[0] ? (typeof arguments[0] === 'string' ? {name: arguments[0]} : arguments[0]) : {};
 
-    return function decorator(classRef) {
-        let contract = Object.assign(CONTRACTS.get(classRef) || {inject: []}, settings);
-        CONTRACTS.delete(classRef); // Needed because a class can be registered multiple times
+    return function decorator(ref) {
+        let contract = Object.assign(CONTRACTS.get(ref) || {inject: []}, settings);
+        CONTRACTS.delete(ref); // Needed because a class can be registered multiple times
 
-        contract.classRef = classRef;
+        contract.ref = ref;
 
         if (!contract.name) { // class BarFoo {} --> { name: 'barFoo' }
-            contract.name = classRef.name.charAt(0).toLowerCase() + classRef.name.substring(1);
+            contract.name = ref.name.charAt(0).toLowerCase() + ref.name.substring(1);
         } else { // 'namespace.bar' --> { ns: 'namespace', name: 'bar'}
             const [ns, name] = splitContract(contract.name);
             contract.name = name.toLowerCase();
@@ -43,7 +43,7 @@ export function Injectable() {
         }
 
         if (contract.constructor === true && Object.keys(contract.inject).length === 0) {
-            extractContracts(classRef).forEach(param => {
+            extractContracts(ref).forEach(param => {
                 contract.inject.push({contractName: param});
             });
         }
@@ -53,14 +53,12 @@ export function Injectable() {
 }
 
 export function Inject(contractName) {
-    return function decorator(classRef, argument, config) {
-        let contract = CONTRACTS.get(classRef.constructor) || {inject: []};
+    return function decorator(ref, argument, config) {
+        let contract = CONTRACTS.get(ref.constructor) || {inject: []};
 
-        //contract.classRef = classRef;
-        //let x = new classRef();
         contract.inject.push({propertyName: argument, contractName, config});
 
-        CONTRACTS.set(classRef.constructor, contract);
+        CONTRACTS.set(ref.constructor, contract);
 
         config.writable = true;
         return config;
@@ -72,6 +70,14 @@ export class DI {
         return {
             PARENT_TO_CHILD: 1,
             CHILD_TO_PARENT: 2
+        }
+    }
+
+    static get ACTIONS() {
+        return {
+            CREATE: 0,
+            INVOKE: 1,
+            NONE: 2
         }
     }
 
@@ -159,7 +165,7 @@ export class DI {
      * @method register
      * @chainable
      * @param {String} contract name of the contract
-     * @param {Class} classRef the class bind to this contract
+     * @param {Class} ref the class bind to this contract
      * @param {Array} [params] list of constructor parameters. Only if a parameter is a string and matches a contract, it
      * will be replaced with the corresponding instance
      * @param {Object} [options] configuration
@@ -173,7 +179,7 @@ export class DI {
      App.di.registerType("$util", App.Util, ["compress", true, ["$wsql", "ls"] ], { singleton: true } ) ;
      **/
     register(config) {
-        Injectable(config)(config.classRef);
+        Injectable(config)(config.ref);
 
         return this;
     }
@@ -330,9 +336,16 @@ export class DI {
         // Make sure the original contract is not altered
         parentContract = Object.assign({map: {}, params: [], accept: [], reject: []}, contract, config);
 
-        if (parentContract.classRef) {
-            instance = Array.isArray(parentContract.params) ?
-                new parentContract.classRef(...(parentContract.params || [])) : new parentContract.classRef(parentContract.params);
+        if (parentContract.ref) {
+            if (!contract.action || contract.action === DI.ACTIONS.CREATE) {
+                instance = Array.isArray(parentContract.params) ?
+                    new parentContract.ref(...(parentContract.params || [])) : new parentContract.ref(parentContract.params);
+            } else if (contract.action === DI.ACTIONS.INVOKE) {
+                instance = Array.isArray(parentContract.params) ?
+                    parentContract.ref(...(parentContract.params || [])) : parentContract.ref(parentContract.params);
+            } else {
+                instance = parentContract.ref;
+            }
 
             deps[parentFullName] = {instance, contract: parentContract};
         }
@@ -362,8 +375,8 @@ export class DI {
 /* *** Private helpers ***/
 // OBSOLETE??
 /*
- function extractContracts(classRef) {
- let args = classRef.toString().match(/(?:(?:^function|constructor)[^\(]*\()([^\)]+)/);
+ function extractContracts(ref) {
+ let args = ref.toString().match(/(?:(?:^function|constructor)[^\(]*\()([^\)]+)/);
 
  return args === null ? [] : args.slice(-1)[0].replace(/\s/g, '').split(',');
  }

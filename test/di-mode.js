@@ -12,7 +12,7 @@ describe('Modes', () => {
         });
 
         it('should find a contract', () => {
-            contract.classRef.should.eqls(fixtures.AFoo);
+            contract.ref.should.eqls(fixtures.AFoo);
         });
 
         it('should find a contract in between', () => {
@@ -30,7 +30,7 @@ describe('Modes', () => {
         });
 
         it('should find a contract', () => {
-            contract.classRef.should.eqls(fixtures.CFoo);
+            contract.ref.should.eqls(fixtures.CFoo);
         });
 
         it('should find a contract in between', () => {

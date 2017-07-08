@@ -22,8 +22,8 @@ describe('DI - Decorators', () => {
                 contract.ns.should.eqls('decorator');
             });
 
-            it('should have a classRef', () => {
-                contract.classRef.should.eqls(fixtures.Foo);
+            it('should have a ref', () => {
+                contract.ref.should.eqls(fixtures.Foo);
             });
 
             describe('property `inject`', () => {
@@ -66,8 +66,8 @@ describe('DI - Decorators', () => {
                 contract.ns.should.eqls('decorator');
             });
 
-            it('should have a classRef', () => {
-                contract.classRef.should.eqls(fixtures.Bar);
+            it('should have a ref', () => {
+                contract.ref.should.eqls(fixtures.Bar);
             });
 
             it('should have an empty inject array', () => {

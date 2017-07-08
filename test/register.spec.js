@@ -10,13 +10,13 @@ describe('#register', () => {
         di.register({
             ns: 'register',
             name: 'Foo',
-            classRef: fixtures.Foo,
+            ref: fixtures.Foo,
             inject: [inject]
         })
             .register({
                 ns: 'register',
                 name: 'maz',
-                classRef: fixtures.Bar,
+                ref: fixtures.Bar,
             });
 
         contract = di.getContract('register.foo');
@@ -29,7 +29,7 @@ describe('#register', () => {
     it('should have all properties', () => {
         contract.ns.should.equals('register');
         contract.name.should.equals('foo');
-        contract.classRef.should.equals(fixtures.Foo);
+        contract.ref.should.equals(fixtures.Foo);
         contract.inject.length.should.equals(1);
         contract.inject[0].should.eqls(inject);
     });
