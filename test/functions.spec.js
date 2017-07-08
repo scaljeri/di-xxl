@@ -6,7 +6,7 @@ describe('Pure functions', () => {
     let instance,
         inject = {propertyName: 'test', contractName: 'register.maz'},
         myFunc = function(){
-            const x = {arguments};
+            const x = {args: arguments[0]};
             return x;
             },
         ref = { x: 10 };
@@ -35,8 +35,8 @@ describe('Pure functions', () => {
     });
 
     it('should have used params', () => {
-        should.exist(instance.arguments);
-        instance.arguments[0].should.eqls({a: 'b'});
+        should.exist(instance.args);
+        instance.args.should.eqls({a: 'b'});
     });
 
     it('should have injected', () => {
