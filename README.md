@@ -8,49 +8,95 @@
 
 ## Javascript Dependency Injection library written in ES2015 
 
-NOTE: This package will soon be renamed to **di-xxl**
+You can find a demo, documentation and code coverage [here](http://scaljeri.github.io/javascript-dependency-injection/)
 
-You can find a demo, documentation and a code coverage report [here](http://scaljeri.github.io/javascript-dependency-injection/)
+**DI-XXL** is a dependency injection library facilitating lazy initialization and loose coupling
+--> maintainable code! 
 
- **DI-XXL** is a dependency injection library which makes classes accessible by a contract. Instances are created when requested and 
- dependencies are injected, facilitating lazy initialization and 
- loose coupling between classes --> maintainable and testable code!!!!
+In order to keep constructor functions as small as possible (Best practice!!) it is not possible
+to inject something into a constructor. 
  
-### The Basics     
+To add, for example, a class to **DI-XXL** you have to define a so called descriptor object
 
-**DI-XXL** is an extremely versatile library; it provides many ways to implement dependency injection. Choose
-whatever fits your needs best.
+    import {DI} from 'di-xxl';
+    
+    class Foo {}
+    
+    DI.register('foo', 
+        { // Descriptor object
+            ref: Foo
+        }
+    );
+    
+The descriptor object is stored by a name, in this case `foo`. Now, to retrieve an instance of the class `Foo` 
+simply do
 
+    const foo = DI.getInstance('foo');
+    
+### Injection 
+In theory you can inject anything into almost anything :)  Circular dependencies do not exist, because it is not 
+possible to inject into a constructor function. 
 
-#### Example 1
+For example, to inject an instance of `Foo` into an object you describe this into the descriptor
 
+    class Foo {}
+    const app = {};
+    
+    DI.register('app', {
+        ref: app,
+        inject: [{propertyName: 'xyz', descriptor: 'foo'}]
+    }
+    DI.register('foo', {
+        ref: Foo
+    });
+
+Is that all? Yes that's all :) and you're ready to rumble
+
+    const myApp = DI.get('app');
+    myApp.xyz.msg = 'Hello world';
+    
+
+### @Decorators    
+
+    import {Injectable, Inject} from 'di-xxl';
+    
+    @Injectable()
     class Foo {
         sum(a, b) { return a + b }
     }
     
     class Bar {
-        constructor(base) {
-            this.inject = ['$foo']; // <- list of contracts
+        @Inject('foo')
+        addService
+        
+        constructor(base = 0) {
             this.total = base;
         }
          
         add(val) {
-            this.total = this.inject.$foo.sum(this.total, val);
+            return this.addService(this.base, val);
         }
     }
     
-    di.register('$foo', Foo);
-    di.register('$bar', Bar); 
-    
-    let bar = di.getInstance('$bar', 100);
-    bar.add(1); // bar.total === 101
-    
+This will register the classes and can be used right away
 
-During registration the constructor is inspected and the line `this.inject = ['$foo'];` is parsed. Next,
-just after the `instance` is created, the `inject` array is replaced with an object holding all requested dependencies. 
+    import {ID} from 'di-xxl';
+    
+    let bar = DI.getInstance('bar', {params: [100]});
+    bar.add(1); // -> 101
+    
+If @Decorators is not yet an option, you can register your classes yourself
 
-NOTE: In this situation the dependencies cannot be used inside the constructor because they are injected 
-after the instance is created.
+    DI.register('foo', {
+      ref: Foo
+    );
+   
+    DI.register('bar', {
+      ref: Bar,
+      inject: [{propertyName: 'addService', contractName: 'foo']
+    })
+     
+NOTE: It is not possible to inject into a constructor, 
 
 However, if you need dependencies in the constructor you have a couple of ways to achieve this
 
