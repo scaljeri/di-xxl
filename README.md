@@ -6,36 +6,34 @@
 
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/scaljeri/javascript-dependency-injection?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
-## Javascript Dependency Injection library written in ES2015 
+## Javascript Dependency Injection library 
 
 You can find a demo, documentation and code coverage [here](http://scaljeri.github.io/javascript-dependency-injection/)
 
-**DI-XXL** is a dependency injection library facilitating lazy initialization and loose coupling
---> maintainable code! 
+**DI-XXL** is a dependency injection library facilitating lazy initialization and loose coupling. To take
+all this one step further, it will not be possible to inject dependencies into the constructor; 
+keep your constructors empty or as small as possible. Although this may sound like a restriction, it will
+help you to write code which is better to unit tests. 
 
-In order to keep constructor functions as small as possible (Best practice!!) it is not possible
-to inject something into a constructor. 
- 
-To add, for example, a class to **DI-XXL** you have to define a so called descriptor object
+**DI-XXL** is an extremely versatile library; it provides many ways to implement dependency injection. Choose
+whatever fits your needs best.
+
+In its most basic form, for example a class, can be registered as 
 
     import {DI} from 'di-xxl';
     
     class Foo {}
     
-    DI.register('foo', 
-        { // Descriptor object
-            ref: Foo
-        }
-    );
+    DI.register('foo', Foo);
     
-The descriptor object is stored by a name, in this case `foo`. Now, to retrieve an instance of the class `Foo` 
-simply do
+Class `Foo` is now registered and accessible by the name `foo`. An instance of `Foo` can now be retrieved as 
+follows
 
-    const foo = DI.getInstance('foo');
+    const foo = DI.get('foo');
     
 ### Injection 
 In theory you can inject anything into almost anything :)  Circular dependencies do not exist, because it is not 
-possible to inject into a constructor function. 
+possible to inject into a constructor function. To setup  
 
 For example, to inject an instance of `Foo` into an object you describe this into the descriptor
 
