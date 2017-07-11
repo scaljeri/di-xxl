@@ -101,7 +101,7 @@ export class DI {
      *
      * Usage:
      *
-     *     let bar = di.getInstance('$bar', 10);   // bar instanceof Bar
+     *     let bar = di.get('$bar', 10);   // bar instanceof Bar
      *     // bar.foo instanceOf Foo -> true
      *     // bar.val === 10
      *
@@ -178,8 +178,15 @@ export class DI {
      App.di.registerType("$ajax", App.AJAX, [], { singleton: true }) ;
      App.di.registerType("$util", App.Util, ["compress", true, ["$wsql", "ls"] ], { singleton: true } ) ;
      **/
-    register(config) {
-        Injectable(config)(config.ref);
+    set(name, ref, config) {
+        if (typeof name === 'string') {
+            config.name = name;
+        } else {
+            config = name;
+            ref = config.ref;
+        }
+
+        Injectable(config)(ref);
 
         return this;
     }
@@ -264,23 +271,27 @@ export class DI {
         return DI.getContract(contractName);
     }
 
+    static get(name, config = {}) {
+
+    }
+
     /**
      * Returns an instance for the given contract. Use <tt>params</tt> attribute to overwrite the default
      * parameters for this contract. If <tt>params</tt> is defined, the singleton will be (re)created and its
      * parameters are updated.
      *
-     * @method getInstance
+     * @method get
      * @param  {String} contract name
      * @param  {...*} [params] constructor parameters which, if defined, replaces its default arguments (see {{#crossLink "DI/register:method"}}{{/crossLink}} )
      * @return {Object} Class instance
      * @example
      App.di.register("ajax", ["rest"]) ;
-     var ajax = App.di.getInstance("ajax") ;
-     ajax = App.di.getInstance("ajax", "rest", true) ;
+     var ajax = App.di.get("ajax") ;
+     ajax = App.di.get("ajax", "rest", true) ;
      **/
-    getInstance(contractStr, config = {}) {
-        let instance = contractStr
-            , contract = contractStr.name ? contractStr : this.findContract(contractStr);
+    get(fullName, config = {}) {
+        let instance = fullName
+            , contract = fullName.name ? fullName : this.findContract(fullName);
 
 
         if (contract) {
@@ -310,7 +321,7 @@ export class DI {
         const contract = Object.assign({}, (this.findContract(contractName) || {}), config);
 
         return (...params) => {
-            return this.getInstance(contractName, params.length ? Object.assign(contract, {params}) : contract);
+            return this.get(contractName, params.length ? Object.assign(contract, {params}) : contract);
         };
     }
 
@@ -363,7 +374,7 @@ export class DI {
                 }
 
                 instance[dep.propertyName] = contract ?
-                    (deps[fullName] || (deps[fullName] = this.getInstance(contract, {deps}))) : dep.contractName;
+                    (deps[fullName] || (deps[fullName] = this.get(contract, {deps}))) : dep.contractName;
             });
         }
 

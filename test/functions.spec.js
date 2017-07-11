@@ -11,20 +11,20 @@ describe('Functions - ACTIONS.INVOKE', () => {
             };
 
     before(() => {
-        di.register({
+        di.set({
             ns: 'register',
             name: 'Foo',
             ref: myFunc,
             inject: [inject],
             action: DI.ACTIONS.INVOKE
         })
-            .register({
+            .set({
                 ns: 'register',
                 name: 'maz',
                 ref: fixtures.Bar
             });
 
-        instance = di.getInstance('register.a.b.c.Foo', {params: {a: 'b'}});
+        instance = di.get('register.a.b.c.Foo', {params: {a: 'b'}});
 
     });
 

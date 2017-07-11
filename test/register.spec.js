@@ -7,13 +7,13 @@ describe('#register', () => {
         inject = {propertyName: 'test', contractName: 'register.maz'};
 
     before(() => {
-        di.register({
+        di.set({
             ns: 'register',
             name: 'Foo',
             ref: fixtures.Foo,
             inject: [inject]
         })
-            .register({
+            .set({
                 ns: 'register',
                 name: 'maz',
                 ref: fixtures.Bar,

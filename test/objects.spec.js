@@ -8,20 +8,20 @@ describe('Objects - ACTIONS.NONE', () => {
         testRef = { x: 10 };
 
     before(() => {
-        di.register({
+        di.set({
             ns: 'register',
             name: 'Foo',
             ref: myObj,
             inject: [inject],
             action: DI.ACTIONS.NONE
         })
-            .register({
+            .set({
                 ns: 'register',
                 name: 'maz',
                 ref: testRef
             });
 
-        obj = di.getInstance('register.a.b.c.Foo', {params: {a: 'b'}});
+        obj = di.get('register.a.b.c.Foo', {params: {a: 'b'}});
 
     });
 

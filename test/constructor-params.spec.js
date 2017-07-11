@@ -10,7 +10,7 @@ describe('Constructor parameter', () => {
 
     describe('As Array', () => {
         before(() => {
-            instance = di.getInstance('decorator.$foo', {params: [1,2,3,4]});
+            instance = di.get('decorator.$foo', {params: [1,2,3,4]});
         });
 
         it('should have received the params', () => {
@@ -25,7 +25,7 @@ describe('Constructor parameter', () => {
 
     describe('As Object', () => {
         before(() => {
-            instance = di.getInstance('decorator.booargs', {params: {val1: 3, val2: 4}});
+            instance = di.get('decorator.booargs', {params: {val1: 3, val2: 4}});
         });
 
         it('should have received the params', () => {
@@ -36,7 +36,7 @@ describe('Constructor parameter', () => {
         /*
         describe('With inspect', () => {
             before(() => {
-                instance = di.getInstance('decorator.booargs', {params: {val1: 3, val2: 4}});
+                instance = di.get('decorator.booargs', {params: {val1: 3, val2: 4}});
             });
 
             it('should have received the params', () => {

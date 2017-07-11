@@ -10,8 +10,8 @@ describe('DI - Singletons', () => {
 
     describe('Without the `singleton` option', () => {
         before(() => {
-            instanceA = di.getInstance('decorator.$foo');
-            instanceB = di.getInstance('decorator.$foo');
+            instanceA = di.get('decorator.$foo');
+            instanceB = di.get('decorator.$foo');
         });
 
         it('should create different instance of the same type', () => {
@@ -26,8 +26,8 @@ describe('DI - Singletons', () => {
 
     describe('With the `singleton` option', () => {
         before(() => {
-            instanceA = di.getInstance('decorator.maz');
-            instanceB = di.getInstance('decorator.maz');
+            instanceA = di.get('decorator.maz');
+            instanceB = di.get('decorator.maz');
         });
 
         it('should create different instance of the same type', () => {

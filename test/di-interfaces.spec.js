@@ -81,7 +81,7 @@ describe('DI - Decorators', () => {
 
         describe('Foo', () => {
             before(() => {
-                instance = di.getInstance('decorator.$foo');
+                instance = di.get('decorator.$foo');
             });
 
             it('should exist', () => {
@@ -105,7 +105,7 @@ describe('DI - Decorators', () => {
                     'decorator.iService': 'decorator.Maz'
                 });
 
-                instance = di.getInstance('decorator.$foo');
+                instance = di.get('decorator.$foo');
             });
 
             it('should exist', () => {

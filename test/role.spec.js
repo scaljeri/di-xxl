@@ -12,7 +12,7 @@ describe('Roles', () => {
     describe('Accept', () => {
         describe('Without whitelist', () => {
             before(() => {
-                instance = di.getInstance('decorator.$foo');
+                instance = di.get('decorator.$foo');
             });
 
             it('should have dependency', () => {
@@ -22,7 +22,7 @@ describe('Roles', () => {
 
         describe('With whitelist', () => {
             before(() => {
-                instance = di.getInstance('decorator.$foo', { accept: ['x']});
+                instance = di.get('decorator.$foo', { accept: ['x']});
             });
 
             it('should have dependency', () => {
@@ -34,7 +34,7 @@ describe('Roles', () => {
     describe('Reject', () => {
         it('should throw a reject error', () => {
             (function(){
-                instance = di.getInstance('decorator.$Foo', { reject: ['x']});
+                instance = di.get('decorator.$Foo', { reject: ['x']});
             }).should.throw(`decorator.maz' with role 'x' is blacklisted by 'decorator.$foo`);
         });
     });

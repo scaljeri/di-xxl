@@ -10,15 +10,13 @@
 
 You can find a demo, documentation and code coverage [here](http://scaljeri.github.io/javascript-dependency-injection/)
 
-**DI-XXL** is a dependency injection library facilitating lazy initialization and loose coupling. To take
-all this one step further, it will not be possible to inject dependencies into the constructor; 
-keep your constructors empty or as small as possible. Although this may sound like a restriction, it will
-help you to write code which is better to unit tests. 
-
-**DI-XXL** is an extremely versatile library; it provides many ways to implement dependency injection. Choose
+**DI-XXL** is a dependency injection library facilitating lazy initialization and loose coupling. To improve
+the code you're writing even more, it is not possible to inject into the constructor; keep constructors 
+empty or as small as possible. Although this may sound like a restriction, you will not miss it, because
+it is an extremely versatile library; it provides many ways to implement dependency injection. Choose
 whatever fits your needs best.
 
-In its most basic form, for example a class, can be registered as 
+In its most basic form, to register an entity like a class, object, function ,etc, you do
 
     import {DI} from 'di-xxl';
     
@@ -26,33 +24,29 @@ In its most basic form, for example a class, can be registered as
     
     DI.register('foo', Foo);
     
-Class `Foo` is now registered and accessible by the name `foo`. An instance of `Foo` can now be retrieved as 
-follows
+Class `Foo` is now registered and accessible by the name `foo`. An instance of `Foo` can now be 
+retrieved 
 
     const foo = DI.get('foo');
     
 ### Injection 
 In theory you can inject anything into almost anything :)  Circular dependencies do not exist, because it is not 
-possible to inject into a constructor function. To setup  
+possible to inject into a constructor function. To inject `foo` into an object a config object is required 
 
-For example, to inject an instance of `Foo` into an object you describe this into the descriptor
-
-    class Foo {}
     const app = {};
     
     DI.register('app', {
         ref: app,
-        inject: [{propertyName: 'xyz', descriptor: 'foo'}]
+        inject: [{property: 'bar', name: 'foo'}]
     }
-    DI.register('foo', {
-        ref: Foo
-    });
 
-Is that all? Yes that's all :) and you're ready to rumble
+Which result in:
 
     const myApp = DI.get('app');
-    myApp.xyz.msg = 'Hello world';
+    myApp.bar instanceof Foo; // - true
     
+Each inject entry requires the property name and the registration name of the entity to inject. The order in
+which entities are registered is irrelevant (lazy initialization!)
 
 ### @Decorators    
 
