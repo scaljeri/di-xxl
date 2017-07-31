@@ -5,11 +5,7 @@
     "functions": 99,
     "branches": 99,
     "include": [
-      "./di.js"
-    ],
-    "exclude": [
-        "./node_modules/**/*.js",
-        "./test/**/*.js"
+      "di.js"
     ],
     "reporter": [
       "lcov",
@@ -23,7 +19,7 @@
     ],
     "cache": false,
     "all": false,
-    "sourceMap": true,
-    "instrument": true,
+    "sourceMap": false,
+    "instrument": false,
     "report-dir": "./coverage"
 }
