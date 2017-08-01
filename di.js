@@ -1,5 +1,5 @@
-const CONTRACTS = new Map(),
-    CONNECTIONS = new Map();
+const DESCRIPTORS = new Map(),
+    PROJECTIONS = new Map();
 
 /*
  Examples
@@ -26,8 +26,8 @@ export function Injectable() {
     const settings = arguments[0] ? (typeof arguments[0] === 'string' ? {name: arguments[0]} : arguments[0]) : {};
 
     return function decorator(ref) {
-        let contract = Object.assign(CONTRACTS.get(ref) || {inject: []}, settings);
-        CONTRACTS.delete(ref); // Needed because a class can be registered multiple times
+        let contract = Object.assign(DESCRIPTORS.get(ref) || {inject: []}, settings);
+        DESCRIPTORS.delete(ref); // Needed because a class can be registered multiple times
 
         contract.ref = ref;
 
@@ -48,17 +48,17 @@ export function Injectable() {
             });
         }
 
-        CONTRACTS.set(fullNameFor(contract).toLowerCase(), contract);
+        DESCRIPTORS.set(fullNameFor(contract).toLowerCase(), contract);
     }
 }
 
 export function Inject(contractName) {
     return function decorator(ref, argument, config) {
-        let contract = CONTRACTS.get(ref.constructor) || {inject: []};
+        let contract = DESCRIPTORS.get(ref.constructor) || {inject: []};
 
         contract.inject.push({propertyName: argument, contractName, config});
 
-        CONTRACTS.set(ref.constructor, contract);
+        DESCRIPTORS.set(ref.constructor, contract);
 
         config.writable = true;
         return config;
@@ -110,52 +110,105 @@ export class DI {
      * @param {String} [namespace] optional namespace
      **/
     constructor(config = {}) {
-        this.direction = (config.lookup || DI.DIRECTIONS.PARENT_TO_CHILD);
+        this.lookup = (config.lookup || DI.DIRECTIONS.PARENT_TO_CHILD);
         this.config = config;
-        this.connections = new Map();
+
+        this.projections = new Map();
+        this.descriptors = new Map();
     }
 
-    static connect(list, connections = CONNECTIONS) {
-        let key, map, ns, contractName;
+    getDescriptor(name, ns) {
+        const fullName = (ns ? `${ns}.` : '') + name;
 
-        for (key in list) {
-            connections.set(key.toLowerCase(), list[key].toLowerCase());
+        return this.descriptors.get(fullName) || DI.getDescriptor(fullName);
+    }
+
+    lookupDescriptor(fullName, config) {
+        return DI.lookupDescriptor.call(this, fullName, config);
+    }
+
+    static getDescriptor(name, ns) {
+        return DESCRIPTORS.get((ns ? `${ns}.` : '') + name);
+    }
+
+    static lookupDescriptor(fullName, config = {}) {
+        const settings = Object.assign({lookup: DI.DIRECTIONS.PARENT_TO_CHILD}, config, {name: fullName});
+
+        let descriptor = lookup(settings,
+            fullName => {
+                return this.getDescriptor(fullName);
+            },
+            fullName => {
+                return this.getProjection(fullName);
+            }
+        );
+
+        return descriptor;
+    }
+
+    getProjection(name, ns) {
+        return this.projections.get((ns ? `${ns}.` : '') + name);
+    }
+
+    static get(fullName, config = {}) {
+        const descriptor = typeof fullName === 'string' ? this.lookupDescriptor(fullName, config) : fullName;
+
+        return createInstance.call(this, descriptor, config);
+
+        /*
+        let result = fullName
+            , descriptor = fullName.name ? fullName : this.find({name: fullName}, store);
+
+        if (descriptor) {
+            if (descriptor.singleton) {
+                if (!descriptor.instance) {
+                    result = descriptor.instance = this.createInstance(descriptor, config);
+                } else {
+                    result = descriptor.instance;
+                }
+            }
+            else
+            {
+                result = this.createInstance(descriptor, config);
+            }
+        }
+
+        return result;
+        */
+    }
+
+    /**
+     * Returns an instance for the given contract. Use <tt>params</tt> attribute to overwrite the default
+     * parameters for this contract. If <tt>params</tt> is defined, the singleton will be (re)created and its
+     * parameters are updated.
+     *
+     * @method get
+     * @param  {String} contract name
+     * @param  {...*} [params] constructor parameters which, if defined, replaces its default arguments (see {{#crossLink "DI/register:method"}}{{/crossLink}} )
+     * @return {Object} Class instance
+     * @example
+     App.di.register("ajax", ["rest"]) ;
+     var ajax = App.di.get("ajax") ;
+     ajax = App.di.get("ajax", "rest", true) ;
+     **/
+    get(fullName, config) {
+        return DI.get.call(this, fullName, config);
+    }
+
+    static setProjection(list) {
+        for (let key in list) {
+            PROJECTIONS.set(key.toLowerCase(), list[key].toLowerCase());
         }
 
         return this;
     }
 
-    connect(list) {
-        DI.connect(list, this.connections);
-    }
-
-    static getConnection(contractName, connections = CONNECTIONS) {
-        return connections.get(contractName.toLowerCase());
-    }
-
-    getConnection(contractName) {
-        return DI.getConnection(contractName, this.connections) || DI.getConnection(contractName)
-    }
-
-    /** Get all contracts
-     *
-     * @param {String} ns optional namespace. If the namespace is omitted, only contracts without a namespace are returned.
-     * @returns {Map} contracts
-     */
-    getContracts(ns = null) {
-        if (ns === null) {
-            return CONTRACTS;
-        } else {
-            const output = new Map();
-
-            CONTRACTS.forEach((value, key) => {
-                if (value.ns === ns) {
-                    output.set(key, value);
-                }
-            });
-
-            return output;
+    setProjection(list) {
+        for (let key in list) {
+            this.projections.set(key.toLowerCase(), list[key].toLowerCase());
         }
+
+        return this;
     }
 
     /**
@@ -201,124 +254,13 @@ export class DI {
     }
 
     /**
-     * A contract can be search for using two different modes, BUBBLING or CAPTURING.
-     * For example, a contract like this `aaa.bbb.ccc.$foo` (namespace = aaa.bbb.ccc, contract name = $foo)
-     * will be search in BUBBLING mode as follows
-     *     aaa.bbb.ccc.$foo
-     *     aaa.bbb.$foo
-     *     aaa.$foo
-     *     $foo
-     *
-     * In CAPTURING mode, it is the other way around
-     *
-     *     $foo
-     *     aaa.$foo
-     *     aaa.bbb.$foo
-     *     aaa.bbb.ccc.$foo
-     *
-     * @param contractStr name of the contract (e.g. 'a.b.c.$foo')
-     * @param traverse should the namespace be search if contract does not exist (default: true)
-     * @returns {*}
-     */
-    static findContract(contractName) {
-        let fullName, contract,
-            isBubbling = (this.direction !== DI.DIRECTIONS.PARENT_TO_CHILD),
-            ns = arguments[1],
-            position = arguments[2];
-
-        if (ns === undefined) {
-            [ns, contractName] = splitContract(contractName.toLowerCase());
-            ns = ns.split('.');
-            position = isBubbling ? ns.length : 0;
-        }
-
-        fullName = `${(ns.slice(0, position).join('.'))}.${contractName}`
-            .replace(/^\./, '');
-
-        const map = this.getConnection(fullName);
-
-        if (map) {
-            [ns, contractName] = splitContract(map.toLowerCase());
-            ns = ns.split('.');
-            position = isBubbling ? ns.length : 0;
-
-            fullName = `${(ns.slice(0, position).join('.'))}.${contractName}`
-                .replace(/^\./, '');
-        }
-
-        contract = CONTRACTS.get(fullName);
-
-        if (!contract && ns.length) {
-            const nextPos = (position + (isBubbling ? -1 : 1));
-
-            if (nextPos >= 0 && nextPos <= ns.length) {
-                return this.findContract(contractName, ns, nextPos);
-            }
-        }
-
-        return contract;
-    }
-
-    findContract() {
-        return DI.findContract.apply(this, arguments)
-    }
-
-    static getContract(contractName) {
-        return CONTRACTS.get(contractName.toLowerCase())
-    }
-
-    getContract(contractName) {
-        return DI.getContract(contractName);
-    }
-
-    static get(name, config = {}) {
-
-    }
-
-    /**
-     * Returns an instance for the given contract. Use <tt>params</tt> attribute to overwrite the default
-     * parameters for this contract. If <tt>params</tt> is defined, the singleton will be (re)created and its
-     * parameters are updated.
-     *
-     * @method get
-     * @param  {String} contract name
-     * @param  {...*} [params] constructor parameters which, if defined, replaces its default arguments (see {{#crossLink "DI/register:method"}}{{/crossLink}} )
-     * @return {Object} Class instance
-     * @example
-     App.di.register("ajax", ["rest"]) ;
-     var ajax = App.di.get("ajax") ;
-     ajax = App.di.get("ajax", "rest", true) ;
-     **/
-    get(fullName, config = {}) {
-        let instance = fullName
-            , contract = fullName.name ? fullName : this.findContract(fullName);
-
-
-        if (contract) {
-            if (contract.singleton) {
-                if (!contract.instance) {
-                    instance = contract.instance = this.createInstance(contract, config);
-                } else {
-                    instance = contract.instance;
-                }
-            }
-            else
-            {
-                instance = this.createInstance(contract, config);
-            }
-        }
-
-        return instance;
-    }
-
-    /**
      * @private
      * @param contractStr
      * @param config
      * @returns {function()}
      */
     getFactory(contractName, config = {params: []}) {
-        const contract = Object.assign({}, (this.findContract(contractName) || {}), config);
+        const contract = Object.assign({}, (this.find(contractName) || {}), config);
 
         return (...params) => {
             return this.get(contractName, params.length ? Object.assign(contract, {params}) : contract);
@@ -340,36 +282,36 @@ export class DI {
      **/
     createInstance(contract, config = {}) {
         let deps = (config.deps || {}),
-            instance, parentContract,
+            instance, parentDescr,
             parentFullName = fullNameFor(contract),
             localMap = config.map || {};
 
         // Make sure the original contract is not altered
-        parentContract = Object.assign({map: {}, params: [], accept: [], reject: []}, contract, config);
+        parentDescr = Object.assign({map: {}, params: [], accept: [], reject: []}, contract, config);
 
-        if (parentContract.ref) {
-            if ((!parentContract.action || parentContract.action === DI.ACTIONS.CREATE) && typeof parentContract.ref === 'function') {
-                instance = Array.isArray(parentContract.params) ?
-                    new parentContract.ref(...(parentContract.params || [])) : new parentContract.ref(parentContract.params);
+        if (parentDescr.ref) {
+            if ((!parentDescr.action || parentDescr.action === DI.ACTIONS.CREATE) && typeof parentDescr.ref === 'function') {
+                instance = Array.isArray(parentDescr.params) ?
+                    new parentDescr.ref(...(parentDescr.params || [])) : new parentDescr.ref(parentDescr.params);
             } else if (contract.action === DI.ACTIONS.INVOKE) {
-                instance = Array.isArray(parentContract.params) ?
-                    parentContract.ref(...(parentContract.params || [])) : parentContract.ref(parentContract.params);
+                instance = Array.isArray(parentDescr.params) ?
+                    parentDescr.ref(...(parentDescr.params || [])) : parentDescr.ref(parentDescr.params);
             } else {
-                instance = parentContract.ref;
+                instance = parentDescr.ref;
             }
 
-            deps[parentFullName] = {instance, contract: parentContract};
+            deps[parentFullName] = {instance, contract: parentDescr};
         }
 
         // Fix inject list
-        if (parentContract.inject.length) {
-            parentContract.inject.forEach(dep => {
-                const contract = this.findContract((localMap[dep.contractName] || dep.contractName)),
+        if (parentDescr.inject.length) {
+            parentDescr.inject.forEach(dep => {
+                const contract = this.find((localMap[dep.contractName] || dep.contractName)),
                     fullName = fullNameFor(contract);
 
-                if (parentContract.accept.length && !~parentContract.accept.indexOf(contract.role)) {
+                if (parentDescr.accept.length && !~parentDescr.accept.indexOf(contract.role)) {
                     throw Error(`Contract '${fullName}' with role '${contract.role}' is not whitelisted by '${parentFullName}'`);
-                } else if (parentContract.reject.length && ~parentContract.reject.indexOf(contract.role)) {
+                } else if (parentDescr.reject.length && ~parentDescr.reject.indexOf(contract.role)) {
                     throw Error(`Contract '${fullName}' with role '${contract.role}' is blacklisted by '${parentFullName}'`);
                 }
 
@@ -399,7 +341,109 @@ function splitContract(contractName) {
     return [(splitted.join('.') || ''), name];
 }
 
-function fullNameFor(contract) {
-    return contract ? (typeof contract === 'string' ? contract : (contract.ns ? `${contract.ns}.` : '') + contract.name) : null;
+function fullNameFor(descriptor) {
+    return descriptor ? (typeof descriptor === 'string' ? descriptor : (descriptor.ns ? `${descriptor.ns}.` : '') + descriptor.name) : null;
 }
 
+/**
+ * A contract can be search for using two different modes, BUBBLING or CAPTURING.
+ * For example, a contract like this `aaa.bbb.ccc.$foo` (namespace = aaa.bbb.ccc, contract name = $foo)
+ * will be search in BUBBLING mode as follows
+ *     aaa.bbb.ccc.$foo
+ *     aaa.bbb.$foo
+ *     aaa.$foo
+ *     $foo
+ *
+ * In CAPTURING mode, it is the other way around
+ *
+ *     $foo
+ *     aaa.$foo
+ *     aaa.bbb.$foo
+ *     aaa.bbb.ccc.$foo
+ *
+ * @param contractStr name of the contract (e.g. 'a.b.c.$foo')
+ * @param traverse should the namespace be search if contract does not exist (default: true)
+ * @returns {*}
+ */
+function lookup(config, locator, relocator) {
+    let name, ns, position;
+
+    ({name, ns, position} = config);
+
+    const isBubbling = config.lookup !== DI.DIRECTIONS.PARENT_TO_CHILD;
+
+    if (ns === undefined) {
+        [ns, name] = splitContract(name.toLowerCase());
+        ns = ns.split('.');
+        position = isBubbling ? ns.length : 0;
+    }
+
+    let fullName = `${(ns.slice(0, position).join('.'))}.${name}`
+        .replace(/^\./, '');
+
+    const projection = relocator(fullName);
+
+    if (projection) {
+        [ns, name] = splitContract(projection.toLowerCase());
+        ns = ns.split('.');
+        position = lookup ? ns.length : 0;
+
+        fullName = `${(ns.slice(0, position).join('.'))}.${name}`
+            .replace(/^\./, '');
+    }
+
+    const descriptor = locator(fullName);
+
+    if (!descriptor && ns.length) {
+        position = position + (isBubbling ? -1 : 1);
+
+        if (position >= 0 && position <= ns.length) {
+            return lookup({name, ns, position, lookup: config.lookup}, locator, relocator);
+        }
+    }
+
+    return descriptor;
+}
+
+function createInstance(descriptor, config) {
+    let instance, instances = (descriptor.instances || {}),
+        localMap = descriptor.map || {};
+
+    // Make sure the original contract is not altered
+    const base = Object.assign({accept: [], reject: [], params: [], projections: {}}, descriptor, config),
+        baseFullName = fullNameFor(base),
+        projections = base.projections;
+
+    instance = baseFullName; // ???
+
+    if (base.ref) {
+       if ((!base.action || base.action === DI.ACTIONS.CREATE) && typeof base.ref === 'function') {
+           instance = Array.isArray(base.params) ? new base.ref(...(base.params || [])) : new base.ref(base.params);
+       } else if (base.action === DI.ACTIONS.INVOKE) {
+           instance = Array.isArray(base.params) ? base.ref(...(base.params || [])) : base.ref(base.params);
+       } else {
+           instance = base.ref;
+       }
+
+       instances[baseFullName] = {instance, descriptor: base};
+    }
+
+    // Fix inject list
+    if (base.inject.length) {
+        base.inject.forEach(dep => {
+            const descriptor = this.lookupDescriptor(projections[dep.contractName] || dep.contractName),
+                fullName = fullNameFor(descriptor);
+
+            if (base.accept.length && !~base.accept.indexOf(descriptor.role)) {
+                throw Error(`Contract '${fullName}' with role '${descriptor.role}' is not whitelisted by '${baseFullName}'`);
+            } else if (base.reject.length && ~base.reject.indexOf(descriptr.role)) {
+                throw Error(`Contract '${fullName}' with role '${descriptor.role}' is blacklisted by '${baseFullName}'`);
+            }
+
+            instance[dep.propertyName] = descriptor ?
+                (instances[fullName] || (instances[fullName] = this.get(descriptor, {instances}))) : dep.contractName;
+        });
+    }
+
+    return instance;
+}

@@ -1,82 +1,85 @@
 import {DI, chai, should} from './helpers';
 import * as fixtures from './fixtures/decorators';
 
-describe('DI - Decorators', () => {
+describe.only('DI - Decorators', () => {
     const di = new DI();
-    let contract;
+    let descriptor, descriptorComp;
 
     before(() => {
     });
 
     describe('Verify Contract', () => {
-        describe('Foo', () => {
-            before(() => {
-                contract = di.getContract('decorator.$foo');
-            });
-
-            it('should exist', () => {
-                should.exist(contract);
-            });
-
-            it('should have a namespace', () => {
-                contract.ns.should.eqls('decorator');
-            });
-
-            it('should have a ref', () => {
-                contract.ref.should.eqls(fixtures.Foo);
-            });
-
-            describe('property `inject`', () => {
-                let inject, item;
-
-                before(() => {
-                    inject = contract.inject;
-                });
-
-                it('should exist', () => {
-                    should.exist(inject);
-                });
-
-                it('should not be empty', () => {
-                    inject.should.be.array();
-                    inject.should.ofSize(1);
-                });
-
-                it('should hold a configuration', () => {
-                    item = inject[0];
-
-                    item.propertyName.should.equals('service');
-                    item.contractName.should.equals('decorator.iService');
-                    item.config.configurable.should.not.be.ok;
-                    item.config.enumerable.should.be.ok;
-                });
-            });
+        before(() => {
+            descriptor = di.getDescriptor('decorator.$foo');
+            descriptorComp = di.getDescriptor('$foo', 'decorator');
         });
 
-        describe('Bar', () => {
+        it('should exist', () => {
+            should.exist(descriptor);
+        });
+
+        it('should both be equal', () => {
+            descriptor.should.eql(descriptorComp);
+        });
+
+        it('should have a namespace', () => {
+            descriptor.ns.should.eqls('decorator');
+        });
+
+        it('should have a ref', () => {
+            descriptor.ref.should.eqls(fixtures.Foo);
+        });
+
+        describe('property `inject`', () => {
+            let inject, item;
+
             before(() => {
-                contract = di.getContract('decorator.bar');
+                inject = descriptor.inject;
             });
 
             it('should exist', () => {
-                should.exist(contract);
+                should.exist(inject);
             });
 
-            it('should have a namespace', () => {
-                contract.ns.should.eqls('decorator');
+            it('should not be empty', () => {
+                inject.should.be.array();
+                inject.should.ofSize(1);
             });
 
-            it('should have a ref', () => {
-                contract.ref.should.eqls(fixtures.Bar);
-            });
+            it('should hold a configuration', () => {
+                item = inject[0];
 
-            it('should have an empty inject array', () => {
-                contract.inject.should.be.empty;
+                item.propertyName.should.equals('service');
+                item.contractName.should.equals('decorator.iService');
+                item.config.configurable.should.not.be.ok;
+                item.config.enumerable.should.be.ok;
             });
         });
     });
 
-    describe('Create instance', () => {
+    describe('Bar', () => {
+        before(() => {
+            descriptor = di.getDescriptor('decorator.bar');
+        });
+
+        it('should exist', () => {
+            should.exist(descriptor);
+        });
+
+        it('should have a namespace', () => {
+            descriptor.ns.should.eqls('decorator');
+        });
+
+        it('should have a ref', () => {
+            descriptor.ref.should.eqls(fixtures.Bar);
+        });
+
+        it('should have an empty inject array', () => {
+            descriptor.inject.should.be.empty;
+        });
+    });
+
+    describe.only('Create instance', () => {
         let instance;
 
         describe('Foo', () => {
@@ -90,7 +93,7 @@ describe('DI - Decorators', () => {
 
             describe('Injectable', () => {
                 it('should exist', () => {
-                   instance.service.should.exist;
+                    instance.service.should.exist;
                 });
 
                 it('should the correct type', () => {
@@ -101,7 +104,7 @@ describe('DI - Decorators', () => {
 
         describe('Foo - #map', () => {
             before(() => {
-                di.connect({
+                di.setProjection({
                     'decorator.iService': 'decorator.Maz'
                 });
 
@@ -123,11 +126,11 @@ describe('DI - Decorators', () => {
 
                 describe('Verify Contract', () => {
                     before(() => {
-                        contract = di.getContract('decorator.$foo');
+                        descriptor = di.getDescriptor('decorator.$foo');
                     });
 
                     it('should not be altered', () => {
-                        contract.inject[0].contractName.should.eqls('decorator.iService');
+                        descriptor.inject[0].contractName.should.eqls('decorator.iService');
                     });
                 });
             });

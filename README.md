@@ -22,33 +22,39 @@ In its most basic form, to register an entity like a class, object, function ,et
     
     class Foo {}
     
-    DI.register('foo', Foo);
+    DI.set('foo', Foo);
     
-Class `Foo` is now registered and accessible by the name `foo`. An instance of `Foo` can now be 
-retrieved 
+Class `Foo` is now registered and accessible by the name `foo`. Use `get` to create an instance of `Foo` 
 
     const foo = DI.get('foo');
     
 ### Injection 
-In theory you can inject anything into almost anything :)  Circular dependencies do not exist, because it is not 
-possible to inject into a constructor function. To inject `foo` into an object a config object is required 
+In theory you can inject anything into almost everything :)  Circular dependencies do not exist, because it is not 
+possible to inject into a constructor. To inject `foo` into an object a configuration object is required 
 
     const app = {};
     
-    DI.register('app', {
-        ref: app,
-        inject: [{property: 'bar', name: 'foo'}]
-    }
+    DI.set('app', app, {
+        inject: ['bar'] // {property: 'bar', name: 'foo'}] 
+    });
 
-Which result in:
+Which gives you access to `app` with an instance of `Foo` injected
 
     const myApp = DI.get('app');
-    myApp.bar instanceof Foo; // - true
+    myApp.foo instanceof Foo; // --> true
     
-Each inject entry requires the property name and the registration name of the entity to inject. The order in
-which entities are registered is irrelevant (lazy initialization!)
+If you want to inject foo to `app.bar` instead, do
+
+    DI.set('app', app, {
+        inject: [{prop: 'bar', name: 'foo'}] 
+    });
+
+### Inherit
+
 
 ### @Decorators    
+As of this writing you have to use a couple of babel plugins to get `@decorators` working, but if you have
+you can **DI-XXL** as follows
 
     import {Injectable, Inject} from 'di-xxl';
     
