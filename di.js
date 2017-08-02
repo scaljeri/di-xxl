@@ -21,6 +21,7 @@ const DESCRIPTORS = new Map(),
  params: ['$baz']
  })
  */
+
 // NOTE: Get parent name: Object.getPrototypeOf(Bar.prototype.constructor).name
 export function Injectable() {
     const settings = arguments[0] ? (typeof arguments[0] === 'string' ? {name: arguments[0]} : arguments[0]) : {};
@@ -132,7 +133,8 @@ export class DI {
     }
 
     static lookupDescriptor(fullName, config = {}) {
-        const settings = Object.assign({lookup: DI.DIRECTIONS.PARENT_TO_CHILD}, config, {name: fullName});
+        const settings = Object.assign({}, config, {name: fullName});
+        settings.lookup = this.lookup || DI.DIRECTIONS.PARENT_TO_CHILD;
 
         let descriptor = lookup(settings,
             fullName => {
@@ -153,7 +155,11 @@ export class DI {
     static get(fullName, config = {}) {
         const descriptor = typeof fullName === 'string' ? this.lookupDescriptor(fullName, config) : fullName;
 
-        return createInstance.call(this, descriptor, config);
+        if (descriptor.singleton && descriptor.instance) {
+            return descriptor.instance;
+        } else {
+            return createInstance.call(this, descriptor, config);
+        }
 
         /*
         let result = fullName
@@ -405,6 +411,19 @@ function lookup(config, locator, relocator) {
     return descriptor;
 }
 
+/**
+ * @private
+ * Returns a new instance of the class matched by the contract.
+ *
+ * @method createInstance
+ * @param {string} contract - the contract name
+ * @param {Array} params - list of contracts passed to the constructor. Each parameter which is not a string or
+ * an unknown contract, is passed as-is to the constructor
+ *
+ * @returns {Object}
+ * @example
+ var storage = App.di.createInstance("data", ["compress", true, "websql"]) ;
+ **/
 function createInstance(descriptor, config) {
     let instance, instances = (descriptor.instances || {}),
         localMap = descriptor.map || {};
@@ -417,15 +436,19 @@ function createInstance(descriptor, config) {
     instance = baseFullName; // ???
 
     if (base.ref) {
-       if ((!base.action || base.action === DI.ACTIONS.CREATE) && typeof base.ref === 'function') {
-           instance = Array.isArray(base.params) ? new base.ref(...(base.params || [])) : new base.ref(base.params);
-       } else if (base.action === DI.ACTIONS.INVOKE) {
-           instance = Array.isArray(base.params) ? base.ref(...(base.params || [])) : base.ref(base.params);
-       } else {
-           instance = base.ref;
-       }
+        if ((!base.action || base.action === DI.ACTIONS.CREATE) && typeof base.ref === 'function') {
+            instance = Array.isArray(base.params) ? new base.ref(...(base.params || [])) : new base.ref(base.params);
+        } else if (base.action === DI.ACTIONS.INVOKE) {
+            instance = Array.isArray(base.params) ? base.ref(...(base.params || [])) : base.ref(base.params);
+        } else {
+            instance = base.ref;
+        }
 
-       instances[baseFullName] = {instance, descriptor: base};
+        instances[baseFullName] = {instance, descriptor: base};
+
+        if (base.singleton) {
+            descriptor.instance = instance;
+        }
     }
 
     // Fix inject list
@@ -436,7 +459,7 @@ function createInstance(descriptor, config) {
 
             if (base.accept.length && !~base.accept.indexOf(descriptor.role)) {
                 throw Error(`Contract '${fullName}' with role '${descriptor.role}' is not whitelisted by '${baseFullName}'`);
-            } else if (base.reject.length && ~base.reject.indexOf(descriptr.role)) {
+            } else if (base.reject.length && ~base.reject.indexOf(descriptor.role)) {
                 throw Error(`Contract '${fullName}' with role '${descriptor.role}' is blacklisted by '${baseFullName}'`);
             }
 

@@ -19,7 +19,7 @@ describe('#register', () => {
                 ref: fixtures.Bar,
             });
 
-        contract = di.getContract('register.foo');
+        contract = di.getDescriptor('register.foo');
     });
 
     it('should have created a contract', () => {

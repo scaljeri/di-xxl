@@ -6,7 +6,7 @@ describe('Roles', () => {
 
     before(() => {
         di = new DI();
-        di.connect({ 'decorator.iService': 'decorator.Maz' });
+        di.setProjection({ 'decorator.iService': 'decorator.Maz' });
     });
 
     describe('Accept', () => {
