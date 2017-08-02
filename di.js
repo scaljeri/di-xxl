@@ -160,27 +160,6 @@ export class DI {
         } else {
             return createInstance.call(this, descriptor, config);
         }
-
-        /*
-        let result = fullName
-            , descriptor = fullName.name ? fullName : this.find({name: fullName}, store);
-
-        if (descriptor) {
-            if (descriptor.singleton) {
-                if (!descriptor.instance) {
-                    result = descriptor.instance = this.createInstance(descriptor, config);
-                } else {
-                    result = descriptor.instance;
-                }
-            }
-            else
-            {
-                result = this.createInstance(descriptor, config);
-            }
-        }
-
-        return result;
-        */
     }
 
     /**
@@ -201,18 +180,16 @@ export class DI {
         return DI.get.call(this, fullName, config);
     }
 
-    static setProjection(list) {
+    static setProjection(list, projections = PROJECTIONS) {
         for (let key in list) {
-            PROJECTIONS.set(key.toLowerCase(), list[key].toLowerCase());
+            projections.set(key.toLowerCase(), list[key].toLowerCase());
         }
 
         return this;
     }
 
     setProjection(list) {
-        for (let key in list) {
-            this.projections.set(key.toLowerCase(), list[key].toLowerCase());
-        }
+        DI.setProjection(list, this.projections);
 
         return this;
     }
@@ -265,68 +242,12 @@ export class DI {
      * @param config
      * @returns {function()}
      */
-    getFactory(contractName, config = {params: []}) {
-        const contract = Object.assign({}, (this.find(contractName) || {}), config);
+    getFactory(fullName, config = {params: []}) {
+        const descriptor = Object.assign({}, (this.lookupDescriptor(fullName, config) || {}), config);
 
         return (...params) => {
-            return this.get(contractName, params.length ? Object.assign(contract, {params}) : contract);
+            return this.get(params.length ? Object.assign(descriptor, {params}) : descriptor);
         };
-    }
-
-    /**
-     * @private
-     * Returns a new instance of the class matched by the contract.
-     *
-     * @method createInstance
-     * @param {string} contract - the contract name
-     * @param {Array} params - list of contracts passed to the constructor. Each parameter which is not a string or
-     * an unknown contract, is passed as-is to the constructor
-     *
-     * @returns {Object}
-     * @example
-     var storage = App.di.createInstance("data", ["compress", true, "websql"]) ;
-     **/
-    createInstance(contract, config = {}) {
-        let deps = (config.deps || {}),
-            instance, parentDescr,
-            parentFullName = fullNameFor(contract),
-            localMap = config.map || {};
-
-        // Make sure the original contract is not altered
-        parentDescr = Object.assign({map: {}, params: [], accept: [], reject: []}, contract, config);
-
-        if (parentDescr.ref) {
-            if ((!parentDescr.action || parentDescr.action === DI.ACTIONS.CREATE) && typeof parentDescr.ref === 'function') {
-                instance = Array.isArray(parentDescr.params) ?
-                    new parentDescr.ref(...(parentDescr.params || [])) : new parentDescr.ref(parentDescr.params);
-            } else if (contract.action === DI.ACTIONS.INVOKE) {
-                instance = Array.isArray(parentDescr.params) ?
-                    parentDescr.ref(...(parentDescr.params || [])) : parentDescr.ref(parentDescr.params);
-            } else {
-                instance = parentDescr.ref;
-            }
-
-            deps[parentFullName] = {instance, contract: parentDescr};
-        }
-
-        // Fix inject list
-        if (parentDescr.inject.length) {
-            parentDescr.inject.forEach(dep => {
-                const contract = this.find((localMap[dep.contractName] || dep.contractName)),
-                    fullName = fullNameFor(contract);
-
-                if (parentDescr.accept.length && !~parentDescr.accept.indexOf(contract.role)) {
-                    throw Error(`Contract '${fullName}' with role '${contract.role}' is not whitelisted by '${parentFullName}'`);
-                } else if (parentDescr.reject.length && ~parentDescr.reject.indexOf(contract.role)) {
-                    throw Error(`Contract '${fullName}' with role '${contract.role}' is blacklisted by '${parentFullName}'`);
-                }
-
-                instance[dep.propertyName] = contract ?
-                    (deps[fullName] || (deps[fullName] = this.get(contract, {deps}))) : dep.contractName;
-            });
-        }
-
-        return instance;
     }
 }
 
@@ -425,8 +346,7 @@ function lookup(config, locator, relocator) {
  var storage = App.di.createInstance("data", ["compress", true, "websql"]) ;
  **/
 function createInstance(descriptor, config) {
-    let instance, instances = (descriptor.instances || {}),
-        localMap = descriptor.map || {};
+    let instance, instances = (descriptor.instances || {});
 
     // Make sure the original contract is not altered
     const base = Object.assign({accept: [], reject: [], params: [], projections: {}}, descriptor, config),
@@ -451,7 +371,6 @@ function createInstance(descriptor, config) {
         }
     }
 
-    // Fix inject list
     if (base.inject.length) {
         base.inject.forEach(dep => {
             const descriptor = this.lookupDescriptor(projections[dep.contractName] || dep.contractName),

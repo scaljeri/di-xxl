@@ -1,7 +1,7 @@
 import {DI, chai, should} from './helpers';
 import * as fixtures from './fixtures/decorators';
 
-xdescribe('DI - Factory', () => {
+describe('DI - Factory', () => {
     const di = new DI();
     let factory, instance;
 
