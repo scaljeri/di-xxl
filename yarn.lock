@@ -1305,7 +1305,7 @@ core-js@^2.4.0:
   version "2.4.1"
   resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/core-js/-/core-js-2.4.1.tgz#4de911e667b0eae9124e34254b53aea6fc618d3e"
 
-core-util-is@~1.0.0:
+core-util-is@1.0.2, core-util-is@~1.0.0:
   version "1.0.2"
   resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/core-util-is/-/core-util-is-1.0.2.tgz#b5fd54220aa2bc5ab57aab7140c940754503c1a7"
 
@@ -1337,8 +1337,8 @@ create-hmac@^1.1.0, create-hmac@^1.1.2, create-hmac@^1.1.4:
     sha.js "^2.4.8"
 
 cross-env@^5.0.1:
-  version "5.0.1"
-  resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/cross-env/-/cross-env-5.0.1.tgz#ff4e72ea43b47da2486b43a7f2043b2609e44913"
+  version "5.0.3"
+  resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/cross-env/-/cross-env-5.0.3.tgz#8f55acef7469fed364f4039a9f7ece90191e3981"
   dependencies:
     cross-spawn "^5.1.0"
     is-windows "^1.0.0"
@@ -1416,13 +1416,7 @@ debug-log@^1.0.1:
   version "1.0.1"
   resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/debug-log/-/debug-log-1.0.1.tgz#2307632d4c04382b8df8a32f70b895046d52745f"
 
-debug@2.6.0, debug@^2.1.1, debug@^2.2.0:
-  version "2.6.0"
-  resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/debug/-/debug-2.6.0.tgz#bc596bcabe7617f11d9fa15361eded5608b8499b"
-  dependencies:
-    ms "0.7.2"
-
-debug@^2.6.3:
+debug@2.6.8, debug@^2.1.1, debug@^2.2.0, debug@^2.6.3:
   version "2.6.8"
   resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/debug/-/debug-2.6.8.tgz#e731531ca2ede27d188222427da17821d68ff4fc"
   dependencies:
@@ -1501,13 +1495,9 @@ detective@^4.0.0:
     acorn "^4.0.3"
     defined "^1.0.0"
 
-diff@3.2.0:
+diff@3.2.0, diff@^3.1.0:
   version "3.2.0"
   resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/diff/-/diff-3.2.0.tgz#c9ce393a4b7cbd0b058a725c93df299027868ff9"
-
-diff@^3.1.0:
-  version "3.3.0"
-  resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/diff/-/diff-3.3.0.tgz#056695150d7aa93237ca7e378ac3b1682b7963b9"
 
 diffie-hellman@^5.0.0:
   version "5.0.2"
@@ -1612,6 +1602,20 @@ escodegen@1.8.x, escodegen@^1.6.1:
   optionalDependencies:
     source-map "~0.2.0"
 
+esdoc-accessor-plugin@^1.0.0:
+  version "1.0.0"
+  resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/esdoc-accessor-plugin/-/esdoc-accessor-plugin-1.0.0.tgz#791ba4872e6c403515ce749b1348d6f0293ad9eb"
+
+esdoc-brand-plugin@^1.0.0:
+  version "1.0.0"
+  resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/esdoc-brand-plugin/-/esdoc-brand-plugin-1.0.0.tgz#9e216d735e62fcec49f7a339bb4121da67cc6033"
+  dependencies:
+    cheerio "0.22.0"
+
+esdoc-coverage-plugin@^1.0.0:
+  version "1.0.0"
+  resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/esdoc-coverage-plugin/-/esdoc-coverage-plugin-1.0.0.tgz#b9680fada8cbb0740e6c9ca6aece84fb7d82caa6"
+
 esdoc-es7-plugin@0.0.3:
   version "0.0.3"
   resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/esdoc-es7-plugin/-/esdoc-es7-plugin-0.0.3.tgz#e31d2a531d08c334dd457927324b5a02f3e663a5"
@@ -1619,6 +1623,64 @@ esdoc-es7-plugin@0.0.3:
     babylon "5.8.20"
     core-js "1.0.1"
     estraverse "4.1.0"
+
+esdoc-external-ecmascript-plugin@^1.0.0:
+  version "1.0.0"
+  resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/esdoc-external-ecmascript-plugin/-/esdoc-external-ecmascript-plugin-1.0.0.tgz#78f565d4a0c5185ac63152614dce1fe1a86688db"
+  dependencies:
+    fs-extra "1.0.0"
+
+esdoc-integrate-manual-plugin@^1.0.0:
+  version "1.0.0"
+  resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/esdoc-integrate-manual-plugin/-/esdoc-integrate-manual-plugin-1.0.0.tgz#1854a6aa1c081035d7c8c51e3bdd4fb65aa4711c"
+
+esdoc-integrate-test-plugin@^1.0.0:
+  version "1.0.0"
+  resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/esdoc-integrate-test-plugin/-/esdoc-integrate-test-plugin-1.0.0.tgz#e2d0d00090f7f0c35e5d2f2c033327a79e53e409"
+
+esdoc-lint-plugin@^1.0.0:
+  version "1.0.0"
+  resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/esdoc-lint-plugin/-/esdoc-lint-plugin-1.0.0.tgz#e5662938df97f252480f46f56e1e09895a2a2385"
+
+esdoc-publish-html-plugin@^1.0.0:
+  version "1.0.0"
+  resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/esdoc-publish-html-plugin/-/esdoc-publish-html-plugin-1.0.0.tgz#d6b2c0a638b0e26b9fc4beaea7ced4beef800bc6"
+  dependencies:
+    babel-generator "6.11.4"
+    cheerio "0.22.0"
+    escape-html "1.0.3"
+    fs-extra "1.0.0"
+    ice-cap "0.0.4"
+    marked "0.3.6"
+    taffydb "2.7.2"
+
+esdoc-standard-plugin@^1.0.0:
+  version "1.0.0"
+  resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/esdoc-standard-plugin/-/esdoc-standard-plugin-1.0.0.tgz#661201cac7ef868924902446fdac1527253c5d4d"
+  dependencies:
+    esdoc-accessor-plugin "^1.0.0"
+    esdoc-brand-plugin "^1.0.0"
+    esdoc-coverage-plugin "^1.0.0"
+    esdoc-external-ecmascript-plugin "^1.0.0"
+    esdoc-integrate-manual-plugin "^1.0.0"
+    esdoc-integrate-test-plugin "^1.0.0"
+    esdoc-lint-plugin "^1.0.0"
+    esdoc-publish-html-plugin "^1.0.0"
+    esdoc-type-inference-plugin "^1.0.0"
+    esdoc-undocumented-identifier-plugin "^1.0.0"
+    esdoc-unexported-identifier-plugin "^1.0.0"
+
+esdoc-type-inference-plugin@^1.0.0:
+  version "1.0.0"
+  resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/esdoc-type-inference-plugin/-/esdoc-type-inference-plugin-1.0.0.tgz#a0a10ee740a848ca865d0314e161a2016778e7a6"
+
+esdoc-undocumented-identifier-plugin@^1.0.0:
+  version "1.0.0"
+  resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/esdoc-undocumented-identifier-plugin/-/esdoc-undocumented-identifier-plugin-1.0.0.tgz#82e05d371c32d12871140f1d5c81ec99fd9cc2c8"
+
+esdoc-unexported-identifier-plugin@^1.0.0:
+  version "1.0.0"
+  resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/esdoc-unexported-identifier-plugin/-/esdoc-unexported-identifier-plugin-1.0.0.tgz#1f9874c6a7c2bebf9ad397c3ceb75c9c69dabab1"
 
 esdoc@1.0.1:
   version "1.0.1"
@@ -1700,9 +1762,9 @@ extglob@^0.3.1:
   dependencies:
     is-extglob "^1.0.0"
 
-extsprintf@1.0.2:
-  version "1.0.2"
-  resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/extsprintf/-/extsprintf-1.0.2.tgz#e1080e0658e300b06294990cc70e1502235fd550"
+extsprintf@1.3.0, extsprintf@^1.2.0:
+  version "1.3.0"
+  resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/extsprintf/-/extsprintf-1.3.0.tgz#96918440e3041a7a414f8c52e3c574eb3c3e1e05"
 
 fast-levenshtein@~2.0.4:
   version "2.0.6"
@@ -2400,13 +2462,13 @@ jsonparse@^1.2.0:
   resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/jsonparse/-/jsonparse-1.3.1.tgz#3f4dae4a91fac315f71062f8521cc239f1366280"
 
 jsprim@^1.2.2:
-  version "1.4.0"
-  resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/jsprim/-/jsprim-1.4.0.tgz#a3b87e40298d8c380552d8cc7628a0bb95a22918"
+  version "1.4.1"
+  resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/jsprim/-/jsprim-1.4.1.tgz#313e66bc1e5cc06e438bc1b7499c2e5c56acb6a2"
   dependencies:
     assert-plus "1.0.0"
-    extsprintf "1.0.2"
+    extsprintf "1.3.0"
     json-schema "0.2.3"
-    verror "1.3.6"
+    verror "1.10.0"
 
 kind-of@^3.0.2:
   version "3.2.2"
@@ -2701,12 +2763,12 @@ mkdirp@0.5.1, mkdirp@0.5.x, "mkdirp@>=0.5 0", mkdirp@^0.5.0, mkdirp@^0.5.1:
     minimist "0.0.8"
 
 mocha@^3.4.2:
-  version "3.4.2"
-  resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/mocha/-/mocha-3.4.2.tgz#d0ef4d332126dbf18d0d640c9b382dd48be97594"
+  version "3.5.0"
+  resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/mocha/-/mocha-3.5.0.tgz#1328567d2717f997030f8006234bce9b8cd72465"
   dependencies:
     browser-stdout "1.3.0"
     commander "2.9.0"
-    debug "2.6.0"
+    debug "2.6.8"
     diff "3.2.0"
     escape-string-regexp "1.0.5"
     glob "7.1.1"
@@ -2735,10 +2797,6 @@ module-deps@^4.0.8:
     subarg "^1.0.0"
     through2 "^2.0.0"
     xtend "^4.0.0"
-
-ms@0.7.2:
-  version "0.7.2"
-  resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/ms/-/ms-0.7.2.tgz#ae25cf2512b3885a1d95d7f037868d8431124765"
 
 ms@2.0.0:
   version "2.0.0"
@@ -3044,8 +3102,8 @@ pathval@^1.0.0:
   resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/pathval/-/pathval-1.1.0.tgz#b942e6d4bde653005ef6b71361def8727d0645e0"
 
 pbkdf2@^3.0.3:
-  version "3.0.12"
-  resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/pbkdf2/-/pbkdf2-3.0.12.tgz#be36785c5067ea48d806ff923288c5f750b6b8a2"
+  version "3.0.13"
+  resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/pbkdf2/-/pbkdf2-3.0.13.tgz#c37d295531e786b1da3e3eadc840426accb0ae25"
   dependencies:
     create-hash "^1.1.2"
     create-hmac "^1.1.4"
@@ -3812,11 +3870,13 @@ validate-npm-package-license@^3.0.1:
     spdx-correct "~1.0.0"
     spdx-expression-parse "~1.0.0"
 
-verror@1.3.6:
-  version "1.3.6"
-  resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/verror/-/verror-1.3.6.tgz#cff5df12946d297d2baaefaa2689e25be01c005c"
+verror@1.10.0:
+  version "1.10.0"
+  resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/verror/-/verror-1.10.0.tgz#3a105ca17053af55d6e270c1f8288682e18da400"
   dependencies:
-    extsprintf "1.0.2"
+    assert-plus "^1.0.0"
+    core-util-is "1.0.2"
+    extsprintf "^1.2.0"
 
 vm-browserify@~0.0.1:
   version "0.0.4"
@@ -3839,8 +3899,8 @@ which-module@^2.0.0:
   resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/which-module/-/which-module-2.0.0.tgz#d9ef07dce77b9902b8a3a8fa4b31c3e3f7e6e87a"
 
 which@^1.0.9, which@^1.1.1, which@^1.2.4, which@^1.2.9:
-  version "1.2.14"
-  resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/which/-/which-1.2.14.tgz#9a87c4378f03e827cecaf1acdf56c736c01c14e5"
+  version "1.3.0"
+  resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/which/-/which-1.3.0.tgz#ff04bdfc010ee547d780bec38e1ac1c2777d253a"
   dependencies:
     isexe "^2.0.0"
 

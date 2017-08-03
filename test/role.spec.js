@@ -21,13 +21,25 @@ describe('Roles', () => {
         });
 
         describe('With whitelist', () => {
-            before(() => {
-                instance = di.get('decorator.$foo', { accept: ['x']});
+            describe('rejected', () => {
+                it('should have dependency', () => {
+                    (function(){
+                        instance = di.get('decorator.$foo', { accept: ['y']});
+                    }).should.throw(`'decorator.maz' has role 'x', which is not whitelisted by 'decorator.$foo`);
+                });
+
             });
 
-            it('should have dependency', () => {
-                instance.service.should.be.instanceOf(fixtures.Maz);
+            describe('accepted', () => {
+                before(() => {
+                    instance = di.get('decorator.$foo', { accept: ['x']});
+                });
+
+                it('should have dependency', () => {
+                    instance.service.should.be.instanceOf(fixtures.Maz);
+                });
             });
+
         });
     });
 
@@ -35,7 +47,7 @@ describe('Roles', () => {
         it('should throw a reject error', () => {
             (function(){
                 instance = di.get('decorator.$Foo', { reject: ['x']});
-            }).should.throw(`decorator.maz' with role 'x' is blacklisted by 'decorator.$foo`);
+            }).should.throw(`decorator.maz' has role 'x', which is blacklisted by 'decorator.$foo`);
         });
     });
 });

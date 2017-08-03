@@ -39,6 +39,11 @@ export function Inject(contractName) {
 }
 
 export class DI {
+    /**
+     *
+     * @returns {{PARENT_TO_CHILD: number, CHILD_TO_PARENT: number}}
+     * @constructor
+     */
     static get DIRECTIONS() {
         return {
             PARENT_TO_CHILD: 1,
@@ -55,32 +60,14 @@ export class DI {
     }
 
     /**
-     * DI makes classes accessible by a contract. Instances are created when requested and dependencies are injected into the constructor,
-     * facilitating lazy initialization and loose coupling between classes.
-     *
-     * Basic usage:
-     *
-     *      class Bar {
-     *          constructor($foo, val) { this.foo = $foo; this.val = val }
-     *      }
-     *
-     *      class Foo {}
-     *
-     * Setup:
-     *
-     *     di.register('$bar', Bar);               // $bar         - is the name of the contract (can be anything),
-     *                                             // Bar          - the class reference
-     *     di.register('$foo', Foo);               // The order of registration is irrelevant (lazy initialization!)
-     *
-     * Usage:
-     *
-     *     let bar = di.get('$bar', 10);   // bar instanceof Bar
-     *     // bar.foo instanceOf Foo -> true
-     *     // bar.val === 10
+     * Instances are useful if changes should not be persisted globally. Every change
+     * made on an instance will only be accessible by that instance. An instance should only
+     * be used in case where some projections are needed temporary.
      *
      * @class DI
      * @constructor
-     * @param {String} [namespace] optional namespace
+     * @param {Object} [config] configuration object
+     * @param {Number} [config.lookup] define the default direction in which namespaces are traversed (default: DI.DIRECTIONS.PARENT_TO_CHILD)
      **/
     constructor(config = {}) {
         this.lookup = (config.lookup || DI.DIRECTIONS.PARENT_TO_CHILD);
@@ -119,26 +106,80 @@ export class DI {
     }
 
     getProjection(name, ns) {
-        return DI.getProjection(name, ns, this.projections);
+        return DI.getProjection(name, ns, this.projections) || DI.getProjection(name, ns);
     }
 
     static getProjection(name, ns, projections = PROJECTIONS) {
-        return projections.get((ns ? `${ns}.` : '') + name);
+        return projections.get(fullNameFor({name, ns}));
     }
 
-    static get(fullName, config = {}) {
-        const descriptor = typeof fullName === 'string' ? this.lookupDescriptor(fullName, config) : fullName;
-        let instance = null;
+    /**
+     * Set one or more projections on the instance
+     *
+     * @param {String} key descriptor name
+     */
+    setProjection(list) {
+        DI.setProjection(list, this.projections);
 
-        if (descriptor) {
-            if (descriptor.singleton && descriptor.instance) {
-                instance = descriptor.instance;
-            } else {
-                instance = createInstance.call(this, descriptor, config);
-            }
+        return this;
+    }
+
+    static setProjection(list, projections = PROJECTIONS) {
+        for (let key in list) {
+            projections.set(key.toLowerCase(), list[key]);
         }
 
-        return instance;
+        return this;
+    }
+
+    /**
+     * Deletes a projection identified by a name
+     *
+     * @param {String} name descriptor name
+     */
+    removeProjection(key) {
+        DI.removeProjection(key, this.projections);
+
+        return this;
+    }
+
+    /**
+     * Deletes a projection identified by a name
+     *
+     * @param {String} name descriptor name
+     */
+    static removeProjection(key, projections = PROJECTIONS) {
+        projections.delete(key.toLowerCase());
+
+        return this;
+    }
+
+    /**
+     * Removes a specific descriptor identified by a name and
+     * optionally a namespace. The namespace can be provided as the second argument or
+     * concat with the name.
+     *
+     * @param {String} name descriptor name (can have a namespace)
+     * @param {String} [ns] namespace
+     */
+    removeDescriptor(name, ns) {
+        DI.removeDescriptor(name, ns);
+
+        return this;
+    }
+
+    /**
+     * Removes a specific descriptor identified by a name and
+     * optionally a namespace. The namespace can be provided as the second argument or
+     * concat with the name.
+     *
+     * @param {String} name descriptor name (can have a namespace)
+     * @param {String} [ns] namespace
+     */
+    static removeDescriptor(name, ns) {
+        DESCRIPTORS.delete(fullNameFor({name, ns}));
+
+        return this;
     }
 
     /**
@@ -159,18 +200,19 @@ export class DI {
         return DI.get.call(this, fullName, config);
     }
 
-    static setProjection(list, projections = PROJECTIONS) {
-        for (let key in list) {
-            projections.set(key.toLowerCase(), list[key].toLowerCase());
+    static get(fullName, config) {
+        const descriptor = typeof fullName === 'string' ? this.lookupDescriptor(fullName, config) : fullName;
+        let instance = null;
+
+        if (descriptor) {
+            if (descriptor.singleton && descriptor.instance) {
+                instance = descriptor.instance;
+            } else {
+                instance = createInstance.call(this, descriptor, config);
+            }
         }
 
-        return this;
-    }
-
-    setProjection(list) {
-        DI.setProjection(list, this.projections);
-
-        return this;
+        return instance;
     }
 
     /**
@@ -201,34 +243,6 @@ export class DI {
 
     static set(config) {
         Injectable(config)(config.ref);
-
-        return this;
-    }
-
-    /**
-     * Removes a specific descriptor identified by a name and
-     * optionally a namespace. The namespace can be provided as the second argument or
-     * concat with the name.
-     *
-     * @param {String} name descriptor name (can have a namespace)
-     * @param {String} [ns] namespace
-     */
-    removeDescriptor(name, ns) {
-        DI.removeDescriptor(name, ns);
-
-        return this;
-    }
-
-    /**
-     * Removes a specific descriptor identified by a name and
-     * optionally a namespace. The namespace can be provided as the second argument or
-     * concat with the name.
-     *
-     * @param {String} name descriptor name (can have a namespace)
-     * @param {String} [ns] namespace
-     */
-    static removeDescriptor(name, ns) {
-        DESCRIPTORS.delete(fullNameFor({name, ns}));
 
         return this;
     }
@@ -341,7 +355,7 @@ function createInstance(descriptor, config) {
         baseFullName = fullNameFor(base),
         projections = base.projections;
 
-    instance = baseFullName; // ???
+    //instance = baseFullName; // ???
 
     if (base.ref) {
         if ((!base.action || base.action === DI.ACTIONS.CREATE) && typeof base.ref === 'function') {
@@ -365,9 +379,9 @@ function createInstance(descriptor, config) {
                 fullName = fullNameFor(descriptor);
 
             if (base.accept.length && !~base.accept.indexOf(descriptor.role)) {
-                throw Error(`Contract '${fullName}' with role '${descriptor.role}' is not whitelisted by '${baseFullName}'`);
+                throw Error(`'${fullName}' has role '${descriptor.role}', which is not whitelisted by '${baseFullName}'`);
             } else if (base.reject.length && ~base.reject.indexOf(descriptor.role)) {
-                throw Error(`Contract '${fullName}' with role '${descriptor.role}' is blacklisted by '${baseFullName}'`);
+                throw Error(`'${fullName}' has role '${descriptor.role}', which is blacklisted by '${baseFullName}'`);
             }
 
             instance[dep.propertyName] = descriptor ?
