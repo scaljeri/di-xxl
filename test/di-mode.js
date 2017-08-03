@@ -8,7 +8,7 @@ describe('Modes', () => {
     describe('Parent 2 Child', () => {
         before(() => {
             di = new DI({lookup: DI.DIRECTIONS.PARENT_TO_CHILD});
-            descriptor = di.lookupDescriptor('a.b.c.$xFoo');
+            descriptor = DI.lookupDescriptor('$xFoo', 'a.b.c');
         });
 
         it('should find a contract', () => {

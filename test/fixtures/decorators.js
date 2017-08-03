@@ -19,10 +19,7 @@ export class Foo {
 })
 export class Bar extends Foo {}
 
-@Injectable({
-    name: 'mode',
-    ns: 'decorator'
-})
+@Injectable('decorator.mode')
 export class Baz extends Foo {}
 
 @Injectable({

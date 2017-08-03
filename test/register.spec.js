@@ -7,9 +7,8 @@ describe('#register', () => {
         inject = {propertyName: 'test', contractName: 'register.maz'};
 
     before(() => {
-        di.set({
+        di.set({ name: 'Foo',
             ns: 'register',
-            name: 'Foo',
             ref: fixtures.Foo,
             inject: [inject]
         })
@@ -19,7 +18,7 @@ describe('#register', () => {
                 ref: fixtures.Bar,
             });
 
-        contract = di.getDescriptor('register.foo');
+        contract = di.getDescriptor('foo', 'register');
     });
 
     it('should have created a contract', () => {

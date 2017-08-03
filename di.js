@@ -1,34 +1,12 @@
 const DESCRIPTORS = new Map(),
     PROJECTIONS = new Map();
 
-/*
- Examples
- @Injectable()
- @Injectable('$foo')
- @Injectable({
- name: '$foo'
- })
- @Injectable({
- name: '$foo',
- type: DI_TYPES.AUGMENT,
- params: ['$baz'],
- singleton: true,
- append: true        // how param inheritance works
- })
- @Injectable({
- name: '$foo',
- type: DI_TYPES.INJECT,
- params: ['$baz']
- })
- */
-
-// NOTE: Get parent name: Object.getPrototypeOf(Bar.prototype.constructor).name
 export function Injectable() {
     const settings = arguments[0] ? (typeof arguments[0] === 'string' ? {name: arguments[0]} : arguments[0]) : {};
 
     return function decorator(ref) {
         let contract = Object.assign(DESCRIPTORS.get(ref) || {inject: []}, settings);
-        DESCRIPTORS.delete(ref); // Needed because a class can be registered multiple times
+        DESCRIPTORS.delete(ref); // Cleanup, because a class can be registered multiple times
 
         contract.ref = ref;
 
@@ -41,12 +19,6 @@ export function Injectable() {
             if (ns) {
                 contract.ns = ns.toLowerCase();
             }
-        }
-
-        if (contract.constructor === true && Object.keys(contract.inject).length === 0) {
-            extractContracts(ref).forEach(param => {
-                contract.inject.push({contractName: param});
-            });
         }
 
         DESCRIPTORS.set(fullNameFor(contract).toLowerCase(), contract);
@@ -119,17 +91,15 @@ export class DI {
     }
 
     getDescriptor(name, ns) {
-        const fullName = (ns ? `${ns}.` : '') + name;
+        return DI.getDescriptor(name, ns, this.descriptors) || DI.getDescriptor(name, ns);
+    }
 
-        return this.descriptors.get(fullName) || DI.getDescriptor(fullName);
+    static getDescriptor(name, ns, descriptor = DESCRIPTORS) {
+        return descriptor.get((ns ? `${ns}.` : '') + name);
     }
 
     lookupDescriptor(fullName, config) {
         return DI.lookupDescriptor.call(this, fullName, config);
-    }
-
-    static getDescriptor(name, ns) {
-        return DESCRIPTORS.get((ns ? `${ns}.` : '') + name);
     }
 
     static lookupDescriptor(fullName, config = {}) {
@@ -149,17 +119,26 @@ export class DI {
     }
 
     getProjection(name, ns) {
-        return this.projections.get((ns ? `${ns}.` : '') + name);
+        return DI.getProjection(name, ns, this.projections);
+    }
+
+    static getProjection(name, ns, projections = PROJECTIONS) {
+        return projections.get((ns ? `${ns}.` : '') + name);
     }
 
     static get(fullName, config = {}) {
         const descriptor = typeof fullName === 'string' ? this.lookupDescriptor(fullName, config) : fullName;
+        let instance = null;
 
-        if (descriptor.singleton && descriptor.instance) {
-            return descriptor.instance;
-        } else {
-            return createInstance.call(this, descriptor, config);
+        if (descriptor) {
+            if (descriptor.singleton && descriptor.instance) {
+                instance = descriptor.instance;
+            } else {
+                instance = createInstance.call(this, descriptor, config);
+            }
         }
+
+        return instance;
     }
 
     /**
@@ -214,26 +193,44 @@ export class DI {
      App.di.registerType("$ajax", App.AJAX, [], { singleton: true }) ;
      App.di.registerType("$util", App.Util, ["compress", true, ["$wsql", "ls"] ], { singleton: true } ) ;
      **/
-    set(name, ref, config) {
-        if (typeof name === 'string') {
-            config.name = name;
-        } else {
-            config = name;
-            ref = config.ref;
-        }
+    set(config) {
+        DI.set(config);
 
-        Injectable(config)(ref);
+        return this;
+    }
+
+    static set(config) {
+        Injectable(config)(config.ref);
 
         return this;
     }
 
     /**
-     * Removes a contract
+     * Removes a specific descriptor identified by a name and
+     * optionally a namespace. The namespace can be provided as the second argument or
+     * concat with the name.
      *
-     * @param {String} contractStr name of the contract
+     * @param {String} name descriptor name (can have a namespace)
+     * @param {String} [ns] namespace
      */
-    remove(contractStr) {
-        delete this.contracts[contractStr];
+    removeDescriptor(name, ns) {
+        DI.removeDescriptor(name, ns);
+
+        return this;
+    }
+
+    /**
+     * Removes a specific descriptor identified by a name and
+     * optionally a namespace. The namespace can be provided as the second argument or
+     * concat with the name.
+     *
+     * @param {String} name descriptor name (can have a namespace)
+     * @param {String} [ns] namespace
+     */
+    static removeDescriptor(name, ns) {
+        DESCRIPTORS.delete(fullNameFor({name, ns}));
+
+        return this;
     }
 
     /**
@@ -251,16 +248,7 @@ export class DI {
     }
 }
 
-
 /* *** Private helpers ***/
-// OBSOLETE??
-/*
- function extractContracts(ref) {
- let args = ref.toString().match(/(?:(?:^function|constructor)[^\(]*\()([^\)]+)/);
-
- return args === null ? [] : args.slice(-1)[0].replace(/\s/g, '').split(',');
- }
- */
 function splitContract(contractName) {
     const splitted = contractName.split(/\.|:/);
     const name = splitted.pop();
@@ -269,7 +257,7 @@ function splitContract(contractName) {
 }
 
 function fullNameFor(descriptor) {
-    return descriptor ? (typeof descriptor === 'string' ? descriptor : (descriptor.ns ? `${descriptor.ns}.` : '') + descriptor.name) : null;
+    return descriptor ? (typeof descriptor === 'string' ? descriptor : (descriptor.ns ? `${descriptor.ns}.` : '') + descriptor.name).toLowerCase() : null;
 }
 
 /**
