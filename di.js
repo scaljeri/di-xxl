@@ -5,33 +5,33 @@ export function Injectable() {
     const settings = arguments[0] ? (typeof arguments[0] === 'string' ? {name: arguments[0]} : arguments[0]) : {};
 
     return function decorator(ref) {
-        let contract = Object.assign(DESCRIPTORS.get(ref) || {inject: []}, settings);
+        let descriptor = Object.assign(DESCRIPTORS.get(ref) || {inject: []}, settings);
         DESCRIPTORS.delete(ref); // Cleanup, because a class can be registered multiple times
 
-        contract.ref = ref;
+        descriptor.ref = ref;
 
-        if (!contract.name) { // class BarFoo {} --> { name: 'barFoo' }
-            contract.name = ref.name.charAt(0).toLowerCase() + ref.name.substring(1);
+        if (!descriptor.name) { // class BarFoo {} --> { name: 'barFoo' }
+            descriptor.name = ref.name.charAt(0).toLowerCase() + ref.name.substring(1);
         } else { // 'namespace.bar' --> { ns: 'namespace', name: 'bar'}
-            const [ns, name] = splitContract(contract.name);
-            contract.name = name.toLowerCase();
+            const [ns, name] = splitContract(descriptor.name);
+            descriptor.name = name.toLowerCase();
 
             if (ns) {
-                contract.ns = ns.toLowerCase();
+                descriptor.ns = ns.toLowerCase();
             }
         }
 
-        DESCRIPTORS.set(fullNameFor(contract).toLowerCase(), contract);
+        DESCRIPTORS.set(fullNameFor(descriptor).toLowerCase(), descriptor);
     }
 }
 
-export function Inject(contractName) {
+export function Inject(name) {
     return function decorator(ref, argument, config) {
-        let contract = DESCRIPTORS.get(ref.constructor) || {inject: []};
+        let descriptor = DESCRIPTORS.get(ref.constructor) || {inject: []};
 
-        contract.inject.push({propertyName: argument, contractName, config});
+        descriptor.inject.push({property: argument, name, config});
 
-        DESCRIPTORS.set(ref.constructor, contract);
+        DESCRIPTORS.set(ref.constructor, descriptor);
 
         config.writable = true;
         return config;
@@ -248,11 +248,11 @@ export class DI {
 }
 
 /* *** Private helpers ***/
-function splitContract(contractName) {
-    const splitted = contractName.split(/\.|:/);
-    const name = splitted.pop();
+function splitContract(fullName) {
+    const parts = fullName.split(/\.|:/);
+    const name = parts.pop();
 
-    return [(splitted.join('.') || ''), name];
+    return [(parts.join('.') || ''), name];
 }
 
 function fullNameFor(descriptor) {
@@ -302,7 +302,7 @@ function lookup(config, locator, relocator) {
 function createInstance(descriptor, config) {
     let instance, instances = (descriptor.instances || {});
 
-    // Make sure the original contract is not altered
+    // Make sure the original descriptor is not altered
     const base = Object.assign({accept: [], reject: [], params: [], projections: {}}, descriptor, config),
         baseFullName = fullNameFor(base),
         projections = base.projections;
@@ -327,7 +327,7 @@ function createInstance(descriptor, config) {
 
     if (base.inject.length) {
         base.inject.forEach(dep => {
-            const descriptor = this.lookupDescriptor(projections[dep.contractName] || dep.contractName),
+            const descriptor = this.lookupDescriptor(projections[dep.name] || dep.name),
                 fullName = fullNameFor(descriptor);
 
             if (base.accept.length && !~base.accept.indexOf(descriptor.role)) {
@@ -336,8 +336,8 @@ function createInstance(descriptor, config) {
                 throw Error(`'${fullName}' has role '${descriptor.role}', which is blacklisted by '${baseFullName}'`);
             }
 
-            instance[dep.propertyName] = descriptor ?
-                (instances[fullName] || (instances[fullName] = this.get(descriptor, {instances}))) : dep.contractName;
+            instance[dep.property] = descriptor ?
+                (instances[fullName] || (instances[fullName] = this.get(descriptor, {instances}))) : dep.name;
         });
     }
 

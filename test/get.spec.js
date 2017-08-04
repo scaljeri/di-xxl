@@ -59,7 +59,7 @@ describe('DI - Decorators', () => {
                     });
 
                     it('should not be altered', () => {
-                        descriptor.inject[0].contractName.should.eqls('decorator.iService');
+                        descriptor.inject[0].name.should.eqls('decorator.iService');
                     });
                 });
             });

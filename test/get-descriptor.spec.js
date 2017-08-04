@@ -49,8 +49,8 @@ describe('DI - Decorators', () => {
             it('should hold a configuration', () => {
                 item = inject[0];
 
-                item.propertyName.should.equals('service');
-                item.contractName.should.equals('decorator.iService');
+                item.property.should.equals('service');
+                item.name.should.equals('decorator.iService');
                 item.config.configurable.should.not.be.ok;
                 item.config.enumerable.should.be.ok;
             });

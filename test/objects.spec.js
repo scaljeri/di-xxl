@@ -3,7 +3,7 @@ import {DI, chai, should} from './helpers';
 describe('Objects - ACTIONS.NONE', () => {
     const di = new DI();
     let obj,
-        inject = {propertyName: 'test', contractName: 'register.maz'},
+        inject = {property: 'test', name: 'register.maz'},
         myObj = {x: 1},
         testRef = { x: 10 };
 

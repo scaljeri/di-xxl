@@ -4,7 +4,7 @@ import * as fixtures from './fixtures/decorators';
 describe('#register', () => {
     const di = new DI();
     let contract,
-        inject = {propertyName: 'test', contractName: 'register.maz'};
+        inject = {property: 'test', name: 'register.maz'};
 
     before(() => {
         di.set({ name: 'Foo',

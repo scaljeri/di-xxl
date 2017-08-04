@@ -4,7 +4,7 @@ import * as fixtures from './fixtures/decorators';
 describe('Functions - ACTIONS.INVOKE', () => {
     const di = new DI();
     let instance,
-        inject = {propertyName: 'test', contractName: 'register.maz'},
+        inject = {property: 'test', name: 'register.maz'},
         myFunc = function(){
             const x = {args: arguments[0]};
             return x;
