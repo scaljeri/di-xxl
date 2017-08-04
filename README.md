@@ -16,41 +16,94 @@ empty or as small as possible. Although this may sound like a restriction, you w
 it is an extremely versatile library; it provides many ways to implement dependency injection. Choose
 whatever fits your needs best.
 
-In its most basic form, to register an entity like a class, object, function ,etc, you do
+In its most basic form, to register an entity like a class, object or function do
 
     import {DI} from 'di-xxl';
     
     class Foo {}
     
-    DI.set('foo', Foo);
+    const descriptor = {
+        name: 'foo',
+        ref: Foo
+    };
     
-Class `Foo` is now registered and accessible by the name `foo`. Use `get` to create an instance of `Foo` 
+    DI.set(descriptor)
+    
+The `descriptor` object needs at least a `name` and a `ref`erence. The descriptor object above makes `Foo` 
+accessible by the name `foo`. Use `get` to retrieve an instance of `Foo` 
 
     const foo = DI.get('foo');
     
+### Parameters
+At any time constructor and function parameters can be defined
+    
+    const descriptor = {
+        name 'bar', 
+        ref: Foo,
+        params: [10]
+    }
+    DI.set(descriptor);
+    
+The parameter `10` is used when none is given when Foo is requested
+
+    DI.get('foo'); // -> new Foo(10)
+
+But when provided, the default parameters are ignored
+    
+    DI.get('foo', {params: [20]}); // -> new Foo(20)
+    
 ### Injection 
 In theory you can inject anything into almost everything :)  Circular dependencies do not exist, because it is not 
-possible to inject into a constructor. To inject `foo` into an object a configuration object is required 
+possible to inject into a constructor. So, to inject `foo` into an object do
 
     const app = {};
     
-    DI.set('app', app, {
-        inject: ['bar'] // {property: 'bar', name: 'foo'}] 
-    });
-
+    const descriptor = {
+        name: 'app',
+        ref: app,
+        inject: [{property: 'foo', name: 'foo'}]
+    };
+    
 Which gives you access to `app` with an instance of `Foo` injected
 
     const myApp = DI.get('app');
     myApp.foo instanceof Foo; // --> true
     
-If you want to inject foo to `app.bar` instead, do
 
-    DI.set('app', app, {
-        inject: [{prop: 'bar', name: 'foo'}] 
-    });
+
+### ACTIONS
+It is also possible to register function (not constructors)
+
+    const descriptor = {
+        name: 'double',
+        ref: num => num * 2,
+        action: DI.ACTIONS.NONE
+    };
+    
+    DI.set(descriptor);
+    
+The action `DI.ACTIONS.NONE` tells DI so simple return the original reference when it is requested
+
+    const double = DI.get('double');
+    double(10); // -> 20
+    
+In case of functions, we can take this even on step further
+
+    const descriptor = {
+        name: 'double',
+        ref: base => (num) => base + num * 2
+        action: DI.ACTIONS.INVOKE
+    }
+    
+This time DI wil invoke the reference using the provided parameters and return its output
+
+    const double = DI.get('double', {params: [10]});
+    double(2); // -> 14
+
+### Singletons
 
 ### Inherit
-
+TODO
 
 ### @Decorators    
 As of this writing you have to use a couple of babel plugins to get `@decorators` working, but if you have
@@ -265,6 +318,17 @@ If you want to run this library in the browser, and you have, for example, inclu
 main.js, you can browserify it using [babelify](https://github.com/babel/babelify) as follows:
 
     $> ./node_modules/.bin/browserify main.js -o bundle.js -t [ babelify --presets [ es2015 stage-0 ] ]
+    
+    
+TODO
+         * Projections: They map dependencies to others. For example
+         *
+         *     @Inject('Bar')
+         *     service
+         *
+         * can be projected and inject 'Maz'
+         *
+         *     di.setProjection({Bar: 'Maz'});
 
 [travis-url]: https://travis-ci.org/scaljeri/javascript-dependency-injection.png
 [travis-image]: https://travis-ci.org/scaljeri/javascript-dependency-injection
