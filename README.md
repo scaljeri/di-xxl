@@ -35,22 +35,22 @@ accessible by the name `foo`. Next, use `get` to retrieve an instance of `Foo`
     const foo = DI.get('foo');
     
 ### Parameters
-At any time constructor and function parameters can be defined
+Very often when an instance is created parameters need to be provided
     
     const descriptor = {
         name 'bar', 
         ref: Foo,
-        params: [10]
+        params: [10, 20]
     }
     DI.set(descriptor);
     
 The parameter `10` is used when none is given when Foo is requested
 
-    DI.get('foo'); // -> new Foo(10)
+    DI.get('foo'); // -> new Foo(10, 20)
 
 But when provided, the default parameters are ignored
     
-    DI.get('foo', {params: [20]}); // -> new Foo(20)
+    DI.get('foo', {params: [999]}); // -> new Foo(999)
     
 ### Injection 
 In theory you can inject anything into almost everything :)  Circular dependencies do not exist, because it is not 
@@ -64,11 +64,13 @@ possible to inject into a constructor. So, to inject `foo` into an object do
         inject: [{property: 'foo', name: 'foo'}]
     };
     
-Which gives you access to `app` holding an instance of `Foo`
-
+    ...
+    
     const myApp = DI.get('app');
     myApp.foo instanceof Foo; // --> true
     
+
+    myApp !== DI.get('app');  // is TRUE, because Object.create(app) is return 
 
 
 ### ACTIONS

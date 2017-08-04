@@ -10,6 +10,11 @@ export function Injectable() {
 
         descriptor.ref = ref;
 
+        // By default an object ref is a singleton
+        if (typeof ref === 'object' && descriptor.singleton === undefined) {
+            descriptor.singleton = true;
+        }
+
         if (!descriptor.name) { // class BarFoo {} --> { name: 'barFoo' }
             descriptor.name = ref.name.charAt(0).toLowerCase() + ref.name.substring(1);
         } else { // 'namespace.bar' --> { ns: 'namespace', name: 'bar'}
@@ -138,7 +143,7 @@ export class DI {
     }
 
     static getDescriptor(name, ns, descriptor = DESCRIPTORS) {
-        return descriptor.get((ns ? `${ns}.` : '') + name);
+        return descriptor.get(fullNameFor({name, ns}));
     }
 
     lookupDescriptor(fullName, config) {
@@ -323,22 +328,22 @@ function createInstance(descriptor, config) {
         baseFullName = fullNameFor(base),
         projections = base.projections;
 
-    //instance = baseFullName; // ???
-
     if (base.ref) {
         if ((!base.action || base.action === DI.ACTIONS.CREATE) && typeof base.ref === 'function') {
             instance = Array.isArray(base.params) ? new base.ref(...(base.params || [])) : new base.ref(base.params);
         } else if (base.action === DI.ACTIONS.INVOKE) {
             instance = Array.isArray(base.params) ? base.ref(...(base.params || [])) : base.ref(base.params);
         } else {
-            instance = base.ref;
+            instance = base.params ? Object.assign(base.ref, base.params) : base.ref;
         }
-
-        instances[baseFullName] = {instance, descriptor: base};
 
         if (base.singleton) {
             descriptor.instance = instance;
+        } else if (typeof base.ref === 'object') {
+            instance = Object.create(base.ref);
         }
+
+        instances[baseFullName] = {instance, descriptor: base};
     }
 
     if ((base.inject || []).length) {
