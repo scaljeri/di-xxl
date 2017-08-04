@@ -38,19 +38,69 @@ export function Inject(contractName) {
     }
 }
 
+/** DI is a library for managing entities like functions and objects and their dependencies.
+ */
 export class DI {
     /**
+     * This Enum defines the direction in which namespaces will be traversed
      *
-     * @returns {{PARENT_TO_CHILD: number, CHILD_TO_PARENT: number}}
-     * @constructor
+     * @example
+     *
+     *    DI.set({
+     *        name: 'Foo',
+     *        lookup: DI.DIRECTIONS.CHILD_TO_PARENT
+     *        ...
+     *    });
+     * }
+     *
+     * @readonly
+     * @enum {object}
+     * @property {number} PARENT_TO_CHILD Upwards (Capturing)
+     * @property {number} CHILD_TO_PARENT Downwards (Bubbling)
      */
-    static get DIRECTIONS() {
-        return {
-            PARENT_TO_CHILD: 1,
-            CHILD_TO_PARENT: 2
-        }
-    }
+    static DIRECTIONS = {
+        PARENT_TO_CHILD: 1,
+        CHILD_TO_PARENT: 2
+    };
 
+    /**
+     * This Enum defines actions that can be applied to the descriptor reference
+     *     when requested ({@link DI#get}).
+     *
+     * For example
+     *
+     * @example
+     * class Foo {}
+     *
+     * DI.set({
+     *     name: 'foo',
+     *     ref: Foo,
+     *     action: DI.ACTIONS.CREATE
+     * });
+     *
+     * function Store() { ... }
+     *
+     * DI.set({
+     *     name: 'app',
+     *     ref: Store,
+     *     action: DI.ACTIONS.INVOKE
+     * });
+     *
+     * const App = {};
+     *
+     * DI.set({
+     *     name: 'App',
+     *     ref: App,
+     *     action: DI.ACTIONS.NONE
+     * });
+     *
+     * The reference (ref) point to Foo which is a class and
+     * @readonly
+     * @enum {object}
+     * @property {number} CREATE Create an instance using `new` (Default if ref is a function)
+     * @property {number} INVOKE Call the function
+     * @property {number} NONE Do nothing (Default is ref is an object)
+    */
     static get ACTIONS() {
         return {
             CREATE: 0,
@@ -66,8 +116,8 @@ export class DI {
      *
      * @class DI
      * @constructor
-     * @param {Object} [config] configuration object
-     * @param {Number} [config.lookup] define the default direction in which namespaces are traversed (default: DI.DIRECTIONS.PARENT_TO_CHILD)
+     * @param {object} [config] configuration object
+     * @param {number} [config.lookup] lookup direction. See {@link DIRECTIONS} (default: DI.DIRECTIONS.PARENT_TO_CHILD)
      **/
     constructor(config = {}) {
         this.lookup = (config.lookup || DI.DIRECTIONS.PARENT_TO_CHILD);
@@ -113,11 +163,6 @@ export class DI {
         return projections.get(fullNameFor({name, ns}));
     }
 
-    /**
-     * Set one or more projections on the instance
-     *
-     * @param {String} key descriptor name
-     */
     setProjection(list) {
         DI.setProjection(list, this.projections);
 
@@ -132,50 +177,24 @@ export class DI {
         return this;
     }
 
-    /**
-     * Deletes a projection identified by a name
-     *
-     * @param {String} name descriptor name
-     */
     removeProjection(key) {
         DI.removeProjection(key, this.projections);
 
         return this;
     }
 
-    /**
-     * Deletes a projection identified by a name
-     *
-     * @param {String} name descriptor name
-     */
     static removeProjection(key, projections = PROJECTIONS) {
         projections.delete(key.toLowerCase());
 
         return this;
     }
 
-    /**
-     * Removes a specific descriptor identified by a name and
-     * optionally a namespace. The namespace can be provided as the second argument or
-     * concat with the name.
-     *
-     * @param {String} name descriptor name (can have a namespace)
-     * @param {String} [ns] namespace
-     */
     removeDescriptor(name, ns) {
         DI.removeDescriptor(name, ns);
 
         return this;
     }
 
-    /**
-     * Removes a specific descriptor identified by a name and
-     * optionally a namespace. The namespace can be provided as the second argument or
-     * concat with the name.
-     *
-     * @param {String} name descriptor name (can have a namespace)
-     * @param {String} [ns] namespace
-     */
     static removeDescriptor(name, ns) {
         DESCRIPTORS.delete(fullNameFor({name, ns}));
 
@@ -183,19 +202,11 @@ export class DI {
     }
 
     /**
-     * Returns an instance for the given contract. Use <tt>params</tt> attribute to overwrite the default
-     * parameters for this contract. If <tt>params</tt> is defined, the singleton will be (re)created and its
-     * parameters are updated.
      *
-     * @method get
-     * @param  {String} contract name
-     * @param  {...*} [params] constructor parameters which, if defined, replaces its default arguments (see {{#crossLink "DI/register:method"}}{{/crossLink}} )
-     * @return {Object} Class instance
-     * @example
-     App.di.register("ajax", ["rest"]) ;
-     var ajax = App.di.get("ajax") ;
-     ajax = App.di.get("ajax", "rest", true) ;
-     **/
+     * @param fullName
+     * @param config
+     * @returns {*}
+     */
     get(fullName, config) {
         return DI.get.call(this, fullName, config);
     }
@@ -215,26 +226,6 @@ export class DI {
         return instance;
     }
 
-    /**
-     * Register a class by creating a contract. Use **getInstance** to obtain
-     * an instance from this contract. The **params** parameter is a list of contracts or simple values.
-     *
-     * @method register
-     * @chainable
-     * @param {String} contract name of the contract
-     * @param {Class} ref the class bind to this contract
-     * @param {Array} [params] list of constructor parameters. Only if a parameter is a string and matches a contract, it
-     * will be replaced with the corresponding instance
-     * @param {Object} [options] configuration
-     *      @param {String} [options.singleton=false] create a new instance every time
-     *      @param {String} [options.factoryFor] name of the contract for which it is a factory
-     *      @param {String} [options.writable=false]  append (=false) or replace (=true) construtor arguments
-     * @return {Object} this
-     * @example
-     App.di.registerType("$ajax", App.AJAX) ;
-     App.di.registerType("$ajax", App.AJAX, [], { singleton: true }) ;
-     App.di.registerType("$util", App.Util, ["compress", true, ["$wsql", "ls"] ], { singleton: true } ) ;
-     **/
     set(config) {
         DI.set(config);
 
@@ -247,12 +238,6 @@ export class DI {
         return this;
     }
 
-    /**
-     * @private
-     * @param contractStr
-     * @param config
-     * @returns {function()}
-     */
     getFactory(fullName, config = {params: []}) {
         const descriptor = Object.assign({}, (this.lookupDescriptor(fullName, config) || {}), config);
 
@@ -274,26 +259,6 @@ function fullNameFor(descriptor) {
     return descriptor ? (typeof descriptor === 'string' ? descriptor : (descriptor.ns ? `${descriptor.ns}.` : '') + descriptor.name).toLowerCase() : null;
 }
 
-/**
- * A contract can be search for using two different modes, BUBBLING or CAPTURING.
- * For example, a contract like this `aaa.bbb.ccc.$foo` (namespace = aaa.bbb.ccc, contract name = $foo)
- * will be search in BUBBLING mode as follows
- *     aaa.bbb.ccc.$foo
- *     aaa.bbb.$foo
- *     aaa.$foo
- *     $foo
- *
- * In CAPTURING mode, it is the other way around
- *
- *     $foo
- *     aaa.$foo
- *     aaa.bbb.$foo
- *     aaa.bbb.ccc.$foo
- *
- * @param contractStr name of the contract (e.g. 'a.b.c.$foo')
- * @param traverse should the namespace be search if contract does not exist (default: true)
- * @returns {*}
- */
 function lookup(config, locator, relocator) {
     let name, ns, position;
 
@@ -334,19 +299,6 @@ function lookup(config, locator, relocator) {
     return descriptor;
 }
 
-/**
- * @private
- * Returns a new instance of the class matched by the contract.
- *
- * @method createInstance
- * @param {string} contract - the contract name
- * @param {Array} params - list of contracts passed to the constructor. Each parameter which is not a string or
- * an unknown contract, is passed as-is to the constructor
- *
- * @returns {Object}
- * @example
- var storage = App.di.createInstance("data", ["compress", true, "websql"]) ;
- **/
 function createInstance(descriptor, config) {
     let instance, instances = (descriptor.instances || {});
 

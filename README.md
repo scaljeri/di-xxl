@@ -30,7 +30,7 @@ In its most basic form, to register an entity like a class, object or function d
     DI.set(descriptor)
     
 The `descriptor` object needs at least a `name` and a `ref`erence. The descriptor object above makes `Foo` 
-accessible by the name `foo`. Use `get` to retrieve an instance of `Foo` 
+accessible by the name `foo`. Next, use `get` to retrieve an instance of `Foo` 
 
     const foo = DI.get('foo');
     
@@ -64,7 +64,7 @@ possible to inject into a constructor. So, to inject `foo` into an object do
         inject: [{property: 'foo', name: 'foo'}]
     };
     
-Which gives you access to `app` with an instance of `Foo` injected
+Which gives you access to `app` holding an instance of `Foo`
 
     const myApp = DI.get('app');
     myApp.foo instanceof Foo; // --> true
@@ -91,7 +91,7 @@ In case of functions, we can take this even on step further
 
     const descriptor = {
         name: 'double',
-        ref: base => (num) => base + num * 2
+        ref: base => num => base + num * 2,
         action: DI.ACTIONS.INVOKE
     }
     
@@ -101,13 +101,52 @@ This time DI wil invoke the reference using the provided parameters and return i
     double(2); // -> 14
 
 ### Singletons
+To turn a class into a singleton, add the singleton flag to the descriptor
 
+    const descriptor = {
+        name: 'foo',
+        ref: Foo,
+        singleton: true
+    }
+    
 ### Inherit
 TODO
 
+### Factories
+A class can produce instances of an other class
+ 
+     class Bar {
+         getFoo(input) {
+             return new Foo(input);
+         }
+     }
+     
+In order to rewrite this using **DI-XXL**, Factories come to the rescue 
+
+     class Bar {
+         constructor(fooFactory) { this.fooFactory = fooFactory; }
+          
+         getFoo(input) { 
+            return this.fooFactory(input);  
+         }
+     }
+     
+To re
+and the relations are now defined as follows
+ 
+     di.register('$bar', Bar, ['$fooFactory']);
+     
+     di.register('$foo', Foo);
+     
+That's all, the Foo-factory is created auto magically!
+ 
+If you really want to create a factory yourself, you can
+     
+     di.register('$fooFactory', ['list', 'of', 'params'], { factoryFor: '$bar' });
+     
 ### @Decorators    
 As of this writing you have to use a couple of babel plugins to get `@decorators` working, but if you have
-you can **DI-XXL** as follows
+you can use **DI-XXL** as follows
 
     import {Injectable, Inject} from 'di-xxl';
     
@@ -128,170 +167,41 @@ you can **DI-XXL** as follows
             return this.addService(this.base, val);
         }
     }
+
+Note that this is equivalent to
+
+    import {ID} from 'di-xxl';
     
-This will register the classes and can be used right away
+    DI.set({
+        name: 'foo',
+        ref: Foo
+    });
+    
+    DI.set({
+        name: 'bar',
+        ref: Bar,
+        inject: [{property: 'addService', name: 'foo'}]
+    });
+    
+    
+After registration they can be used as follows
 
     import {ID} from 'di-xxl';
     
     let bar = DI.getInstance('bar', {params: [100]});
     bar.add(1); // -> 101
     
-If @Decorators is not yet an option, you can register your classes yourself
-
-    DI.register('foo', {
-      ref: Foo
-    );
-   
-    DI.register('bar', {
-      ref: Bar,
-      inject: [{propertyName: 'addService', contractName: 'foo']
-    })
-     
-NOTE: It is not possible to inject into a constructor, 
-
 However, if you need dependencies in the constructor you have a couple of ways to achieve this
 
-#### Example 2
+### Inject into a constructor
+Ok, if you really really really have to do this you can still do it. For example, if you need to 
+inject `Foo` into `Bar`
 
-    class Bar {
-        constructor(base) {
-            this.total = this.inject.$foo.add(0, base); // Here the dependency is used!
-        }
-         
-        add(val) {
-            this.total = this.inject.$foo.sum(this.total, val);
-        }
-    }
-    di.register('$bar', Bar, {inject: ['$foo']});
-    
-Or you can do the following
-
-#### Example 3
-
-    class Bar { 
-        constructor($foo, base) {
-            this.$foo = $foo;     // $foo instanceof Foo (injected)
-            this.total = base;
-        }
-        
-        add(val) {
-            this.total = this.$foo.sum(this.total, val);
-        }
-    }
-    di.register('$bar', Bar);
-    
-    let bar = di.getInstance('$bar', 100);
-    bar.add(1); // bar.total === 101
-    
-This time **DI-XXL** doesn't know what do to, in which case it extracts and inspects the constructor arguments.
-
-This pattern can be extended to the instance methods too
-
-#### Example 3
-
-    class Bar {
-        constructor(base) { this.total = base; }
-      
-        add($foo, val) {
-          this.total = $foo.sum(this.total, val);
-        }
-    }
-    di.register('$bar', Bar, { augment: true }); // or a list of instance methods
-    
-    let bar = di.getInstance('$bar', 10);
-    bar.add(100); // -> bar.total === 110
+    const bar = DI.get('bar', {params: [DI.get('foo')]});
     
 
-It is also possible to define the constructor arguments yourself
 
-#### Example 4
 
-    class Bar {
-      constructor(someInstance, someValue) {
-          this.someInstance = someInstance;
-          this.someValue = someValue;
-      }
-      ...
-    }
-
-    di.register('$bar', Bar, ['$foo' ,100]);
-    var bar = di.getInstance('$bar');
-    bar.someInstance instanceOf Foo
-    bar.someValue === 100;
-       
-Checkout the unit tests for more advanced examples
-       
-### Singletons
-**DI** can also return the same instance (singleton)
- 
-     di.register('$bar', Bar, { singleton: true });
-     di.getInstance('$bar') === di.getInstance('$bar')
-     
-### Factories
-A class can produce instances of an other class
- 
-     class Bar {
-         getFoo(input) {
-             return new Foo(input);
-         }
-     }
-     
-In order to rewrite this using DI, Factories come to the rescue 
-
-     class Bar {
-         constructor(fooFactory) { this.fooFactory = fooFactory; }
-          
-         getFoo(input) { 
-            return this.fooFactory(input);  
-         }
-     }
-     
-and the relations are now defined as follows
- 
-     di.register('$bar', Bar, ['$fooFactory']);
-     
-     di.register('$foo', Foo);
-     
-That's all, the Foo-factory is created auto magically!
- 
-If you really want to create a factory yourself, you can
-     
-     di.register('$fooFactory', ['list', 'of', 'params'], { factoryFor: '$bar' });
-     
-## Parameters 
-Now things get a bit tricky, because parameters can be set at different places and
-some kind of parameter-inheritance happens. The first level of where parameters can be defined is 
-with `register`
-
-    di.register('$bar', Bar, ['$foo', 
-For example
- 
-     di.register('$bar', Bar, ['p1', 'p2', 'p3', 'p4']);
-     let bar = di.getInstance('$bar', 'p5', 'p6', 'p7');
-     
-The `getInstance` method accepts constructor arguments too. The above is equivalent o
-    
-      new Bar('p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7');
-      
-The parameters are added. But what if you like to replace the initial parameter?
-  
-     di.register('$bar', Bar, ['p1', 'p2', 'p3', 'p4'], { writable: true });
-     let bar = di.getInstance('$bar', 'p5', 'p6', 'p7');
- 
-This time the constructor arguments are
- 
-     'p5', 'p6', 'p7', 'p4'
-     
-Important to note here is that an initial parameter is only replaced if the 
-new parameter not equals `undefined`. 
-  
-With factories, you have this behavior too, but also an extra inheritance layer. 
-Check this out
-
-    di.register('$barFactory', ['p1', 'p2', 'p3', 'p4', 'p5'], { factoryFor: '$bar' });    
-    let barFactory = di.getInstance('$barFactory', 'p6', 'p7');                            
-    let bar = barFactory('p8', 'p9');  // bar is initialized with 'p1', 'p2', ...., 'p9'   
-    
 For more advanced use-cases checkout the [unit tests](https://github.com/scaljeri/javascript-dependency-injection/blob/master/test/di.spec.js)
 file.
 
