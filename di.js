@@ -336,8 +336,13 @@ function createInstance(descriptor, config) {
                 throw Error(`'${fullName}' has role '${descriptor.role}', which is blacklisted by '${baseFullName}'`);
             }
 
-            instance[dep.property] = descriptor ?
-                (instances[fullName] || (instances[fullName] = this.get(descriptor, {instances}))) : dep.name;
+            const injectable = descriptor ? (instances[fullName] || (instances[fullName] = this.get(descriptor, {instances}))) : dep.name;
+
+            if (typeof instance[dep.property] === 'function') {
+                instance[dep.property](injectable);
+            } else {
+                instance[dep.property] = injectable;
+            }
         });
     }
 

@@ -39,3 +39,13 @@ export class BooArgs {
         this.val2 = val2;
     }
 }
+
+@Injectable({
+    ns: 'decorator'
+})
+export class Mooz {
+    @Inject('decorator.Maz')
+    setService(service) {
+        this.service = service
+    }
+}
