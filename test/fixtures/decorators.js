@@ -15,7 +15,7 @@ export class Foo {
 
 @Injectable({
     ns: 'decorator',
-    inherit: '$foo'
+    inherit: 'decorator.$foo'
 })
 export class Bar extends Foo {}
 
@@ -49,3 +49,19 @@ export class Mooz {
         this.service = service
     }
 }
+
+@Injectable({
+    ns: 'decorator'
+})
+export class Wooz {
+    @Inject({ factory: true, name: 'decorator.Mooz'})
+    setFactory(factory) {
+        this.factory = factory
+    }
+}
+
+@Injectable({
+    ns: 'decorator',
+    inherit: 'decorator.Wooz'
+})
+export class Buzu extends Wooz {}

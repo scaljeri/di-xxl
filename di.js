@@ -5,7 +5,7 @@ export function Injectable() {
     const settings = arguments[0] ? (typeof arguments[0] === 'string' ? {name: arguments[0]} : arguments[0]) : {};
 
     return function decorator(ref) {
-        let descriptor = Object.assign(DESCRIPTORS.get(ref) || {inject: []}, settings);
+        let descriptor = Object.assign(DESCRIPTORS.get(ref) || {}, settings);
         DESCRIPTORS.delete(ref); // Cleanup, because a class can be registered multiple times
 
         descriptor.ref = ref;
@@ -25,16 +25,22 @@ export function Injectable() {
     }
 }
 
-export function Inject(name) {
-    return function decorator(ref, argument, config) {
+export function Inject(config) {
+    return function decorator(ref, property, settings) {
         let descriptor = DESCRIPTORS.get(ref.constructor) || {inject: []};
 
-        descriptor.inject.push({property: argument, name, config});
+        if (typeof config === 'string') {
+            config = {name: config};
+        }
+
+        config.property = property;
+
+        descriptor.inject.push(config);
 
         DESCRIPTORS.set(ref.constructor, descriptor);
 
-        config.writable = true;
-        return config;
+        settings.writable = true;
+        return settings;
     }
 }
 
@@ -100,7 +106,7 @@ export class DI {
      * @property {number} CREATE Create an instance using `new` (Default if ref is a function)
      * @property {number} INVOKE Call the function
      * @property {number} NONE Do nothing (Default is ref is an object)
-    */
+     */
     static get ACTIONS() {
         return {
             CREATE: 0,
@@ -212,10 +218,14 @@ export class DI {
     }
 
     static get(fullName, config) {
-        const descriptor = typeof fullName === 'string' ? this.lookupDescriptor(fullName, config) : fullName;
+        let descriptor = typeof fullName === 'string' ? this.lookupDescriptor(fullName, config) : fullName;
         let instance = null;
 
         if (descriptor) {
+            if (descriptor.inherit) {
+                descriptor = inheritance.call(this, descriptor, config);
+            }
+
             if (descriptor.singleton && descriptor.instance) {
                 instance = descriptor.instance;
             } else {
@@ -238,8 +248,14 @@ export class DI {
         return this;
     }
 
-    getFactory(fullName, config = {params: []}) {
-        const descriptor = Object.assign({}, (this.lookupDescriptor(fullName, config) || {}), config);
+    getFactory(fullName, config) {
+        return DI.getFactory(fullName, config);
+    }
+
+
+    static getFactory(fullName, config = {params: []}) {
+
+        const descriptor = Object.assign({}, (typeof fullName === 'string' ? this.lookupDescriptor(fullName, config) || {} : fullName), config);
 
         return (...params) => {
             return this.get(params.length ? Object.assign(descriptor, {params}) : descriptor);
@@ -325,7 +341,7 @@ function createInstance(descriptor, config) {
         }
     }
 
-    if (base.inject.length) {
+    if ((base.inject || []).length) {
         base.inject.forEach(dep => {
             const descriptor = this.lookupDescriptor(projections[dep.name] || dep.name),
                 fullName = fullNameFor(descriptor);
@@ -336,7 +352,12 @@ function createInstance(descriptor, config) {
                 throw Error(`'${fullName}' has role '${descriptor.role}', which is blacklisted by '${baseFullName}'`);
             }
 
-            const injectable = descriptor ? (instances[fullName] || (instances[fullName] = this.get(descriptor, {instances}))) : dep.name;
+            let injectable;
+            if (dep.factory) {
+                injectable = DI.getFactory(descriptor);
+            } else {
+                injectable = descriptor ? (instances[fullName] || (instances[fullName] = this.get(descriptor, {instances}))) : dep.name;
+            }
 
             if (typeof instance[dep.property] === 'function') {
                 instance[dep.property](injectable);
@@ -347,4 +368,17 @@ function createInstance(descriptor, config) {
     }
 
     return instance;
+}
+
+function inheritance(descriptor, config) {
+    if (descriptor.inherit) {
+        const parent = this.lookupDescriptor(descriptor.inherit, config);
+        descriptor = Object.assign({}, parent, descriptor);
+
+        if (parent.inherit) {
+            descriptor = inheritance.call(this. descriptor, config);
+        }
+    }
+
+    return descriptor;
 }

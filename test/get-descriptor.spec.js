@@ -51,8 +51,6 @@ describe('DI - Decorators', () => {
 
                 item.property.should.equals('service');
                 item.name.should.equals('decorator.iService');
-                item.config.configurable.should.not.be.ok;
-                item.config.enumerable.should.be.ok;
             });
         });
     });
@@ -75,7 +73,7 @@ describe('DI - Decorators', () => {
         });
 
         it('should have an empty inject array', () => {
-            descriptor.inject.should.be.empty;
+            should.not.exist(descriptor.inject);
         });
     });
 });
