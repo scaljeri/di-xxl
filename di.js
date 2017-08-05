@@ -26,7 +26,7 @@ export function Injectable() {
             }
         }
 
-        DESCRIPTORS.set(fullNameFor(descriptor).toLowerCase(), descriptor);
+        ((this || {}).descriptors || DESCRIPTORS).set(fullNameFor(descriptor).toLowerCase(), descriptor);
     }
 }
 
@@ -151,8 +151,7 @@ export class DI {
     }
 
     static lookupDescriptor(fullName, config = {}) {
-        const settings = Object.assign({}, config, {name: fullName});
-        settings.lookup = this.lookup || DI.DIRECTIONS.PARENT_TO_CHILD;
+        const settings = Object.assign({lookup: this.lookup || DI.DIRECTIONS.PARENT_TO_CHILD}, this.config, config, {name: fullName});
 
         let descriptor = lookup(settings,
             fullName => {
@@ -201,13 +200,13 @@ export class DI {
     }
 
     removeDescriptor(name, ns) {
-        DI.removeDescriptor(name, ns);
+        DI.removeDescriptor(name, ns, this.descriptors);
 
         return this;
     }
 
-    static removeDescriptor(name, ns) {
-        DESCRIPTORS.delete(fullNameFor({name, ns}));
+    static removeDescriptor(name, ns, descriptors = DESCRIPTORS) {
+        descriptors.delete(fullNameFor({name, ns}));
 
         return this;
     }
@@ -242,13 +241,11 @@ export class DI {
     }
 
     set(config) {
-        DI.set(config);
-
-        return this;
+        return DI.set.call(this, config);
     }
 
     static set(config) {
-        Injectable(config)(config.ref);
+        Injectable(config).call(this, config.ref);
 
         return this;
     }
