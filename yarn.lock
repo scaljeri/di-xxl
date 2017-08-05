@@ -401,6 +401,10 @@ babel-plugin-istanbul@^4.1.4:
     istanbul-lib-instrument "^1.7.2"
     test-exclude "^4.1.1"
 
+babel-plugin-remove-comments@^2.0.0:
+  version "2.0.0"
+  resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/babel-plugin-remove-comments/-/babel-plugin-remove-comments-2.0.0.tgz#48c3a12ba0416a78b7cc8fe100098b2f737a2d6b"
+
 babel-plugin-syntax-async-functions@^6.8.0:
   version "6.13.0"
   resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/babel-plugin-syntax-async-functions/-/babel-plugin-syntax-async-functions-6.13.0.tgz#cad9cad1191b5ad634bf30ae0872391e0647be95"
@@ -1059,8 +1063,8 @@ buffer-xor@^1.0.2:
   resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/buffer-xor/-/buffer-xor-1.0.3.tgz#26e61ed1422fb70dd42e6e36729ed51d855fe8d9"
 
 buffer@^5.0.2:
-  version "5.0.6"
-  resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/buffer/-/buffer-5.0.6.tgz#2ea669f7eec0b6eda05b08f8b5ff661b28573588"
+  version "5.0.7"
+  resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/buffer/-/buffer-5.0.7.tgz#570a290b625cf2603290c1149223d27ccf04db97"
   dependencies:
     base64-js "^1.0.2"
     ieee754 "^1.1.4"
@@ -1119,8 +1123,8 @@ chai-as-promised@^7.1.1:
     check-error "^1.0.2"
 
 chai@^4.0.2:
-  version "4.1.0"
-  resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/chai/-/chai-4.1.0.tgz#331a0391b55c3af8740ae9c3b7458bc1c3805e6d"
+  version "4.1.1"
+  resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/chai/-/chai-4.1.1.tgz#66e21279e6f3c6415ff8231878227900e2171b39"
   dependencies:
     assertion-error "^1.0.1"
     check-error "^1.0.1"
@@ -1495,9 +1499,13 @@ detective@^4.0.0:
     acorn "^4.0.3"
     defined "^1.0.0"
 
-diff@3.2.0, diff@^3.1.0:
+diff@3.2.0:
   version "3.2.0"
   resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/diff/-/diff-3.2.0.tgz#c9ce393a4b7cbd0b058a725c93df299027868ff9"
+
+diff@^3.1.0:
+  version "3.3.0"
+  resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/diff/-/diff-3.3.0.tgz#056695150d7aa93237ca7e378ac3b1682b7963b9"
 
 diffie-hellman@^5.0.0:
   version "5.0.2"
@@ -3921,17 +3929,13 @@ window-size@0.1.0:
   version "0.1.0"
   resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/window-size/-/window-size-0.1.0.tgz#5438cd2ea93b202efa3a19fe8887aee7c94f9c9d"
 
-wordwrap@0.0.2:
+wordwrap@0.0.2, wordwrap@~0.0.2:
   version "0.0.2"
   resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/wordwrap/-/wordwrap-0.0.2.tgz#b79669bb42ecb409f83d583cad52ca17eaa1643f"
 
 wordwrap@^1.0.0, wordwrap@~1.0.0:
   version "1.0.0"
   resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/wordwrap/-/wordwrap-1.0.0.tgz#27584810891456a4171c8d0226441ade90cbcaeb"
-
-wordwrap@~0.0.2:
-  version "0.0.3"
-  resolved "https://npmjs.build.edubase.malmberg.nl/repository/npm/wordwrap/-/wordwrap-0.0.3.tgz#a3d5da6cd5c0bc0008d37234bbaf1bed63059107"
 
 wrap-ansi@^2.0.0:
   version "2.1.0"

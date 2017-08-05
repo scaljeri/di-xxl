@@ -4,6 +4,7 @@
     "stage-0"
   ],
   "plugins": [
+    "remove-comments",
     "transform-decorators-legacy",
     "transform-class-properties"
   ],
