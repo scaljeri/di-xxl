@@ -29,13 +29,13 @@ In its most basic form, to register an entity like a class, object or function d
     
     DI.set(descriptor)
     
-The `descriptor` object needs at least a `name` and a `ref`erence. The descriptor object above makes `Foo` 
-accessible by the name `foo`. Next, use `get` to retrieve an instance of `Foo` 
+The `descriptor` object needs at least a `name` and a `ref`erence. Above `Foo` gets registered
+and accessible by the name `foo`. Next, use `get` to retrieve an instance of `Foo` 
 
     const foo = DI.get('foo');
     
 ### Parameters
-Very often when an instance is created parameters need to be provided
+When parameters are required in order to create an instance, add the `params` array
     
     const descriptor = {
         name 'bar', 
@@ -44,7 +44,7 @@ Very often when an instance is created parameters need to be provided
     }
     DI.set(descriptor);
     
-The parameter `10` is used when none is given when Foo is requested
+The parameter `10` is used when none is given when the instane of Foo is requested
 
     DI.get('foo'); // -> new Foo(10, 20)
 
