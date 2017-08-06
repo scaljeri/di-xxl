@@ -5,7 +5,7 @@
   "main": "dist/di.js",
   "scripts": {
     "build": "./node_modules/.bin/babel di.js --out-dir dist && ./node_modules/.bin/uglifyjs dist/di.js -o dist/di.min.js",
-    "doc": "./node_modules/.bin/esdoc -c esdoc.json && open esdoc/index.html",
+    "doc": "./node_modules/.bin/jsdoc di.js -c jsdoc.json --destination docs && open docs/index.html",
     "old-test": "./node_modules/.bin/babel-node ./node_modules/.bin/isparta cover ./node_modules/.bin/_mocha -- --recursive",
     "prepublish": "npm run build",
     "test": "cross-env NODE_ENV=test nyc mocha",
@@ -51,6 +51,8 @@
     "chai-arrays": "^1.0.0",
     "cross-env": "^5.0.1",
     "esdoc-standard-plugin": "^1.0.0",
+    "jsdoc": "^3.5.4",
+    "jsdoc-escape-at": "^1.0.1",
     "nyc": "^11.0.3",
     "uglify-js": "^3.0.27"
   }

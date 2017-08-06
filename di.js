@@ -1,6 +1,15 @@
 const DESCRIPTORS = new Map(),
     PROJECTIONS = new Map();
 
+/**
+ * This is a decorator function which registers the entity it is attached to
+ *
+ * @example
+ *
+ *     \@Injectable({name: 'Foo'})
+ *     class Foo { ... }
+ *
+ */
 export function Injectable() {
     const settings = arguments[0] ? (typeof arguments[0] === 'string' ? {name: arguments[0]} : arguments[0]) : {};
 
@@ -30,6 +39,24 @@ export function Injectable() {
     }
 }
 
+/**
+ * This is a decorator function which injects dependencies into the property or function
+ * it is attached to
+ *
+ * @example
+ *
+ *     \@Injectable({name: 'foo'})
+ *     class Foo {
+ *         \@Inject({name: 'bar'})
+ *         counter
+ *
+ *         @Inject({name: 'baz'})
+ *         addService(service) {
+ *            this.service = service;
+ *         }
+ *     }
+ *
+ */
 export function Inject(config) {
     return function decorator(ref, property, settings) {
         let descriptor = DESCRIPTORS.get(ref.constructor) || {inject: []};
@@ -49,7 +76,10 @@ export function Inject(config) {
     }
 }
 
-/** DI is a library for managing entities like functions and objects and their dependencies.
+/** __DI-XXL__ is a very generic Dependency Injection (DI) library, facilitating lazy initialization
+ * and loose coupling. It is generic, it can inject anything into anything in multiple ways. Together
+ * with support for namespaces, decorators and factory functions it is a powerful tool ready for complex
+ * projects.
  */
 export class DI {
     /**
@@ -75,10 +105,7 @@ export class DI {
     };
 
     /**
-     * This Enum defines actions that can be applied to the descriptor reference
-     *     when requested ({@link DI#get}).
-     *
-     * For example
+     * Enum with all available actions applicable to the descriptor reference when requested ({@link DI#get}).
      *
      * @example
      * class Foo {}
@@ -105,12 +132,12 @@ export class DI {
      *     action: DI.ACTIONS.NONE
      * });
      *
-     * The reference (ref) point to Foo which is a class and
+     * @type Enum
      * @readonly
      * @enum {object}
-     * @property {number} CREATE Create an instance using `new` (Default if ref is a function)
+     * @property {number} CREATE Create an instance using `new` (Default if __ref__ is a function)
      * @property {number} INVOKE Call the function
-     * @property {number} NONE Do nothing (Default is ref is an object)
+     * @property {number} NONE Do nothing (Default is __ref__ is an object)
      */
     static get ACTIONS() {
         return {
@@ -121,14 +148,14 @@ export class DI {
     }
 
     /**
-     * Instances are useful if changes should not be persisted globally. Every change
-     * made on an instance will only be accessible by that instance. An instance should only
-     * be used in case where some projections are needed temporary.
+     * Instances are useful if changes should be kept within the scope of the instance only. So, every
+     * change made on an instance will only be accessible by that instance. Its best use case is
+     * when temporary projection are needed. In any other case simply use `DI` directly.
      *
      * @class DI
      * @constructor
      * @param {object} [config] configuration object
-     * @param {number} [config.lookup] lookup direction. See {@link DIRECTIONS} (default: DI.DIRECTIONS.PARENT_TO_CHILD)
+     * @param {number} [config.lookup] lookup direction. See {@link DI#DIRECTIONS} (default: PARENT_TO_CHILD)
      **/
     constructor(config = {}) {
         this.lookup = (config.lookup || DI.DIRECTIONS.PARENT_TO_CHILD);
@@ -205,6 +232,13 @@ export class DI {
         return this;
     }
 
+    /**
+     *
+     * @param name
+     * @param ns
+     * @param descriptors
+     * @returns {DI}
+     */
     static removeDescriptor(name, ns, descriptors = DESCRIPTORS) {
         descriptors.delete(fullNameFor({name, ns}));
 
@@ -212,17 +246,41 @@ export class DI {
     }
 
     /**
-     *
-     * @param fullName
-     * @param config
-     * @returns {*}
+     * See {@link DI#get)
      */
-    get(fullName, config) {
-        return DI.get.call(this, fullName, config);
+    get(name, config) {
+        return DI.get.call(this, name, config);
     }
 
-    static get(fullName, config) {
-        let descriptor = typeof fullName === 'string' ? this.lookupDescriptor(fullName, config) : fullName;
+    /**
+     * Returns the outcome of the reference processed by one of the {@link DI#ACTIONS}. Use __config__ to
+     * overwrite one or more descriptor values. Below is an example in which __params__ is replaced.
+     *
+     * @example
+     * class Foo {
+     *     constructor(base) { this.base = base; }
+     *     addToBase(num) { return this.base + num; }
+     * }
+     *
+     * const descriptor = {
+     *     name: 'foo',
+     *     ref: Foo,
+     *     action: DI.ACTIONS.CREATE,
+     *     params: [100]
+     * };
+     * di.set(descriptor);
+     *
+     * di.get('foo').addToBase(1); // --> 101
+     * di.get('foo', {params: [1]}).addToBase(1); // --> 2
+     *
+     * @param {string} name name of the descriptor
+     * @param {object} [config] configuration
+     * @param {number} [config.lookup] Direction of namespace traversal
+     * @param {array} [config.params] List of arguments (e.g: used to create an instance)
+     * @returns {*}
+     */
+    static get(name, config) {
+        let descriptor = typeof name === 'string' ? this.lookupDescriptor(name, config) : name;
         let instance = null;
 
         if (descriptor) {

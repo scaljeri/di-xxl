@@ -10,11 +10,9 @@
 
 You can find a demo, documentation and code coverage [here](http://scaljeri.github.io/javascript-dependency-injection/)
 
-**DI-XXL** is a dependency injection library facilitating lazy initialization and loose coupling. To improve
-the code you're writing even more, it is not possible to inject into the constructor; keep constructors 
-empty or as small as possible. Although this may sound like a restriction, you will not miss it, because
-it is an extremely versatile library; it provides many ways to implement dependency injection. Choose
-whatever fits your needs best.
+**DI-XXL** is a dependency injection library facilitating lazy initialization and loose coupling. 
+It is generic, because it can inject anything into anything in multiple ways. Together with support 
+for namespaces, decorators, factory functions and projections it is a powerful tool ready for complex projects.
 
 In its most basic form, to register an entity like a class, object or function do
 
@@ -54,7 +52,9 @@ But when provided, the default parameters are ignored
     
 ### Injection 
 In theory you can inject anything into almost everything :)  Circular dependencies do not exist, because it is not 
-possible to inject into a constructor. So, to inject `foo` into an object do
+possible to inject into a constructor. Keep your constructors empty or as small as possible! 
+
+So, to inject `foo` into an object do
 
     const app = {};
     
@@ -74,7 +74,25 @@ possible to inject into a constructor. So, to inject `foo` into an object do
 
 
 ### ACTIONS
-It is also possible to register function (not constructors)
+As you might have noticed, anything can be registered, like classes, objects, functions (not constructors)
+numbers, strings, etc. But, for Objects and functions it is not trivial what **DI-XXL** should do 
+when requested. For example
+
+    const descriptor = {
+        name: 'Foo',
+        ref: function Test() { ... }
+    }
+    
+Is `Test` a constructor or not? Now, if it is ambiguous, you have to define the action yourself
+
+    const descriptor = {
+        name: 'Foo',
+        ref: function Test() { ... },
+        action: DI.ACTIONS.CREATE
+    }
+
+With `DI.ACTIONS.CREATE` **DI-XXL** will treat `ref` as a constructor function. Or if 
+nothing should be done, simple return the  `ref`
 
     const descriptor = {
         name: 'double',
@@ -84,8 +102,6 @@ It is also possible to register function (not constructors)
     
     DI.set(descriptor);
     
-The action `DI.ACTIONS.NONE` tells DI so simple return the original reference when it is requested
-
     const double = DI.get('double');
     double(10); // -> 20
     
@@ -97,7 +113,7 @@ In case of functions, we can take this even on step further
         action: DI.ACTIONS.INVOKE
     }
     
-This time DI wil invoke the reference using the provided parameters and return its output
+This time **DI-XXL** will invoke the reference using the provided parameters and return its output
 
     const double = DI.get('double', {params: [10]});
     double(2); // -> 14
@@ -111,11 +127,45 @@ To turn a class into a singleton, add the singleton flag to the descriptor
         singleton: true
     }
     
+This will also work with Objects. By default (if not specified) on object is a singleton
+
+    const descriptor = {
+        name: 'app',
+        ref: {}
+    }
+    DI.set(descriptor);
+    
+    let app = DI.get('app')
+    app.count = 1
+    app = DI.get('app');
+    console.log(app.count); // -> 1
+    
+But if you set it to false, **DI-XXL** returns a new object, using internally `Object.create`, each time
+    
+    const descriptor = {
+        name: 'app',
+        ref: {},
+        singleton: false
+    }
+    DI.set(descriptor);
+    
+    let app = DI.get('app')
+    app.count = 1
+    app = DI.get('app');
+    console.log(app.count); // -> undefined
+    
 ### Inherit
-TODO
+In case you have almost identical descriptors for two different entities, one can inherit the other. For example 
+
+    descriptor = {
+        name: 'Bar',
+        ref: Bar,
+        inherit: 'foo'
+    }
+   
 
 ### Factories
-A class can produce instances of an other class
+If a class produce instances of an other class, like this
  
      class Bar {
          getFoo(input) {
@@ -125,38 +175,33 @@ A class can produce instances of an other class
      
 In order to rewrite this using **DI-XXL**, Factories come to the rescue 
 
-     class Bar {
-         constructor(fooFactory) { this.fooFactory = fooFactory; }
-          
-         getFoo(input) { 
-            return this.fooFactory(input);  
-         }
-     }
+    class Bar {
+        getInstance() {
+            return this.creator();
+        }        
+    }
      
-To re
-and the relations are now defined as follows
- 
-     di.register('$bar', Bar, ['$fooFactory']);
-     
-     di.register('$foo', Foo);
-     
-That's all, the Foo-factory is created auto magically!
- 
-If you really want to create a factory yourself, you can
-     
-     di.register('$fooFactory', ['list', 'of', 'params'], { factoryFor: '$bar' });
+    descriptor = {
+        name: 'bar',
+        ref: Bar,
+        inject: [{property: 'creator', factory: 'Foo'}]
+    }
+
+**DI-XXL** creates a factory function which produces instances of Foo and injects it into the 
+Bar instance.
      
 ### @Decorators    
-As of this writing you have to use a couple of babel plugins to get `@decorators` working, but if you have
-you can use **DI-XXL** as follows
+As of this writing you have to use a couple of babel plugins to get `@decorators` up and running, 
+but if you have you can use **DI-XXL** as follows
 
     import {Injectable, Inject} from 'di-xxl';
     
-    @Injectable()
+    @Injectable({name: 'foo'})
     class Foo {
         sum(a, b) { return a + b }
     }
     
+    @Injectable({name: 'Bar'})
     class Bar {
         @Inject('foo')
         addService
@@ -170,7 +215,7 @@ you can use **DI-XXL** as follows
         }
     }
 
-Note that this is equivalent to
+Which is equivalent to
 
     import {ID} from 'di-xxl';
     
@@ -190,18 +235,24 @@ After registration they can be used as follows
 
     import {ID} from 'di-xxl';
     
-    let bar = DI.getInstance('bar', {params: [100]});
+    let bar = DI.get('bar', {params: [100]});
     bar.add(1); // -> 101
     
-However, if you need dependencies in the constructor you have a couple of ways to achieve this
+    
+### Namespaces
+TODO
+
+### Projections
+TODO
 
 ### Inject into a constructor
-Ok, if you really really really have to do this you can still do it. For example, if you need to 
-inject `Foo` into `Bar`
+Ok, if you really really really have to do this you can of course do it ... yourself :)
 
-    const bar = DI.get('bar', {params: [DI.get('foo')]});
+    const params = [DI.get('foo'), 10];
+    const bar = DI.get('bar', {params});
     
-
+ 
+If you want to find out more about the possibilities with decorators, checkout the test fixtures here (TODO)
 
 
 For more advanced use-cases checkout the [unit tests](https://github.com/scaljeri/javascript-dependency-injection/blob/master/test/di.spec.js)
