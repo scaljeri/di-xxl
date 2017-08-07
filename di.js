@@ -246,7 +246,7 @@ export class DI {
     }
 
     /**
-     * See {@link DI#get)
+     * See{@link DI.get}
      */
     get(name, config) {
         return DI.get.call(this, name, config);
@@ -298,11 +298,19 @@ export class DI {
         return instance;
     }
 
-    set(config) {
+    /**
+     * See {@link DI.set}
+     */
+    set(descriptor) {
         return DI.set.call(this, config);
     }
 
-    static set(config) {
+    /**
+     * Register an entity using
+     * @param config
+     * @returns {*}
+     */
+    static set(descriptor) {
         Injectable(config).call(this, config.ref);
 
         return this;
