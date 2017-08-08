@@ -157,9 +157,8 @@ export class DI {
      * @param {object} [config] configuration object
      * @param {number} [config.lookup] lookup direction. See {@link DI#DIRECTIONS} (default: PARENT_TO_CHILD)
      **/
-    constructor(config = {}) {
-        this.lookup = (config.lookup || DI.DIRECTIONS.PARENT_TO_CHILD);
-        this.config = config;
+    constructor(descriptor = {}) {
+        this.defaults = Object.assign({lookup: DI.DIRECTIONS.PARENT_TO_CHILD}, descriptor);
 
         this.projections = new Map();
         this.descriptors = new Map();
@@ -177,15 +176,15 @@ export class DI {
         return DI.lookupDescriptor.call(this, fullName, config);
     }
 
-    static lookupDescriptor(fullName, config = {}) {
-        const settings = Object.assign({lookup: this.lookup || DI.DIRECTIONS.PARENT_TO_CHILD}, this.config, config, {name: fullName});
+    static lookupDescriptor(name, config = {}) {
+        const settings = Object.assign({}, this.defaults, config, {name: name});
 
         let descriptor = lookup(settings,
-            fullName => {
-                return this.getDescriptor(fullName);
+            name => {
+                return this.getDescriptor(name);
             },
-            fullName => {
-                return this.getProjection(fullName);
+            name => {
+                return this.getProjection(name);
             }
         );
 
@@ -302,7 +301,7 @@ export class DI {
      * See {@link DI.set}
      */
     set(descriptor) {
-        return DI.set.call(this, config);
+        return DI.set.call(this, descriptor);
     }
 
     /**
@@ -311,19 +310,19 @@ export class DI {
      * @returns {*}
      */
     static set(descriptor) {
-        Injectable(config).call(this, config.ref);
+        Injectable(descriptor).call(this, descriptor.ref);
 
         return this;
     }
 
-    getFactory(fullName, config) {
-        return DI.getFactory(fullName, config);
+    getFactory(name, config) {
+        return DI.getFactory(name, config);
     }
 
 
-    static getFactory(fullName, config = {params: []}) {
+    static getFactory(name, config = {params: []}) {
 
-        const descriptor = Object.assign({}, (typeof fullName === 'string' ? this.lookupDescriptor(fullName, config) || {} : fullName), config);
+        const descriptor = Object.assign({}, (typeof name === 'string' ? this.lookupDescriptor(name, config) || {} : name), config);
 
         return (...params) => {
             return this.get(params.length ? Object.assign(descriptor, {params}) : descriptor);
