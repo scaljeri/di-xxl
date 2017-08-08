@@ -2,16 +2,30 @@ const DESCRIPTORS = new Map(),
     PROJECTIONS = new Map();
 
 /**
- * This is a decorator function which registers the entity it is attached to
+ * A decorator which registers the class it is attached to.
+ *
+ * @param {object} descriptor configuration needed for the entity being registered
+ * @param {string} descriptor.name entity name, used to access or inject the entity
+ * @param {string} descriptor.ns namespace or prefix of the reference name separated with a '.' (e.g: widget.foo)
+ * @param {array|object} descriptor.params list of parameters used to initialse/call the entity if none are given
+ * @param {array} descriptor.inject list of entity names to be injected
+ * @param {string} descriptor.inherit descriptor properties of the referenced entity are used as defaults
+ * @param {boolean} descriptor.singleton turn the entity into a singleton
+ * @param {string} descriptor.role role of the entity (e.g: Service or Component)
+ * @param {array} descriptor.accept list of roles which are allowed to be injected
+ * @param {string} descriptor.reject list or roles which are not allowed to be injected
+ * @param {number} descriptor.action the action to be applied to the entity when requested
+ *
+ * @returns {function(*)} Use this curry function to pass in the entity
  *
  * @example
  *
- *     \@Injectable({name: 'Foo'})
+ *     \@Injectable({name: 'foo'})
  *     class Foo { ... }
  *
  */
-export function Injectable() {
-    const settings = arguments[0] ? (typeof arguments[0] === 'string' ? {name: arguments[0]} : arguments[0]) : {};
+export function Injectable(descriptor) {
+    const settings = descriptor ? (typeof descriptor === 'string' ? {name: descriptor} : descriptor) : {};
 
     return function decorator(ref) {
         let descriptor = Object.assign(DESCRIPTORS.get(ref) || {}, settings);
@@ -95,7 +109,7 @@ export class DI {
      * }
      *
      * @readonly
-     * @enum {object}
+     * @enum {number}
      * @property {number} PARENT_TO_CHILD Upwards (Capturing)
      * @property {number} CHILD_TO_PARENT Downwards (Bubbling)
      */
@@ -105,7 +119,8 @@ export class DI {
     };
 
     /**
-     * Enum with all available actions applicable to the descriptor reference when requested ({@link DI#get}).
+     * Enum with all available actions applicable to the entity when requested ({@link DI#get}).
+     * For example, if the entity is a class, you probably want to return an instance of that class, so use __DI.ACTIONS.CREATE__.
      *
      * @example
      * class Foo {}
@@ -132,7 +147,7 @@ export class DI {
      *     action: DI.ACTIONS.NONE
      * });
      *
-     * @type Enum
+     * @enum {number}
      * @readonly
      * @enum {object}
      * @property {number} CREATE Create an instance using `new` (Default if __ref__ is a function)
@@ -150,12 +165,23 @@ export class DI {
     /**
      * Instances are useful if changes should be kept within the scope of the instance only. So, every
      * change made on an instance will only be accessible by that instance. Its best use case is
-     * when temporary projection are needed. In any other case simply use `DI` directly.
+     * when temporary projection are needed. In any other case simply use `DI` directly. The values of the
+     * __descriptor__ are used as defaults anywehere in the library where descriptors are required (e.g. {@link DI.get})
      *
-     * @class DI
      * @constructor
-     * @param {object} [config] configuration object
-     * @param {number} [config.lookup] lookup direction. See {@link DI#DIRECTIONS} (default: PARENT_TO_CHILD)
+     * @param {object} [descriptor] configuration needed for the entity being registered
+     * @param {array} [descriptor.accept] list of roles which are allowed to be injected
+     * @param {number} [descriptor.action] the action to be applied to the entity when requested (see {@link DI.ACTIONS})
+     * @param {string} [descriptor.inherit] descriptor properties of the referenced entity are used as defaults
+     * @param {array} [descriptor.inject] list of entity names to be injected
+     * @param {string} [descriptor.name] entity name, used to access or inject the entity
+     * @param {string} [descriptor.ns namespace] or prefix of the entity name separated with a '.' (e.g: widget.foo)
+     * @param {array|object} [descriptor.params] list of parameters used to initialse/call the entity if none are given
+     * @param {string} [descriptor.reject] list or roles which are not allowed to be injected
+     * @param {string} [descriptor.ref] the entity (e.g.: class or function)
+     * @param {string} [descriptor.role] role of the entity (e.g: Service or Component)
+     * @param {boolean} [descriptor.singleton] turn the entity into a singleton
+     * @param {number} [descriptor.lookup] lookup direction. See {@link DI#DIRECTIONS} (default: __PARENT_TO_CHILD__)
      **/
     constructor(descriptor = {}) {
         this.defaults = Object.assign({lookup: DI.DIRECTIONS.PARENT_TO_CHILD}, descriptor);
@@ -164,18 +190,50 @@ export class DI {
         this.descriptors = new Map();
     }
 
+
+    /**
+     * See {@link DI.getDescriptor}
+     */
     getDescriptor(name, ns) {
         return DI.getDescriptor(name, ns, this.descriptors) || DI.getDescriptor(name, ns);
     }
 
+    /**
+     * Returns the descriptor identified by the given __name__. However, it will not
+     * traverse the namespace
+     *
+     * @param {string} name entity name (it can include the namespace)
+     * @param {string} [ns] namespace
+     * @returns {object} descriptor
+     */
     static getDescriptor(name, ns, descriptor = DESCRIPTORS) {
         return descriptor.get(fullNameFor({name, ns}));
     }
 
-    lookupDescriptor(fullName, config) {
-        return DI.lookupDescriptor.call(this, fullName, config);
+    /**
+     * See {@link DI.lookupDescriptor}
+     */
+    lookupDescriptor(name, config) {
+        return DI.lookupDescriptor.call(this, name, config);
     }
 
+    /**
+     * This function is identical to {@link DI.getDescriptor} except it will traverse the namespace until it finds it.
+     *
+     * @example
+     *
+     *     const descriptor = {
+     *         name: 'foo',
+     *         ns: 'a.b.c.d'
+     *         ...
+     *     }
+     *
+     *     DI.lookupDescriptor('foo', {lookup: DI.DIRECTIONS.PARENT_TO_CHILD}); // will find `a.b.c.d.foo`
+     *
+     * @param name
+     * @param config
+     * @returns {object} descriptor
+     */
     static lookupDescriptor(name, config = {}) {
         const settings = Object.assign({}, this.defaults, config, {name: name});
 
@@ -191,10 +249,20 @@ export class DI {
         return descriptor;
     }
 
+    /**
+     * See {@link DI.getProjection}
+     */
     getProjection(name, ns) {
         return DI.getProjection(name, ns, this.projections) || DI.getProjection(name, ns);
     }
 
+    /**
+     *
+     * @param name
+     * @param ns
+     * @param projections
+     * @returns {V}
+     */
     static getProjection(name, ns, projections = PROJECTIONS) {
         return projections.get(fullNameFor({name, ns}));
     }
