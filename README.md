@@ -50,29 +50,6 @@ But when provided, the default parameters are ignored
     
     DI.get('foo', {params: [999]}); // -> new Foo(999)
     
-### Injection 
-In theory you can inject anything into almost everything :)  Circular dependencies do not exist, because it is not 
-possible to inject into a constructor. Keep your constructors empty or as small as possible! 
-
-So, to inject `foo` into an object do
-
-    const app = {};
-    
-    const descriptor = {
-        name: 'app',
-        ref: app,
-        inject: [{property: 'foo', name: 'foo'}]
-    };
-    
-    ...
-    
-    const myApp = DI.get('app');
-    myApp.foo instanceof Foo; // --> true
-    
-
-    myApp !== DI.get('app');  // is TRUE, because Object.create(app) is return 
-
-
 ### ACTIONS
 As you might have noticed, anything can be registered, like classes, objects, functions (not constructors)
 numbers, strings, etc. But, for Objects and functions it is not trivial what **DI-XXL** should do 
@@ -240,7 +217,75 @@ After registration they can be used as follows
     
     
 ### Namespaces
-TODO
+If namespaces are used at one place in your application, it is probably best to use them everywhere
+
+    @Injectable({ name: 'foo', ns: 'widget'});
+    class MyWidget { .... }
+    
+    @Injectable({name: 'foo', ns: 'app'});
+    class MyApp { ... }
+    
+    
+This way you still have access to both `foo` entities
+
+    DI.get('app.foo'); 
+    DI.get('widget.foo')
+    
+Meaning that you have not to worry about name collitions. 
+But there is more, a namespace can have multiple parts, like `a.b.c`
+
+    @Injectable({name: 'foo', ns: 'a.b.c'})
+
+    DI.get('a.b.c.foo') 
+   
+But what if you do
+
+    DI.get({name: 'foo', ns: 'a.b.c.d'});
+    
+In this case, **DI-XXL** will find it, because it will travers the namespace. By default it will look for `foo` 
+in the following order
+
+    'a.b.c.d.foo'
+    'foo'
+    'a.foo'
+    'a.b.foo'
+    'a.b.c.foo' -> bingo
+    
+This is the default lookup direction defined by `DI.ACTIONS.PARENT_TO_CHILD`, it is equivalent to
+
+    DI.get('a.b.c.dfoo', {lookup: DI.DIRECTIONS.PARENT_TO_CHILD});
+    
+To do a reverse lookup do
+
+    'a.b.c.d.foo'
+    'a.b.c.foo'
+    'a.b.foo'
+    'a.foo'
+    'foo'
+    
+    DI.get('a.b.c.foo', {lookup: DI.DIRECTIONS.CHILD_TO_PARENT});
+    
+### Injection 
+In theory you can inject anything into almost everything :)  Circular dependencies do not exist, because it is not 
+possible to inject into a constructor. Keep your constructors empty or as small as possible! 
+
+So, to inject `foo` into an object do
+
+    const app = {};
+    
+    const descriptor = {
+        name: 'app',
+        ref: app,
+        inject: [{property: 'foo', name: 'foo'}]
+    };
+    
+    ...
+    
+    const myApp = DI.get('app');
+    myApp.foo instanceof Foo; // --> true
+    
+
+    myApp !== DI.get('app');  // is TRUE, because Object.create(app) is return 
 
 ### Projections
 TODO
