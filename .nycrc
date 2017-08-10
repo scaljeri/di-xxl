@@ -1,0 +1,25 @@
+{
+    "check-coverage": false,
+    "lines": 99,
+    "statements": 99,
+    "functions": 99,
+    "branches": 99,
+    "include": [
+      "di.js"
+    ],
+    "reporter": [
+      "lcov",
+      "text-summary"
+    ],
+    "require": [
+        "babel-register"
+    ],
+    "extension": [
+      ".js"
+    ],
+    "cache": false,
+    "all": false,
+    "sourceMap": false,
+    "instrument": false,
+    "report-dir": "./coverage"
+}
