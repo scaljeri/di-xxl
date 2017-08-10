@@ -318,8 +318,8 @@ Install this library with `yarn`
     $> yarn doc
     
 ### Run in the browser
-If you want to run this library in the browser use browserify
-main.js, you can browserify it using [babelify](https://github.com/babel/babelify) as follows:
+If you want to run this library in the browser build it with browserify using [babelify](https://github.com/babel/babelify) 
+as follows
 
     $> ./node_modules/.bin/browserify main.js -o bundle.js -t [ babelify --presets [ es2015 stage-0 ] ]
     
