@@ -6,6 +6,18 @@ describe('DI - Factory', () => {
     let factory, instance;
 
     before(() => {
+        DI.set({
+            name: 'foo',
+            ns: 'factory',
+            ref: fixtures.Foo,
+            singleton: true
+        })
+            .set({
+                name: 'bar',
+                ns: 'factory',
+                ref: fixtures.Bar,
+                inject: [{name: 'factory.foo', factory: true, property: 'creator'}]
+            });
     });
 
     describe('Create instances', () => {
@@ -81,6 +93,17 @@ describe('DI - Factory', () => {
             instance.args.length.should.equals(2);
             instance.args[0].should.equals(11);
             instance.args[1].should.equals(12);
+        });
+    });
+
+    xdescribe('Singletons', () => {
+        let instance;
+        beforeEach(() => {
+            instance = DI.get('factory.bar');
+        });
+
+        it('should create singletons', () => {
+           instance.creator().should.equal(DI.get('factory.foo'));
         });
     });
 });

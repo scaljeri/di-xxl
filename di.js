@@ -389,7 +389,6 @@ export class DI {
 
 
     static getFactory(name, config = {params: []}) {
-
         const descriptor = Object.assign({}, (typeof name === 'string' ? this.lookupDescriptor(name, config) || {} : name), config);
 
         return (...params) => {
@@ -415,7 +414,7 @@ function lookup(config, locator, relocator) {
 
     ({name, ns, position} = config);
 
-    const isBubbling = config.lookup !== DI.DIRECTIONS.PARENT_TO_CHILD;
+    const isBubbling = config.lookup === DI.DIRECTIONS.CHILD_TO_PARENT;
 
     if (ns === undefined) {
         [ns, name] = splitContract(name.toLowerCase());

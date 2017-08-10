@@ -1,8 +1,7 @@
 import {Injectable, Inject} from '../../di';
 
 @Injectable({
-    ns: 'decorator',
-    name: '$foo'
+    name: 'decorator.$foo'
 })
 export class Foo {
     @Inject('decorator.iService')
