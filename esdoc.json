@@ -1,8 +1,0 @@
-{
-  "source": ".",
-  "destination": "./esdoc",
-  "excludes": ["\\.config\\.(js|es6)$", "node_modules", "coverage", "doc", "test", "spec"],
-  "plugins": [
-    {"name": "esdoc-es7-plugin"}
-  ]
-}
