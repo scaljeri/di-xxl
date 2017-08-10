@@ -8,7 +8,7 @@
 
 ## Javascript Dependency Injection library 
 
-You can find a demo, documentation and code coverage [here](http://scaljeri.github.io/javascript-dependency-injection/)
+You can find a demo, documentation and code coverage [here](http://scaljeri.github.io/di-xxl/)
 
 **DI-XXL** is a dependency injection library facilitating lazy initialization and loose coupling. 
 It is generic, because it can inject everything into anything in multiple ways. Together with support 
