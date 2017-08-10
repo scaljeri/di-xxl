@@ -11,10 +11,10 @@
 You can find a demo, documentation and code coverage [here](http://scaljeri.github.io/javascript-dependency-injection/)
 
 **DI-XXL** is a dependency injection library facilitating lazy initialization and loose coupling. 
-It is generic, because it can inject anything into anything in multiple ways. Together with support 
-for namespaces, decorators, factory functions and projections it is a powerful tool ready for complex projects.
+It is generic, because it can inject everything into anything in multiple ways. Together with support 
+for namespaces, decorators, factory functions and projections it is a powerful tool ready for complex situations.
 
-In its most basic form, to register an entity like a class, object or function do
+In its most basic form, to register an entity like a class, object or function looks like this
 
     import {DI} from 'di-xxl';
     
@@ -27,22 +27,23 @@ In its most basic form, to register an entity like a class, object or function d
     
     DI.set(descriptor)
     
-The `descriptor` object needs at least a `name` and a `ref`erence. Above `Foo` gets registered
-and accessible by the name `foo`. Next, use `get` to retrieve an instance of `Foo` 
+`Foo` gets registered here and will be accessible by the name `foo`. The `descriptor` object needs at least 
+a `name` and a `ref`erence. Next, use `get` to retrieve an instance of `Foo` 
 
     const foo = DI.get('foo');
     
 ### Parameters
-When parameters are required in order to create an instance, add the `params` array
+Above, the instance was created without parameters. In order to add default parameters, define
+the `params` array
     
     const descriptor = {
-        name 'bar', 
+        name 'foo', 
         ref: Foo,
         params: [10, 20]
     }
     DI.set(descriptor);
     
-The parameter `10` is used when none is given when the instane of Foo is requested
+These `params` will be used when none are given when the instance of Foo is requested
 
     DI.get('foo'); // -> new Foo(10, 20)
 
@@ -50,26 +51,32 @@ But when provided, the default parameters are ignored
     
     DI.get('foo', {params: [999]}); // -> new Foo(999)
     
-### ACTIONS
-As you might have noticed, anything can be registered, like classes, objects, functions (not constructors)
-numbers, strings, etc. But, for Objects and functions it is not trivial what **DI-XXL** should do 
-when requested. For example
-
-    const descriptor = {
-        name: 'Foo',
-        ref: function Test() { ... }
-    }
     
-Is `Test` a constructor or not? Now, if it is ambiguous, you have to define the action yourself
-
+### Injection 
+In theory you can inject anything into almost everything :)  Circular dependencies do not exist, because it is not 
+possible to inject into a constructor. Keep your constructors empty or as small as possible! 
+    
+So, to inject `foo` into an object do
+    
+    const app = {};
+        
     const descriptor = {
-        name: 'Foo',
-        ref: function Test() { ... },
-        action: DI.ACTIONS.CREATE
-    }
-
-With `DI.ACTIONS.CREATE` **DI-XXL** will treat `ref` as a constructor function. Or if 
-nothing should be done, simple return the  `ref`
+        name: 'app',
+        ref: app,
+        inject: [{property: 'foo', name: 'foo'}]
+    };
+    DI.set(descriptor);
+        
+      
+    const myApp = DI.get('app');
+    myApp.foo instanceof Foo; // --> true
+        
+    myApp !== DI.get('app');  // is TRUE, because Object.create(app) is return 
+    
+### ACTIONS
+Because anything can be registered, like classes, objects, but also normal functions (not constructors).
+If a function is not a constructor you have to tell **DI-XXL** what it should, return the function or call it
+and return the output
 
     const descriptor = {
         name: 'double',
@@ -82,7 +89,7 @@ nothing should be done, simple return the  `ref`
     const double = DI.get('double');
     double(10); // -> 20
     
-In case of functions, we can take this even on step further
+or
 
     const descriptor = {
         name: 'double',
@@ -132,17 +139,16 @@ But if you set it to false, **DI-XXL** returns a new object, using internally `O
     console.log(app.count); // -> undefined
     
 ### Inherit
-In case you have almost identical descriptors for two different entities, one can inherit the other. For example 
+In case you have almost identical descriptors for two different entities, one can inherit the other
 
     descriptor = {
         name: 'Bar',
         ref: Bar,
         inherit: 'foo'
     }
-   
 
 ### Factories
-If a class produce instances of an other class, like this
+When a class produce instances of an other class
  
      class Bar {
          getFoo(input) {
@@ -150,7 +156,7 @@ If a class produce instances of an other class, like this
          }
      }
      
-In order to rewrite this using **DI-XXL**, Factories come to the rescue 
+it can be rewritten with **DI-XXL** using Factories
 
     class Bar {
         getInstance() {
@@ -161,12 +167,79 @@ In order to rewrite this using **DI-XXL**, Factories come to the rescue
     descriptor = {
         name: 'bar',
         ref: Bar,
-        inject: [{property: 'creator', factory: 'Foo'}]
+        inject: [{property: 'creator', factory: 'foo'}]
     }
 
-**DI-XXL** creates a factory function which produces instances of Foo and injects it into the 
-Bar instance.
-     
+**DI-XXL** creates a factory function which produces instances of Foo and injects it.
+
+### Projections
+Projections let you map an entity name to an other
+
+    DI.setProjection({'foo': 'bar'})
+
+    const something = DI.get('foo'); 
+    
+an instance of `bar` is returned. Projections can be used, for example, to change the behaviour of you application 
+dynamically, based on user action.
+
+### Namespaces
+Namespaces help to structure your entities in a very descriptive way and is nothing more than a prefix of the entity name
+
+    user.overview.profile
+    
+with `user.overview` being the namespace. To begin with, try to keep your entity names unique. For example
+
+    user.profile
+    user.overview.profile
+    
+`profile` is not unique!! As long as you know what your are doing this isn't a problem. The reason for this is how 
+namespaces are implemented. For example 
+ 
+    class User { ... }
+    
+    DI.set({ 
+        name: 'user.overview.profile', 
+        ref: User,
+        inject: [
+            {property: 'list', name: 'user.widgets.list'},
+            {property: 'source', name: 'user.data.source'}]});
+        
+    DI.get('user.overview.profile');
+  
+The `list` and `source` entities, although exactly specified, they are searched for within the namespace from the root up.
+It means that **DI-XXL** will look for `list` using the following names
+
+    list               --> no
+    user.list          --> no
+    user.widgets.list  --> yes
+    
+This allows you to redefine entities
+
+    DI.set({ name: 'list', ns: 'user', ....});
+    
+This time the the search for `list` looks like
+
+    list       --> no
+    user.list  --> yes
+    
+And will not find `user.widgets.list`. It is best used preferably only during initialization.
+So, this is the default lookup direction  (`DI.DIRECTIONS.PARENT_TO_CHILD), but you can reverse the lookup
+
+    DI.get('user.overview.profile', {lookup: DI.DIRECTIONS.CHILD_TO_PARENT});
+    
+So far we have only talked about the entities from the `inject` list, but this search pattern is also applied on the entity request, 
+with one exception, the first attempt is always the name provided
+
+    // DI.DIRECTIONS.CHILD_TO_PARENT
+       user.overview.profile
+       user.profile
+       profile
+       
+    // DI.DIRECTIONS.PARENT_TO_CHIDL
+       user.overview.profile
+       profile
+       user.profile
+
 ### @Decorators    
 As of this writing you have to use a couple of babel plugins to get `@decorators` up and running, 
 but if you have you can use **DI-XXL** as follows
@@ -215,80 +288,7 @@ After registration they can be used as follows
     let bar = DI.get('bar', {params: [100]});
     bar.add(1); // -> 101
     
-    
-### Namespaces
-If namespaces are used at one place in your application, it is probably best to use them everywhere
-
-    @Injectable({ name: 'foo', ns: 'widget'});
-    class MyWidget { .... }
-    
-    @Injectable({name: 'foo', ns: 'app'});
-    class MyApp { ... }
-    
-    
-This way you still have access to both `foo` entities
-
-    DI.get('app.foo'); 
-    DI.get('widget.foo')
-    
-Meaning that you have not to worry about name collitions. 
-But there is more, a namespace can have multiple parts, like `a.b.c`
-
-    @Injectable({name: 'foo', ns: 'a.b.c'})
-
-    DI.get('a.b.c.foo') 
-   
-But what if you do
-
-    DI.get({name: 'foo', ns: 'a.b.c.d'});
-    
-In this case, **DI-XXL** will find it, because it will travers the namespace. By default it will look for `foo` 
-in the following order
-
-    'a.b.c.d.foo'
-    'foo'
-    'a.foo'
-    'a.b.foo'
-    'a.b.c.foo' -> bingo
-    
-This is the default lookup direction defined by `DI.ACTIONS.PARENT_TO_CHILD`, it is equivalent to
-
-    DI.get('a.b.c.dfoo', {lookup: DI.DIRECTIONS.PARENT_TO_CHILD});
-    
-To do a reverse lookup do
-
-    'a.b.c.d.foo'
-    'a.b.c.foo'
-    'a.b.foo'
-    'a.foo'
-    'foo'
-    
-    DI.get('a.b.c.foo', {lookup: DI.DIRECTIONS.CHILD_TO_PARENT});
-    
-### Injection 
-In theory you can inject anything into almost everything :)  Circular dependencies do not exist, because it is not 
-possible to inject into a constructor. Keep your constructors empty or as small as possible! 
-
-So, to inject `foo` into an object do
-
-    const app = {};
-    
-    const descriptor = {
-        name: 'app',
-        ref: app,
-        inject: [{property: 'foo', name: 'foo'}]
-    };
-    
-    ...
-    
-    const myApp = DI.get('app');
-    myApp.foo instanceof Foo; // --> true
-    
-
-    myApp !== DI.get('app');  // is TRUE, because Object.create(app) is return 
-
-### Projections
-TODO
+TODO: Checkout the unit tests fixtures for more advanced use cases
 
 ### Inject into a constructor
 Ok, if you really really really have to do this you can of course do it ... yourself :)
@@ -297,47 +297,32 @@ Ok, if you really really really have to do this you can of course do it ... your
     const bar = DI.get('bar', {params});
     
  
-If you want to find out more about the possibilities with decorators, checkout the test fixtures here (TODO)
-
-
+### More information
 For more advanced use-cases checkout the [unit tests](https://github.com/scaljeri/javascript-dependency-injection/blob/master/test/di.spec.js)
 file.
 
+TODO: DEMO link
+
 #### Installation ####
 
-Install this library with `npm` 
+Install this library with `yarn` 
 
-    $> npm install --save javascript-dependency-injection@beta
-    
-or
-
-    $> bower install javascript-dependency-injection#2.0.0-rc.1
+    $> yarn add di-xxl@beta
     
 #### Unit testing ####
 
-    $> npm test
+    $> yarn test
     
 #### Documentation ####
 
-    $> npm run doc
+    $> yarn doc
     
 ### Run in the browser
-If you want to run this library in the browser, and you have, for example, included it in
+If you want to run this library in the browser use browserify
 main.js, you can browserify it using [babelify](https://github.com/babel/babelify) as follows:
 
     $> ./node_modules/.bin/browserify main.js -o bundle.js -t [ babelify --presets [ es2015 stage-0 ] ]
     
-    
-TODO
-         * Projections: They map dependencies to others. For example
-         *
-         *     @Inject('Bar')
-         *     service
-         *
-         * can be projected and inject 'Maz'
-         *
-         *     di.setProjection({Bar: 'Maz'});
-
 [travis-url]: https://travis-ci.org/scaljeri/javascript-dependency-injection.png
 [travis-image]: https://travis-ci.org/scaljeri/javascript-dependency-injection
 
