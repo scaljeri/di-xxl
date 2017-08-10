@@ -323,6 +323,11 @@ as follows
 
     $> ./node_modules/.bin/browserify main.js -o bundle.js -t [ babelify --presets [ es2015 stage-0 ] ]
     
+### TODO
+  * Decide what to do with singletons if requested with parameter
+  
+    DI.get('fooSingleton', {params: [1,2]});
+    
 [travis-url]: https://travis-ci.org/scaljeri/javascript-dependency-injection.png
 [travis-image]: https://travis-ci.org/scaljeri/javascript-dependency-injection
 
