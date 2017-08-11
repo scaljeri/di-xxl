@@ -2,27 +2,13 @@ const DESCRIPTORS = new Map(),
     PROJECTIONS = new Map();
 
 /**
- * A decorator which registers the class it is attached to.
+ * A decorator which registers the class it is attached to. The argument is described for {@link DI.constructor}
  *
- * @param {object} descriptor configuration needed for the entity being registered
- * @param {string} descriptor.name entity name, used to access or inject the entity
- * @param {string} descriptor.ns namespace or prefix of the reference name separated with a '.' (e.g: widget.foo)
- * @param {array|object} descriptor.params list of parameters used to initialse/call the entity if none are given
- * @param {array} descriptor.inject list of entity names to be injected
- * @param {string} descriptor.inherit descriptor properties of the referenced entity are used as defaults
- * @param {boolean} descriptor.singleton turn the entity into a singleton
- * @param {string} descriptor.role role of the entity (e.g: Service or Component)
- * @param {array} descriptor.accept list of roles which are allowed to be injected
- * @param {string} descriptor.reject list or roles which are not allowed to be injected
- * @param {number} descriptor.action the action to be applied to the entity when requested
- *
- * @returns {function(*)} Use this curry function to pass in the entity
  *
  * @example
  *
- *     \@Injectable({name: 'foo'})
- *     class Foo { ... }
- *
+ * \@Injectable({name: 'foo'})
+ * class Foo { ... }
  */
 export function Injectable(descriptor) {
     const settings = descriptor ? (typeof descriptor === 'string' ? {name: descriptor} : descriptor) : {};
@@ -54,22 +40,21 @@ export function Injectable(descriptor) {
 }
 
 /**
- * This is a decorator function which injects dependencies into the property or function
+ * Decorator function which registers the entities names to be injected
  * it is attached to
  *
  * @example
  *
- *     \@Injectable({name: 'foo'})
- *     class Foo {
- *         \@Inject({name: 'bar'})
- *         counter
+ * \@Injectable({name: 'foo'})
+ * class Foo {
+ *     \@Inject({name: 'bar'})
+ *     counter
  *
- *         @Inject({name: 'baz'})
- *         addService(service) {
- *            this.service = service;
- *         }
+ *     @Inject({name: 'baz'})
+ *     addService(service) {
+ *        this.service = service;
  *     }
- *
+ * }
  */
 export function Inject(config) {
     return function decorator(ref, property, settings) {
@@ -97,12 +82,12 @@ export function Inject(config) {
  */
 export class DI {
     /**
-     * This Enum defines the direction in which namespaces will be traversed
+     * Lookup direction for namespace traversal.
      *
      * @example
      *
      *    DI.set({
-     *        name: 'Foo',
+     *        name: 'a.b.c.d.Foo',
      *        lookup: DI.DIRECTIONS.CHILD_TO_PARENT
      *        ...
      *    });
@@ -119,7 +104,7 @@ export class DI {
     };
 
     /**
-     * Enum with all available actions applicable to the entity when requested ({@link DI#get}).
+     * Actions applicable on the entities when requested ({@link DI.get}
      * For example, if the entity is a class, you probably want to return an instance of that class, so use __DI.ACTIONS.CREATE__.
      *
      * @example
