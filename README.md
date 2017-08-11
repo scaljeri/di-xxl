@@ -317,9 +317,10 @@ Install this library with `yarn`
     
 ### Run in the browser
 If you want to run this library in the browser build it with browserify using [babelify](https://github.com/babel/babelify) 
-as follows
 
     $> ./node_modules/.bin/browserify main.js -o bundle.js -t [ babelify --presets [ es2015 stage-0 ] ]
+    
+Checkout the [demo](https://github.com/scaljeri/di-xxl/tree/gh-pages) ([main.js](https://github.com/scaljeri/di-xxl/blob/gh-pages/main.js))
     
 ### TODO
   * Decide what to do with singletons if requested with parameter

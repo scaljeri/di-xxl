@@ -1,6 +1,6 @@
 {
   "name": "javascript-dependency-injection",
-  "version": "2.0.0-rc.1",
+  "version": "1.0.0-rc.1",
   "description": "Javscript dependency injection library",
   "main": "dist/di.js",
   "scripts": {
