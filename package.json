@@ -1,16 +1,13 @@
 {
-  "name": "javascript-dependency-injection",
-  "version": "1.0.0-rc.1",
+  "name": "di-xxl",
+  "version": "1.0.0-rc.2",
   "description": "Javscript dependency injection library",
   "main": "dist/di.js",
   "scripts": {
     "build": "./node_modules/.bin/babel di.js --out-dir dist && ./node_modules/.bin/uglifyjs dist/di.js -o dist/di.min.js",
     "doc": "./node_modules/.bin/jsdoc di.js -c jsdoc.json --destination docs && open docs/index.html",
-    "old-test": "./node_modules/.bin/babel-node ./node_modules/.bin/isparta cover ./node_modules/.bin/_mocha -- --recursive",
     "prepublish": "npm run build",
-    "test": "cross-env NODE_ENV=test nyc mocha",
-    "t1": "cross-env NODE_ENV=test nyc --reporter=lcov --reporter=text mocha test/*.js --compilers js:babel-core/register",
-    "t2": "./node_modules/.bin/babel-node ./node_modules/.bin/mocha --compilers js:babel-core/register"
+    "test": "cross-env NODE_ENV=test nyc mocha"
   },
   "repository": {
     "type": "git",
@@ -20,14 +17,15 @@
     "javascript",
     "dependency",
     "injection",
-    "di"
+    "di",
+    "es2015"
   ],
   "author": "Lucas Calje <lucas@calje.eu>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/scaljeri/javascript-dependency-injection/issues"
+    "url": "https://github.com/scaljeri/di-xx/issues"
   },
-  "homepage": "https://github.com/scaljeri/javascript-dependency-injection",
+  "homepage": "https://github.com/scaljeri/di-xxl",
   "devDependencies": {
     "babel-preset-es2015": "^6.24.1",
     "chai": "^4.0.2",
