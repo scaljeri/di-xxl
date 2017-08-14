@@ -1,7 +1,7 @@
 [![CircleCI](https://circleci.com/gh/scaljeri/di-xxl/tree/master.svg?style=svg)](https://circleci.com/gh/scaljeri/di-xxl/tree/master)
-[![Build Status][travis-url]][travis-image] [![Coverage Status][coveralls-url]][coveralls-image] [![Dependency Status][depstat-image]][depstat-url] [![devDependency Status][depstat-dev-image]][depstat-dev-url] 
+[![Coverage Status][coveralls-url]][coveralls-image] [![Dependency Status][depstat-image]][depstat-url] [![devDependency Status][depstat-dev-image]][depstat-dev-url] 
 [![Code Climate][code-climate-url]][code-climate-image]
-[![Inline docs](http://inch-ci.org/github/scaljeri/javascript-dependency-injection.svg?branch=master&style=flat-square)](http://inch-ci.org/github/scaljeri/javascript-dependency-injection)
+[![Inline docs](http://inch-ci.org/github/scaljeri/di-xxl.svg?branch=master&style=flat-square)](http://inch-ci.org/github/scaljeri/di-xxl)
 
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/scaljeri/javascript-dependency-injection?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
@@ -328,20 +328,17 @@ Checkout the [demo](https://github.com/scaljeri/di-xxl/tree/gh-pages) ([main.js]
   
     DI.get('fooSingleton', {params: [1,2]});
     
-[travis-url]: https://travis-ci.org/scaljeri/javascript-dependency-injection.png
-[travis-image]: https://travis-ci.org/scaljeri/javascript-dependency-injection
-
 [coveralls-image]: https://coveralls.io/github/scaljeri/javascript-dependency-injection?branch=master
 [coveralls-url]: https://coveralls.io/repos/github/scaljeri/javascript-dependency-injection/badge.svg?branch=master
 
-[depstat-url]: https://david-dm.org/scaljeri/javascript-dependency-injection
-[depstat-image]: https://david-dm.org/scaljeri/javascript-dependency-injection.svg
+[depstat-url]: https://david-dm.org/scaljeri/di-xxl
+[depstat-image]: https://david-dm.org/scaljeri/di-xxl.svg
 
-[_depstat-dev-url]: https://david-dm.org/scaljeri/javascript-dependency-injection#info=devDependencies
-[_depstat-dev-image]: https://david-dm.org/scaljeri/javascript-dependency-injection.svg#info=devDependencies
+[_depstat-dev-url]: https://david-dm.org/scaljeri/di-xxl#info=devDependencies
+[_depstat-dev-image]: https://david-dm.org/scaljeri/di-xxl.svg#info=devDependencies
 
-[depstat-dev-url]: https://david-dm.org/scaljeri/javascript-dependency-injection#info=devDependencies
-[depstat-dev-image]: https://david-dm.org/scaljeri/javascript-dependency-injection/dev-status.svg
+[depstat-dev-url]: https://david-dm.org/scaljeri/di-xxl#info=devDependencies
+[depstat-dev-image]: https://david-dm.org/scaljeri/di-xxl/dev-status.svg
 
-[code-climate-url]: https://codeclimate.com/github/scaljeri/javascript-dependency-injection/badges/gpa.svg
-[code-climate-image]: https://codeclimate.com/github/scaljeri/javascript-dependency-injection
+[code-climate-url]: https://codeclimate.com/github/scaljeri/di-xxl/badges/gpa.svg
+[code-climate-image]: https://codeclimate.com/github/scaljeri/di-xxl
