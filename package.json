@@ -1,6 +1,6 @@
 {
   "name": "di-xxl",
-  "version": "1.0.0-rc.2",
+  "version": "1.0.0-rc.3",
   "description": "Javscript dependency injection library",
   "main": "dist/di.js",
   "scripts": {
@@ -17,7 +17,9 @@
     "javascript",
     "dependency",
     "injection",
+    "injector",
     "di",
+    "factory",
     "es2015"
   ],
   "author": "Lucas Calje <lucas@calje.eu>",

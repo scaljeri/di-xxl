@@ -4,7 +4,6 @@ const DESCRIPTORS = new Map(),
 /**
  * A decorator which registers the class it is attached to. The argument is described for {@link DI.constructor}
  *
- *
  * @example
  *
  * \@Injectable({name: 'foo'})
@@ -40,8 +39,7 @@ export function Injectable(descriptor) {
 }
 
 /**
- * Decorator function which registers the entities names to be injected
- * it is attached to
+ * Decorator function which registers the entity names to be injected
  *
  * @example
  *
@@ -148,25 +146,25 @@ export class DI {
     }
 
     /**
-     * Instances are useful if changes should be kept within the scope of the instance only. So, every
-     * change made on an instance will only be accessible by that instance. Its best use case is
-     * when temporary projection are needed. In any other case simply use `DI` directly. The values of the
-     * __descriptor__ are used as defaults anywehere in the library where descriptors are required (e.g. {@link DI.get})
+     * Use an instance if changes should be kept encapsulated and only accessible by that instance.
+     * Its best use case is when temporary projection (See {@link DI.setProjection}) are needed. In any other case simply use `DI` directly.
+     * The values of the __descriptor__ are used as defaults anywhere in the library where descriptors are
+     * required (e.g. {@link DI.get})
      *
      * @constructor
-     * @param {object} [descriptor] configuration needed for the entity being registered
-     * @param {array} [descriptor.accept] list of roles which are allowed to be injected
-     * @param {number} [descriptor.action] the action to be applied to the entity when requested (see {@link DI.ACTIONS})
-     * @param {string} [descriptor.inherit] descriptor properties of the referenced entity are used as defaults
-     * @param {array} [descriptor.inject] list of entity names to be injected
-     * @param {string} [descriptor.name] entity name, used to access or inject the entity
-     * @param {string} [descriptor.ns namespace] or prefix of the entity name separated with a '.' (e.g: widget.foo)
-     * @param {array|object} [descriptor.params] list of parameters used to initialse/call the entity if none are given
-     * @param {string} [descriptor.reject] list or roles which are not allowed to be injected
-     * @param {string} [descriptor.ref] the entity (e.g.: class or function)
-     * @param {string} [descriptor.role] role of the entity (e.g: Service or Component)
-     * @param {boolean} [descriptor.singleton] turn the entity into a singleton
-     * @param {number} [descriptor.lookup] lookup direction. See {@link DI#DIRECTIONS} (default: __PARENT_TO_CHILD__)
+     * @param {object} [descriptor] Defaults descriptor used as the base for all other descriptors
+     * @param {array} [descriptor.accept] List of roles which are allowed to be injected
+     * @param {number} [descriptor.action] The action to be applied to the entity when requested (see {@link DI.ACTIONS})
+     * @param {string} [descriptor.inherit] Descriptor properties of the referenced entity are used as defaults too
+     * @param {array} [descriptor.inject] List of entity names to be injected
+     * @param {string} [descriptor.name] Entity name, used to access or inject the entity
+     * @param {string} [descriptor.ns] Namespace/prefix of the entity name separated with a '.' (e.g: widget.foo)
+     * @param {array|object} [descriptor.params] List of parameters used to initialise/call the entity
+     * @param {string} [descriptor.reject] List of roles which are not allowed to be injected
+     * @param {string} [descriptor.ref] The entity (e.g.: class or function, sting)
+     * @param {string} [descriptor.role] Role of the entity (e.g: Service or Component)
+     * @param {boolean} [descriptor.singleton] Turns the entity into a singleton
+     * @param {number} [descriptor.lookup] Lookup direction. See {@link DI#DIRECTIONS} (default: __PARENT_TO_CHILD__)
      **/
     constructor(descriptor = {}) {
         this.defaults = Object.assign({lookup: DI.DIRECTIONS.PARENT_TO_CHILD}, descriptor);
@@ -203,21 +201,22 @@ export class DI {
     }
 
     /**
-     * This function is identical to {@link DI.getDescriptor} except it will traverse the namespace until it finds it.
+     * This function is identical to {@link DI.getDescriptor} except it will traverse the namespace until it finds it or
+     * reaches the end of the namespace.
      *
      * @example
      *
      *     const descriptor = {
-     *         name: 'foo',
-     *         ns: 'a.b.c.d'
+     *         name: 'a.b.foo',
      *         ...
      *     }
      *
-     *     DI.lookupDescriptor('foo', {lookup: DI.DIRECTIONS.PARENT_TO_CHILD}); // will find `a.b.c.d.foo`
+     *     DI.lookupDescriptor('a.b.c.d.e.foo', {lookup: DI.DIRECTIONS.PARENT_TO_CHILD}); // will find `a.b.foo`
      *
      * @param name
-     * @param config
-     * @returns {object} descriptor
+     * @param {object} [config] Configuration of the lookup process
+     * @param {object} [config.lookup] Lookup direction (See {@Link DI.DIRECTIONS})
+     * @returns {object} Descriptor
      */
     static lookupDescriptor(name, config = {}) {
         const settings = Object.assign({}, this.defaults, config, {name: name});
@@ -242,22 +241,34 @@ export class DI {
     }
 
     /**
+     * Returns the projection identified by the given __name__. However, it will not
+     * traverse the namespace
      *
-     * @param name
-     * @param ns
-     * @param projections
-     * @returns {V}
+     * @param {string} name entity name (it can include the namespace)
+     * @param {string} [ns] namespace
+     * @returns {object} descriptor
      */
     static getProjection(name, ns, projections = PROJECTIONS) {
         return projections.get(fullNameFor({name, ns}));
     }
 
+    /**
+     *
+     * @param list
+     * @returns {DI}
+     */
     setProjection(list) {
         DI.setProjection(list, this.projections);
 
         return this;
     }
 
+    /**
+     *
+     * @param list
+     * @param projections
+     * @returns {DI}
+     */
     static setProjection(list, projections = PROJECTIONS) {
         for (let key in list) {
             projections.set(key.toLowerCase(), list[key]);
@@ -266,18 +277,35 @@ export class DI {
         return this;
     }
 
+    /**
+     *
+     * @param key
+     * @returns {DI}
+     */
     removeProjection(key) {
         DI.removeProjection(key, this.projections);
 
         return this;
     }
 
+    /**
+     *
+     * @param key
+     * @param projections
+     * @returns {DI}
+     */
     static removeProjection(key, projections = PROJECTIONS) {
         projections.delete(key.toLowerCase());
 
         return this;
     }
 
+    /**
+     *
+     * @param name
+     * @param ns
+     * @returns {DI}
+     */
     removeDescriptor(name, ns) {
         DI.removeDescriptor(name, ns, this.descriptors);
 
@@ -368,11 +396,22 @@ export class DI {
         return this;
     }
 
+    /**
+     *
+     * @param name
+     * @param config
+     * @returns {*}
+     */
     getFactory(name, config) {
         return DI.getFactory(name, config);
     }
 
-
+    /**
+     *
+     * @param name
+     * @param config
+     * @returns {function(...[*])}
+     */
     static getFactory(name, config = {params: []}) {
         const descriptor = Object.assign({}, (typeof name === 'string' ? this.lookupDescriptor(name, config) || {} : name), config);
 
