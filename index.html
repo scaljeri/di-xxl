@@ -16,7 +16,7 @@
 
 <body>
     <a href="./coverage/lcov-report/index.html">Coverage report</a><br>
-    <a href="./esdoc/index.html">Documentation</a><br>
+    <a href="./docs/index.html">Documentation</a><br>
 
     <!-- HTML -->
 
@@ -26,17 +26,20 @@
         The code below has already been executed:<br>
 
         <pre>
-            var di = new DI();
-            function Bar(val1, $foo, val2) { this.args = arguments; }
-            function Foo(a) { this.args = arguments; }
+        class Foo {
+            constructor() { this.args = arguments}
+        }
 
-            di.register('$foo', Foo, [10], {singleton: true});
-            di.register('$bar', Bar, {writable: true});
-            di.register('$baz', Bar);
+        class Bar {
+            constructor($foo) { this.args = arguments}
+        }
 
-            var bar = di.getInstance('$bar', 99, 100);
-            var baz = di.getInstance('$baz', 99, 100);
-            var foo = di.getInstance('$foo');
+        DI.set({ name: 'foo', ref: Foo, singleton: true});
+        DI.set({ name: 'bar', ref: Bar, inject: [{property: 'foo', factory: true, name: 'foo'}]});
+        DI.set({ name: 'baz', ref: Bar});
+
+        let bar = DI.get('bar', {params: [100]});
+        let foo = DI.get('foo');
         </pre>
 
         If you want, you can also work with DI in the browser console!

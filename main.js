@@ -1,8 +1,5 @@
 import {DI} from './di';
 
-const di = new DI();
-
-console.log(di);
 class Foo {
     constructor() { this.args = arguments}
 }
@@ -11,15 +8,16 @@ class Bar {
     constructor($foo) { this.args = arguments}
 }
 
-di.register('$foo', Foo, {singleton: true});
-di.register('$bar', Bar, {inject: DI.ACTIONS.CONSTRUCTOR});
-di.register('$baz', Bar);
+DI.set({ name: 'foo', ref: Foo, singleton: true});
+DI.set({ name: 'bar', ref: Bar, inject: [{property: 'foo', factory: true, name: 'foo'}]});
+DI.set({ name: 'baz', ref: Bar});
 
-let bar = di.getInstance('$bar', 100);
-let foo = di.getInstance('$foo');
+let bar = DI.get('bar', {params: [100]});
+let foo = DI.get('foo');
 
 window.Foo = Foo;
 window.Bar = Bar;
+window.bar = bar;
+window.foo = foo;
 window.DI = DI;
-window.di = di;
 console.log('READY');
