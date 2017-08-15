@@ -1,7 +1,7 @@
 {
   "files": {
     "included": [
-      "di.js"
+      "./di.js"
     ],
     "excluded": [
     ]
