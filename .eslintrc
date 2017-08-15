@@ -1,0 +1,31 @@
+{
+  "parser": "babel-eslint",
+  "env": {
+    "es6": true,
+    "node": true,
+    "jasmine": true
+  },
+  "extends": "eslint:recommended",
+  "parserOptions": {
+    "sourceType": "module",
+    "globalReturn": true
+  },
+  "rules": {
+    "no-else-return": "error",
+    "no-multi-spaces": "error",
+    "no-whitespace-before-property": "error",
+    "camelcase": "error",
+    "new-cap": 0,
+    "no-console": "error",
+    "comma-dangle": "error",
+    "complexity": ["error", 8],
+    "quotes": [
+      "error",
+      "single"
+    ],
+    "semi": [
+      "error",
+      "always"
+    ]
+  }
+}

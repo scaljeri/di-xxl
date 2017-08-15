@@ -5,6 +5,7 @@
   "main": "di.js",
   "scripts": {
     "build": "./node_modules/.bin/babel src/di.js --out-dir dist && ./node_modules/.bin/uglifyjs dist/di.js -o dist/di.min.js",
+    "lint": "./node_modules/.bin/eslint -c .eslintrc ./src/di.js",
     "doc": "./node_modules/.bin/jsdoc src/di.js -c jsdoc.json --destination docs && open docs/index.html",
     "prepublish": "npm run build",
     "test": "cross-env NODE_ENV=test nyc mocha"
@@ -41,6 +42,7 @@
   },
   "dependencies": {
     "babel-cli": "^6.24.1",
+    "babel-eslint": "^7.2.3",
     "babel-plugin-istanbul": "^4.1.4",
     "babel-plugin-transform-class-properties": "^6.24.1",
     "babel-plugin-transform-decorators-legacy": "^1.3.4",
@@ -50,6 +52,7 @@
     "chai-arrays": "^1.0.0",
     "cross-env": "^5.0.1",
     "esdoc-standard-plugin": "^1.0.0",
+    "eslint": "^4.4.1",
     "jsdoc": "^3.5.4",
     "jsdoc-escape-at": "^1.0.1",
     "nyc": "^11.0.3",

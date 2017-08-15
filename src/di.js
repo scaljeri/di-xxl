@@ -35,7 +35,7 @@ export function Injectable(descriptor) {
         }
 
         ((this || {}).descriptors || DESCRIPTORS).set(fullNameFor(descriptor).toLowerCase(), descriptor);
-    }
+    };
 }
 
 /**
@@ -70,7 +70,7 @@ export function Inject(config) {
 
         settings.writable = true;
         return settings;
-    }
+    };
 }
 
 /** __DI-XXL__ is a very generic Dependency Injection (DI) library, facilitating lazy initialization
@@ -96,10 +96,12 @@ export class DI {
      * @property {number} PARENT_TO_CHILD Upwards (Capturing)
      * @property {number} CHILD_TO_PARENT Downwards (Bubbling)
      */
-    static DIRECTIONS = {
-        PARENT_TO_CHILD: 1,
-        CHILD_TO_PARENT: 2
-    };
+    static get DIRECTIONS() {
+        return {
+            PARENT_TO_CHILD: 1,
+            CHILD_TO_PARENT: 2
+        };
+    }
 
     /**
      * Actions applicable on the entities when requested ({@link DI.get}
@@ -142,7 +144,7 @@ export class DI {
             CREATE: 0,
             INVOKE: 1,
             NONE: 2
-        }
+        };
     }
 
     /**
@@ -271,7 +273,9 @@ export class DI {
      */
     static setProjection(list, projections = PROJECTIONS) {
         for (let key in list) {
-            projections.set(key.toLowerCase(), list[key]);
+            if (list.hasOwnProperty(key)) {
+                projections.set(key.toLowerCase(), list[key]);
+            }
         }
 
         return this;
@@ -328,7 +332,7 @@ export class DI {
     /**
      * See{@link DI.get}
      */
-    get(name, config) {
+    get (name, config) {
         return DI.get.call(this, name, config);
     }
 
@@ -359,7 +363,7 @@ export class DI {
      * @param {array} [config.params] List of arguments (e.g: used to create an instance)
      * @returns {*}
      */
-    static get(name, config) {
+    static get (name, config) {
         let descriptor = typeof name === 'string' ? this.lookupDescriptor(name, config) : name;
         let instance = null;
 
@@ -381,7 +385,7 @@ export class DI {
     /**
      * See {@link DI.set}
      */
-    set(descriptor) {
+    set (descriptor) {
         return DI.set.call(this, descriptor);
     }
 
@@ -390,7 +394,7 @@ export class DI {
      * @param config
      * @returns {*}
      */
-    static set(descriptor) {
+    static set (descriptor) {
         Injectable(descriptor).call(this, descriptor.ref);
 
         return this;
@@ -473,6 +477,50 @@ function lookup(config, locator, relocator) {
     return descriptor;
 }
 
+function canActionDoCreate(base) {
+    return (!base.action || base.action === DI.ACTIONS.CREATE) && typeof base.ref === 'function';
+}
+
+function createBaseInstance(base) {
+    let instance;
+
+    if (canActionDoCreate(base)) {
+        instance = Array.isArray(base.params) ? new base.ref(...(base.params || [])) : new base.ref(base.params);
+    } else if (base.action === DI.ACTIONS.INVOKE) {
+        instance = Array.isArray(base.params) ? base.ref(...(base.params || [])) : base.ref(base.params);
+    } else {
+        instance = base.params ? Object.assign(base.ref, base.params) : base.ref;
+    }
+
+    return {instance, descriptor: base};
+}
+
+function injectIntoBase(baseFullName, base, projections, instances, instance) {
+    base.inject.forEach(dep => {
+        const descriptor = this.lookupDescriptor(projections[dep.name] || dep.name),
+            fullName = fullNameFor(descriptor);
+
+        if (base.accept.length && !~base.accept.indexOf(descriptor.role)) {
+            throw Error(`'${fullName}' has role '${descriptor.role}', which is not whitelisted by '${baseFullName}'`);
+        } else if (base.reject.length && ~base.reject.indexOf(descriptor.role)) {
+            throw Error(`'${fullName}' has role '${descriptor.role}', which is blacklisted by '${baseFullName}'`);
+        }
+
+        let injectable;
+        if (dep.factory) {
+            injectable = DI.getFactory(descriptor);
+        } else {
+            injectable = descriptor ? (instances[fullName] || (instances[fullName] = this.get(descriptor, {instances}))) : dep.name;
+        }
+
+        if (typeof instance[dep.property] === 'function') {
+            instance[dep.property](injectable);
+        } else {
+            instance[dep.property] = injectable;
+        }
+    });
+}
+
 function createInstance(descriptor, config) {
     let instance, instances = (descriptor.instances || {});
 
@@ -482,13 +530,8 @@ function createInstance(descriptor, config) {
         projections = base.projections;
 
     if (base.ref) {
-        if ((!base.action || base.action === DI.ACTIONS.CREATE) && typeof base.ref === 'function') {
-            instance = Array.isArray(base.params) ? new base.ref(...(base.params || [])) : new base.ref(base.params);
-        } else if (base.action === DI.ACTIONS.INVOKE) {
-            instance = Array.isArray(base.params) ? base.ref(...(base.params || [])) : base.ref(base.params);
-        } else {
-            instance = base.params ? Object.assign(base.ref, base.params) : base.ref;
-        }
+        instances[baseFullName] = createBaseInstance(base, descriptor);
+        instance = instances[baseFullName].instance;
 
         if (base.singleton) {
             descriptor.instance = instance;
@@ -496,33 +539,10 @@ function createInstance(descriptor, config) {
             instance = Object.create(base.ref);
         }
 
-        instances[baseFullName] = {instance, descriptor: base};
     }
 
     if ((base.inject || []).length) {
-        base.inject.forEach(dep => {
-            const descriptor = this.lookupDescriptor(projections[dep.name] || dep.name),
-                fullName = fullNameFor(descriptor);
-
-            if (base.accept.length && !~base.accept.indexOf(descriptor.role)) {
-                throw Error(`'${fullName}' has role '${descriptor.role}', which is not whitelisted by '${baseFullName}'`);
-            } else if (base.reject.length && ~base.reject.indexOf(descriptor.role)) {
-                throw Error(`'${fullName}' has role '${descriptor.role}', which is blacklisted by '${baseFullName}'`);
-            }
-
-            let injectable;
-            if (dep.factory) {
-                injectable = DI.getFactory(descriptor);
-            } else {
-                injectable = descriptor ? (instances[fullName] || (instances[fullName] = this.get(descriptor, {instances}))) : dep.name;
-            }
-
-            if (typeof instance[dep.property] === 'function') {
-                instance[dep.property](injectable);
-            } else {
-                instance[dep.property] = injectable;
-            }
-        });
+        injectIntoBase.call(this, baseFullName, base, projections, instances, instance);
     }
 
     return instance;
@@ -534,7 +554,7 @@ function inheritance(descriptor, config) {
         descriptor = Object.assign({}, parent, descriptor);
 
         if (parent.inherit) {
-            descriptor = inheritance.call(this. descriptor, config);
+            descriptor = inheritance.call(this.descriptor, config);
         }
     }
 
