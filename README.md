@@ -1,7 +1,8 @@
 [![CircleCI](https://circleci.com/gh/scaljeri/di-xxl/tree/master.svg?style=svg)](https://circleci.com/gh/scaljeri/di-xxl/tree/master)
+[![Inline docs](http://inch-ci.org/github/scaljeri/di-xxl.svg?branch=master)](http://inch-ci.org/github/scaljeri/di-xxl)
+
 [![Coverage Status][coveralls-url]][coveralls-image] [![Dependency Status][depstat-image]][depstat-url] [![devDependency Status][depstat-dev-image]][depstat-dev-url] 
 [![Code Climate][code-climate-url]][code-climate-image]
-[![Inline docs](http://inch-ci.org/github/scaljeri/di-xxl.svg?branch=master&style=flat-square)](http://inch-ci.org/github/scaljeri/di-xxl)
 
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/scaljeri/javascript-dependency-injection?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
