@@ -1,10 +1,10 @@
 {
+  "comments": false,
   "presets": [
     "es2015",
     "stage-0"
   ],
   "plugins": [
-    "remove-comments",
     "transform-decorators-legacy",
     "transform-class-properties"
   ],
