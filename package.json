@@ -4,7 +4,7 @@
   "description": "Javscript dependency injection library",
   "main": "di.js",
   "scripts": {
-    "build": "./node_modules/.bin/babel src/di.js --out-dir dist && ./node_modules/.bin/uglifyjs dist/di.js -o dist/di.min.js",
+    "build": "mkdir dist && ./node_modules/.bin/babel ./src/di.js --out-file dist/di.js && ./node_modules/.bin/uglifyjs dist/di.js -o dist/di.min.js",
     "lint": "./node_modules/.bin/eslint -c .eslintrc ./src/di.js",
     "doc": "./node_modules/.bin/jsdoc src/di.js -c jsdoc.json --destination docs && open docs/index.html",
     "prepublish": "npm run build",
