@@ -2,10 +2,10 @@
   "name": "di-xxl",
   "version": "1.0.0-rc.3",
   "description": "Javscript dependency injection library",
-  "main": "./di.js",
+  "main": "./src/di.js",
   "scripts": {
-    "build": "./node_modules/.bin/babel di.js --out-dir dist && ./node_modules/.bin/uglifyjs dist/di.js -o dist/di.min.js",
-    "doc": "./node_modules/.bin/jsdoc di.js -c jsdoc.json --destination docs && open docs/index.html",
+    "build": "./node_modules/.bin/babel src/di.js --out-dir dist && ./node_modules/.bin/uglifyjs dist/di.js -o dist/di.min.js",
+    "doc": "./node_modules/.bin/jsdoc src/di.js -c jsdoc.json --destination docs && open docs/index.html",
     "prepublish": "npm run build",
     "test": "cross-env NODE_ENV=test nyc mocha"
   },

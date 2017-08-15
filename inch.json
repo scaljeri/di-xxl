@@ -1,9 +1,0 @@
-{
-  "files": {
-    "included": [
-      "*.js"
-    ],
-    "excluded": [
-    ]
-  }
-}
