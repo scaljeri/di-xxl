@@ -1,7 +1,7 @@
 import chai from 'chai';
 import assertArrays from 'chai-arrays';
 import {beforeEach, describe, it} from "mocha";
-import {DI} from '../di';
+import {DI} from '../src/di';
 
 let should = chai.should();
 chai.use(assertArrays);
