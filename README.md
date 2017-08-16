@@ -122,7 +122,7 @@ This will also work with Objects. By default (if not specified) on object is a s
     app = DI.get('app');
     console.log(app.count); // -> 1
     
-But if you set it to false, **DI-XXL** returns a new object, using internally `Object.create`, each time
+But if you set that flag to false, **DI-XXL** returns a new object, internally using `Object.create`
     
     const descriptor = {
         name: 'app',
