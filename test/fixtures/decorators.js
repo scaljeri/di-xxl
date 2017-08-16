@@ -64,3 +64,6 @@ export class Wooz {
     inherit: 'decorator.Wooz'
 })
 export class Buzu extends Wooz {}
+
+@Injectable({name: 'decorator.basic'})
+class Basic {}

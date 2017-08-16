@@ -310,9 +310,27 @@ Install this library with `yarn`
 
     $> yarn add di-xxl@beta
     
-#### Unit testing ####
+#### Commands ####
+Convert **DI--XXL into  an ES5 library + minified version in `./dist` 
+
+    $> yarn build
+    
+Unit testing
 
     $> yarn test
+    
+Linting
+
+    $> yarn lint
+    
+Generate documentation (jsdoc)
+
+    $> yarn doc
+    
+Run benchmarks on different aspects of **DI-XXL**
+
+    $> yarn bench 
+
     
 #### Documentation ####
 
