@@ -411,6 +411,20 @@ export class DI {
     }
 
     /**
+     * Returns a factory for the given name
+     *
+     * @example
+     * class Foo {
+     *     constructor(val) { this.val = val; }
+     * }
+     *
+     * DI.set({name: 'foo', ref: Foo, params: [1]});
+     * const factory = DI.getFactory();
+     * let foo = factory(); // foo.val === 1
+     * foo = factory(2); // foo.val === 2
+     *
+     * DI.getFactory(10)().val === 10
+     * DI.getFactory(10)(20).val === 20
      *
      * @param name
      * @param config
@@ -426,6 +440,11 @@ export class DI {
 }
 
 /* *** Private helpers ***/
+/**
+ * @private
+ * @param fullName
+ * @returns {[null,null]}
+ */
 function splitContract(fullName) {
     const parts = fullName.split(/\.|:/);
     const name = parts.pop();
@@ -437,6 +456,13 @@ function fullNameFor(descriptor) {
     return descriptor ? (typeof descriptor === 'string' ? descriptor : (descriptor.ns ? `${descriptor.ns}.` : '') + descriptor.name).toLowerCase() : null;
 }
 
+/**
+ * @private
+ * @param config
+ * @param locator
+ * @param relocator
+ * @returns {*}
+ */
 function lookup(config, locator, relocator) {
     let name, ns, position;
 
@@ -481,6 +507,11 @@ function canActionDoCreate(base) {
     return (!base.action || base.action === DI.ACTIONS.CREATE) && typeof base.ref === 'function';
 }
 
+/**
+ * @private
+ * @param base
+ * @returns {{instance: *, descriptor: *}}
+ */
 function createBaseInstance(base) {
     let instance;
 
@@ -495,6 +526,14 @@ function createBaseInstance(base) {
     return {instance, descriptor: base};
 }
 
+/**
+ * @private
+ * @param baseFullName
+ * @param base
+ * @param projections
+ * @param instances
+ * @param instance
+ */
 function injectIntoBase(baseFullName, base, projections, instances, instance) {
     base.inject.forEach(dep => {
         const descriptor = this.lookupDescriptor(projections[dep.name] || dep.name),
@@ -521,6 +560,12 @@ function injectIntoBase(baseFullName, base, projections, instances, instance) {
     });
 }
 
+/**
+ * @private
+ * @param descriptor
+ * @param config
+ * @returns {*}
+ */
 function createInstance(descriptor, config) {
     let instance, instances = (descriptor.instances || {});
 
@@ -548,6 +593,12 @@ function createInstance(descriptor, config) {
     return instance;
 }
 
+/**
+ * @private
+ * @param descriptor
+ * @param config
+ * @returns {*}
+ */
 function inheritance(descriptor, config) {
     if (descriptor.inherit) {
         const parent = this.lookupDescriptor(descriptor.inherit, config);

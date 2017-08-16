@@ -3,6 +3,7 @@
 
 [![Coverage Status](https://coveralls.io/repos/github/scaljeri/di-xxl/badge.svg)](https://coveralls.io/github/scaljeri/di-xxl)
 [![Code Climate][code-climate-url]][code-climate-image]
+[![Code Climate](https://codeclimate.com/github/scaljeri/di-xxl/badges/gpa.svg)](https://codeclimate.com/github/scaljeri/di-xxl)
 
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/scaljeri/javascript-dependency-injection?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
