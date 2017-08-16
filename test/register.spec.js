@@ -15,7 +15,7 @@ describe('#register', () => {
             .set({
                 ns: 'register',
                 name: 'maz',
-                ref: fixtures.Bar,
+                ref: fixtures.Bar
             });
 
         contract = di.getDescriptor('foo', 'register');

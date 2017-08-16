@@ -15,7 +15,7 @@ You can find a demo, documentation and code coverage [here](http://scaljeri.gith
 It is generic, because it can inject everything into anything in multiple ways. Together with support 
 for namespaces, decorators, factory functions and projections it is a powerful tool ready for complex situations.
 
-In its most basic form, to register an entity like a class, object or function looks like this
+In its most basic form a registration of an entity like a class, object or function is done like this
 
     import {DI} from 'di-xxl';
     
@@ -34,8 +34,7 @@ a `name` and a `ref`erence. Next, use `get` to retrieve an instance of `Foo`
     const foo = DI.get('foo');
     
 ### Parameters
-Above, the instance was created without parameters. In order to add default parameters, define
-the `params` array
+Above, the instance was created without parameters, but they can be added to the descriptor object as well
     
     const descriptor = {
         name 'foo', 
@@ -72,11 +71,9 @@ So, to inject `foo` into an object do
     const myApp = DI.get('app');
     myApp.foo instanceof Foo; // --> true
         
-    myApp !== DI.get('app');  // is TRUE, because Object.create(app) is return 
-    
 ### ACTIONS
-Because anything can be registered, like classes, objects, but also normal functions (not constructors).
-If a function is not a constructor you have to tell **DI-XXL** what it should, return the function or call it
+Anything can be registered, like classes, objects, but also normal functions (not constructors).
+If a function is not a constructor you need to instruct **DI-XXL** what it should; return the function or call it first
 and return the output
 
     const descriptor = {
@@ -98,7 +95,7 @@ or
         action: DI.ACTIONS.INVOKE
     }
     
-This time **DI-XXL** will invoke the reference using the provided parameters and return its output
+In the last example **DI-XXL** will invoke the reference using the provided parameters and return the output
 
     const double = DI.get('double', {params: [10]});
     double(2); // -> 14
