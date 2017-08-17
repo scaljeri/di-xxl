@@ -1,7 +1,6 @@
 import {DI} from '../src/di';
 import * as fixtures from '../test/fixtures/decorators';
 
-console.log(DI);
 compare("Classes vs Objects", () => {
     DI.set({ name: 'bencha.obj', ref: {}});
 
@@ -14,27 +13,23 @@ compare("Classes vs Objects", () => {
     });
 });
 
-/*
-compare("RegExp vs String::indexOf", () => {
-    const input = "demo.string";
+suite("DI Feature", function(){
+    let di = new DI();
+    di.set({ name: 'a.b.c.d.foo', ref: fixtures.Foo});
 
-    benchmark("RegExp", function(){
-        /(\.)/.test(input);
+    benchmark("Register", () => {
+        di.set({name: 'x.y.z.foo', ref: Foo});
     });
-    benchmark("String::indexOf", function(){
-        input.indexOf(".") > -1;
+
+    benchmark("Class", () => {
+        di.get('a.b.c.d.foo');
+    });
+
+    benchmark("Object", () => {
+        di.get('bencha.basic');
+    });
+
+    benchmark("Namespace traversal", () => {
+        di.get('a.b.c.d.e.foo');
     });
 });
-
-suite("My Feature", function(){
-    benchmark("foo() no arguments", function(){
-        foo();
-    });
-    benchmark("foo() with arguments", function(){
-        foo(true, false);
-    });
-    benchmark("bar()", function(){
-        bar()
-    });
-});
-*/
