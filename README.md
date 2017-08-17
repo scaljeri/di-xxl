@@ -168,7 +168,7 @@ it can be rewritten with **DI-XXL** using Factories
         inject: [{property: 'creator', factory: 'foo'}]
     }
 
-**DI-XXL** creates a factory function which produces instances of Foo and injects it.
+The factory function, which produces instances of `Foo` is injected into the `creator` property of `bar`
 
 ### Projections
 Projections let you map an entity name to an other
@@ -177,21 +177,21 @@ Projections let you map an entity name to an other
 
     const something = DI.get('foo'); 
     
-an instance of `bar` is returned. Projections can be used, for example, to change the behaviour of you application 
+results in `something instanceof Bar`. Projections can be used, for example, to change the behaviour of you application 
 dynamically, based on user action.
 
 ### Namespaces
-Namespaces help to structure your entities in a very descriptive way and is nothing more than a prefix of the entity name
+Namespaces help to structure your entities in a descriptive way. A namespace is a prefix of the entity name
 
     user.overview.profile
     
-with `user.overview` being the namespace. To begin with, try to keep your entity names unique. For example
+with `user.overview` being the namespace. Try to keep your entity names unique within the whole namespace. For example
 
     user.profile
     user.overview.profile
     
-`profile` is not unique!! As long as you know what your are doing this isn't a problem. The reason for this is how 
-namespaces are implemented. For example 
+`profile` is not unique!! As long as you know what your are doing this isn't a problem. The reason behind this is how 
+namespaces are implemented:
  
     class User { ... }
     
@@ -204,29 +204,29 @@ namespaces are implemented. For example
         
     DI.get('user.overview.profile');
   
-The `list` and `source` entities, although exactly specified, they are searched for within the namespace from the root up.
+The `list` and `source` entities, although exactly specified, will be searched for within the namespace from the root up.
 It means that **DI-XXL** will look for `list` using the following names
 
     list               --> no
     user.list          --> no
     user.widgets.list  --> yes
     
-This allows you to redefine entities
+This allows you to redefine entities without replacing the original
 
-    DI.set({ name: 'list', ns: 'user', ....});
+    DI.set({ name: 'user.list', ....});
     
 This time the the search for `list` looks like
 
     list       --> no
     user.list  --> yes
     
-And will not find `user.widgets.list`. It is best used preferably only during initialization.
-So, this is the default lookup direction  (`DI.DIRECTIONS.PARENT_TO_CHILD), but you can reverse the lookup
+It will not find `user.widgets.list`. It is best used preferably only during initialization.
+This is the default lookup direction (`DI.DIRECTIONS.PARENT_TO_CHILD), but you can reverse the lookup
 
     DI.get('user.overview.profile', {lookup: DI.DIRECTIONS.CHILD_TO_PARENT});
     
 So far we have only talked about the entities from the `inject` list, but this search pattern is also applied on the entity request, 
-with one exception, the first attempt is always the name provided
+with one exception, the first attempt is always the exact name provided
 
     // DI.DIRECTIONS.CHILD_TO_PARENT
        user.overview.profile
@@ -240,7 +240,7 @@ with one exception, the first attempt is always the name provided
 
 ### @Decorators    
 As of this writing you have to use a couple of babel plugins to get `@decorators` up and running, 
-but if you have you can use **DI-XXL** as follows
+but if you have them enabled you can use **DI-XXL** as follows
 
     import {Injectable, Inject} from 'di-xxl';
     
@@ -279,14 +279,14 @@ Which is equivalent to
     });
     
     
-After registration they can be used as follows
+The `@Injectable` statements are directly executed, meaning that they are immediately available
 
     import {ID} from 'di-xxl';
     
     let bar = DI.get('bar', {params: [100]});
     bar.add(1); // -> 101
     
-TODO: Checkout the unit tests fixtures for more advanced use cases
+Checkout the unit tests fixtures [file](https://github.com/scaljeri/di-xxl/blob/master/test/fixtures/decorators.js) for more advanced use cases
 
 ### Inject into a constructor
 Ok, if you really really really have to do this you can of course do it ... yourself :)
@@ -296,10 +296,7 @@ Ok, if you really really really have to do this you can of course do it ... your
     
  
 ### More information
-For more advanced use-cases checkout the [unit tests](https://github.com/scaljeri/javascript-dependency-injection/blob/master/test/di.spec.js)
-file.
-
-TODO: DEMO link
+A lot more advanced use-cases are available inside the [unit test](https://github.com/scaljeri/javascript-dependency-injection/blob/master/test/di.spec.js) files.
 
 #### Installation ####
 
