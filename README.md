@@ -1,5 +1,10 @@
 [![CircleCI](https://circleci.com/gh/scaljeri/di-xxl/tree/master.svg?style=svg)](https://circleci.com/gh/scaljeri/di-xxl/tree/master)
-[![Inline docs](http://inch-ci.org/github/scaljeri/di-xxl.svg?branch=master)](http://inch-ci.org/github/scaljeri/di-xxl) [![Code coverage][coveralls-image]][coveralls-url] [![Code Climate][code-climate-image]][code-climate-url] 
+[![Inline docs](http://inch-ci.org/github/scaljeri/di-xxl.svg?branch=master)](http://inch-ci.org/github/scaljeri/di-xxl)
+
+[![Coverage Status][coveralls-image]][coveralls-url] 
+
+[![Code Climate][code-climate-image]][code-climate-url]
+
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/scaljeri/javascript-dependency-injection?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 ## Javascript Dependency Injection library 
@@ -350,3 +355,4 @@ Checkout the [demo](https://github.com/scaljeri/di-xxl/tree/gh-pages) ([main.js]
 
 [coveralls-image]: https://coveralls.io/repos/github/scaljeri/di-xxl/badge.svg?branch=master
 [coveralls-url]: https://coveralls.io/github/scaljeri/di-xxl?branch=master
+
