@@ -337,11 +337,6 @@ If you want to run this library in the browser build it with browserify using [b
     
 Checkout the [demo](https://github.com/scaljeri/di-xxl/tree/gh-pages) ([main.js](https://github.com/scaljeri/di-xxl/blob/gh-pages/main.js))
     
-### TODO
-  * Decide what to do with singletons if requested with parameter
-  
-    DI.get('fooSingleton', {params: [1,2]});
-    
 [coveralls-image]: https://coveralls.io/github/scaljeri/javascript-dependency-injection?branch=master
 [coveralls-url]: https://coveralls.io/repos/github/scaljeri/javascript-dependency-injection/badge.svg?branch=master
 

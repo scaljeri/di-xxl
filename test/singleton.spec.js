@@ -2,14 +2,14 @@ import {DI, chai, should} from './helpers';
 import * as fixtures from './fixtures/decorators';
 
 describe('DI - Singletons', () => {
-    const di = new DI();
-    let instanceA, instanceB;
+    let di, instanceA, instanceB;
 
-    before(() => {
+    beforeEach(() => {
+        di = new DI();
     });
 
     describe('Without the `singleton` option', () => {
-        before(() => {
+        beforeEach(() => {
             instanceA = di.get('decorator.$foo');
             instanceB = di.get('decorator.$foo');
         });
@@ -25,7 +25,7 @@ describe('DI - Singletons', () => {
     });
 
     describe('With the `singleton` option', () => {
-        before(() => {
+        beforeEach(() => {
             instanceA = di.get('decorator.maz');
             instanceB = di.get('decorator.maz');
         });
@@ -38,5 +38,28 @@ describe('DI - Singletons', () => {
         it('should not be identical', () => {
             instanceA.should.equals(instanceB);
         });
+    });
+
+    describe('With arguments', () => {
+        beforeEach(() => {
+            const descriptor = {
+               name: 'xux',
+               ref: (a,b,c) => ({args: [a,b,c]}),
+               singleton: true,
+               params: [1,2,3],
+               action: DI.ACTIONS.INVOKE
+            };
+            di.set(descriptor);
+        });
+
+       it('should have used default params', () => {
+           di.get('xux').should.eql({args: [1,2,3]});
+       });
+
+       it('should ignore new arguments', () => {
+           const singleton = di.get('xux', {params: [5,6,7]});
+           di.get('xux', {params: [8,9,10]}).args.should.eql([5,6,7]);
+           singleton.should.equals(di.get('xux', {params: [8,9,10]}));
+       })
     });
 });

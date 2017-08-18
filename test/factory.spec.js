@@ -96,14 +96,14 @@ describe('DI - Factory', () => {
         });
     });
 
-    xdescribe('Singletons', () => {
+    describe('Singletons', () => {
         let instance;
         beforeEach(() => {
             instance = DI.get('factory.bar');
         });
 
         it('should create singletons', () => {
-           instance.creator().should.equal(DI.get('factory.foo'));
+           instance.creator().should.eql(DI.get('factory.foo'));
         });
     });
 });

@@ -74,7 +74,7 @@ export function Inject(config) {
 }
 
 /** __DI-XXL__ is a very generic Dependency Injection (DI) library, facilitating lazy initialization
- * and loose coupling. It is generic, it can inject anything into anything in multiple ways. Together
+ * and loose coupling. It is generic, it can inject everything into anything in multiple ways. Together
  * with support for namespaces, decorators and factory functions it is a powerful tool ready for complex
  * projects.
  */
@@ -104,7 +104,7 @@ export class DI {
     }
 
     /**
-     * Actions applicable on the entities when requested ({@link DI.get}
+     * List of actions applicable on the entities when requested ({@link DI.get}).
      * For example, if the entity is a class, you probably want to return an instance of that class, so use __DI.ACTIONS.CREATE__.
      *
      * @example
@@ -135,9 +135,9 @@ export class DI {
      * @enum {number}
      * @readonly
      * @enum {object}
-     * @property {number} CREATE Create an instance using `new` (Default if __ref__ is a function)
-     * @property {number} INVOKE Call the function
-     * @property {number} NONE Do nothing (Default is __ref__ is an object)
+     * @property {number} CREATE Create an instance using `new` (Default if the entity is a function/class)
+     * @property {number} INVOKE Execute the function
+     * @property {number} NONE Do nothing (Default if the entity is an object)
      */
     static get ACTIONS() {
         return {
@@ -154,19 +154,18 @@ export class DI {
      * required (e.g. {@link DI.get})
      *
      * @constructor
-     * @param {object} [descriptor] Defaults descriptor used as the base for all other descriptors
+     * @param {object} [descriptor] Descriptor used as the base for all other descriptors
      * @param {array} [descriptor.accept] List of roles which are allowed to be injected
      * @param {number} [descriptor.action] The action to be applied to the entity when requested (see {@link DI.ACTIONS})
      * @param {string} [descriptor.inherit] Descriptor properties of the referenced entity are used as defaults too
      * @param {array} [descriptor.inject] List of entity names to be injected
      * @param {string} [descriptor.name] Entity name, used to access or inject the entity
-     * @param {string} [descriptor.ns] Namespace/prefix of the entity name separated with a '.' (e.g: widget.foo)
      * @param {array|object} [descriptor.params] List of parameters used to initialise/call the entity
      * @param {string} [descriptor.reject] List of roles which are not allowed to be injected
      * @param {string} [descriptor.ref] The entity (e.g.: class or function, sting)
      * @param {string} [descriptor.role] Role of the entity (e.g: Service or Component)
-     * @param {boolean} [descriptor.singleton] Turns the entity into a singleton
-     * @param {number} [descriptor.lookup] Lookup direction. See {@link DI#DIRECTIONS} (default: __PARENT_TO_CHILD__)
+     * @param {boolean} [descriptor.singleton] Turns the entity into a singleton (Default for object entities)
+     * @param {number} [descriptor.lookup] Lookup direction. See {@link DI.DIRECTIONS} (default: __PARENT_TO_CHILD__)
      **/
     constructor(descriptor = {}) {
         this.defaults = Object.assign({lookup: DI.DIRECTIONS.PARENT_TO_CHILD}, descriptor);
@@ -180,15 +179,20 @@ export class DI {
      * See {@link DI.getDescriptor}
      */
     getDescriptor(name, ns) {
-        return DI.getDescriptor(name, ns, this.descriptors) || DI.getDescriptor(name, ns);
+        let descriptor = DI.getDescriptor(name, ns, this.descriptors);
+
+        if (descriptor === undefined) {
+            descriptor = DI.getDescriptor(name, ns);
+        }
+
+        return descriptor;
     }
 
     /**
      * Returns the descriptor identified by the given __name__. However, it will not
      * traverse the namespace
      *
-     * @param {string} name entity name (it can include the namespace)
-     * @param {string} [ns] namespace
+     * @param {string} name Entity name
      * @returns {object} descriptor
      */
     static getDescriptor(name, ns, descriptor = DESCRIPTORS) {
@@ -239,7 +243,13 @@ export class DI {
      * See {@link DI.getProjection}
      */
     getProjection(name, ns) {
-        return DI.getProjection(name, ns, this.projections) || DI.getProjection(name, ns);
+        let projection = DI.getProjection(name, ns, this.projections);
+
+        if (projection === undefined) {
+            projection = DI.getProjection(name, ns);
+        }
+
+        return projection;
     }
 
     /**
@@ -255,9 +265,8 @@ export class DI {
     }
 
     /**
-     *
-     * @param list
-     * @returns {DI}
+     * See {@link DI.seProjection}
+     * @returns {object} DI instance
      */
     setProjection(list) {
         DI.setProjection(list, this.projections);
@@ -266,9 +275,14 @@ export class DI {
     }
 
     /**
+     * Define one or projection
      *
-     * @param list
-     * @param projections
+     * @example
+     *
+     * DI.setProjection( { foo: 'bar', baz: 'a.b.mooz'} ); // 'foo' being projected to 'bar'
+     * DI.get('foo') instanceof Bar
+     *
+     * @param {Object} list Projections with the key being the entity name to be replaced by its value
      * @returns {DI}
      */
     static setProjection(list, projections = PROJECTIONS) {
@@ -282,17 +296,23 @@ export class DI {
     }
 
     /**
+     * See {@link DI.removeProjection}
      *
-     * @param key
-     * @returns {DI}
+     * @returns {object} DI instance
      */
     removeProjection(key) {
-        DI.removeProjection(key, this.projections);
+        this.projections.set(key.toLowerCase(), null); // Map to null
 
         return this;
     }
 
     /**
+     * Remove one projection
+     *
+     * @example
+     *
+     * DI.setProjection({foo: 'bar'}); // --> foo is projected to bar
+     * DI.removeProjection('foo');     // --> remove the above projection
      *
      * @param key
      * @param projections
@@ -305,23 +325,27 @@ export class DI {
     }
 
     /**
+     * See {@link DI.removeDescriptor}
      *
-     * @param name
-     * @param ns
-     * @returns {DI}
+     * @returns {object} DI instance
      */
     removeDescriptor(name, ns) {
-        DI.removeDescriptor(name, ns, this.descriptors);
+        this.descriptors.set(fullNameFor(name, ns), null);
 
         return this;
     }
 
     /**
+     * Remove a descriptor/entity
      *
-     * @param name
-     * @param ns
-     * @param descriptors
-     * @returns {DI}
+     * @example
+     *
+     * DI.set({name: 'foo', ref: Foo});
+     * DI.removeDescriptor('foo');
+     * DI.get('foo')
+     *
+     * @param {string} name entity name
+     * @returns {function} DI class
      */
     static removeDescriptor(name, ns, descriptors = DESCRIPTORS) {
         descriptors.delete(fullNameFor({name, ns}));
@@ -337,7 +361,7 @@ export class DI {
     }
 
     /**
-     * Returns the outcome of the reference processed by one of the {@link DI#ACTIONS}. Use __config__ to
+     * Returns the processed entity using of {@link DI.ACTIONS}. Use __config__ to
      * overwrite one or more descriptor values. Below is an example in which __params__ is replaced.
      *
      * @example
@@ -359,12 +383,12 @@ export class DI {
      *
      * @param {string} name name of the descriptor
      * @param {object} [config] configuration
-     * @param {number} [config.lookup] Direction of namespace traversal
+     * @param {number} [config.lookup] Direction of namespace traversal (See {@link DI.DIRECTIONS})
      * @param {array} [config.params] List of arguments (e.g: used to create an instance)
-     * @returns {*}
+     * @returns {*} The processed entity (See {@link DI.ACTIONS})
      */
     static get (name, config) {
-        let descriptor = typeof name === 'string' ? this.lookupDescriptor(name, config) : name;
+        let descriptor = typeof name === 'string' ? (this.getDescriptor(name) || this.lookupDescriptor(name, config)) : name;
         let instance = null;
 
         if (descriptor) {
@@ -384,15 +408,16 @@ export class DI {
 
     /**
      * See {@link DI.set}
+     * @returns {object} DI instance
      */
     set (descriptor) {
         return DI.set.call(this, descriptor);
     }
 
     /**
-     * Register an entity using
-     * @param config
-     * @returns {*}
+     * Register an entity
+     * @param {descriptor} descriptor defaults (Checkout {@link DI.constructor} for all descriptor properties)
+     * @returns {function} DI class
      */
     static set (descriptor) {
         Injectable(descriptor).call(this, descriptor.ref);
@@ -401,17 +426,14 @@ export class DI {
     }
 
     /**
-     *
-     * @param name
-     * @param config
-     * @returns {*}
+     * See {@link DI.getFactory}
      */
     getFactory(name, config) {
         return DI.getFactory(name, config);
     }
 
     /**
-     * Returns a factory for the given name
+     * Returns a factory for the given entity name
      *
      * @example
      * class Foo {
@@ -426,8 +448,8 @@ export class DI {
      * DI.getFactory(10)().val === 10
      * DI.getFactory(10)(20).val === 20
      *
-     * @param name
-     * @param config
+     * @param {string} name Entity name
+     * @param {object} config Descriptor defaults (Checkout {@link DI#constructor} for all descriptor properties)
      * @returns {function(...[*])}
      */
     static getFactory(name, config = {params: []}) {
@@ -439,11 +461,12 @@ export class DI {
     }
 }
 
-/* *** Private helpers ***/
 /**
+ * Seperate the namespace from the entity name
+ *
  * @private
- * @param fullName
- * @returns {[null,null]}
+ * @param {string} name entity name plus the namespace (if any)
+ * @returns {Array} [namespace: string, name: string]
  */
 function splitContract(fullName) {
     const parts = fullName.split(/\.|:/);
@@ -457,11 +480,13 @@ function fullNameFor(descriptor) {
 }
 
 /**
+ * This function holds the implementation of the namespace traversal. It looks up the descriptor
+ *
  * @private
- * @param config
- * @param locator
- * @param relocator
- * @returns {*}
+ * @param {object} config descriptor defaults
+ * @param {function} locator function which returns a descriptor
+ * @param {function} relocator function which returns a projection (if any)
+ * @returns {object} descriptor
  */
 function lookup(config, locator, relocator) {
     let name, ns, position;
@@ -503,13 +528,22 @@ function lookup(config, locator, relocator) {
     return descriptor;
 }
 
+/**
+ * Determines if an instance can be created from the entity
+ *
+ * @private
+ * @param {object} base descriptor
+ * @returns {boolean}
+ */
 function canActionDoCreate(base) {
     return (!base.action || base.action === DI.ACTIONS.CREATE) && typeof base.ref === 'function';
 }
 
 /**
+ * Returns the processed entity based on the defined DI.ACTIONS
+ *
  * @private
- * @param base
+ * @param {object} base descriptor
  * @returns {{instance: *, descriptor: *}}
  */
 function createBaseInstance(base) {
@@ -527,12 +561,14 @@ function createBaseInstance(base) {
 }
 
 /**
+ * This function injects all dependencies defined by the `inject` array into the base entity
+ *
  * @private
- * @param baseFullName
- * @param base
- * @param projections
- * @param instances
- * @param instance
+ * @param {string} baseFullName entity name of the requested entity
+ * @param {object base the requested entity's descriptor
+ * @param {object} projections projections list
+ * @param {Array} instances List of all involved processed entities
+ * @param {object} requested instance
  */
 function injectIntoBase(baseFullName, base, projections, instances, instance) {
     base.inject.forEach(dep => {
@@ -561,10 +597,12 @@ function injectIntoBase(baseFullName, base, projections, instances, instance) {
 }
 
 /**
+ * This function returns the processed entity with all its dependencies injected
+ *
  * @private
- * @param descriptor
- * @param config
- * @returns {*}
+ * @param {object} descriptor default descriptor values
+ * @param {object} config descriptor values
+ * @returns {*} processed entity
  */
 function createInstance(descriptor, config) {
     let instance, instances = (descriptor.instances || {});
@@ -594,10 +632,12 @@ function createInstance(descriptor, config) {
 }
 
 /**
+ * Implementation of descriptor inheritance. It is recursive, as parents can inherit too, etc
+ *
  * @private
- * @param descriptor
- * @param config
- * @returns {*}
+ * @param {object} descriptor default descriptor values
+ * @param {object} config descriptor values
+ * @returns {object} merged descriptor
  */
 function inheritance(descriptor, config) {
     if (descriptor.inherit) {

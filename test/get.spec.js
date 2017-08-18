@@ -9,8 +9,6 @@ describe('DI - Decorators', () => {
     });
 
     describe('Create instance', () => {
-        let instance;
-
         describe('Foo', () => {
             before(() => {
                 instance = di.get('decorator.$foo');

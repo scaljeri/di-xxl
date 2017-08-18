@@ -9,21 +9,21 @@ describe('Projections', () => {
     });
 
     describe('Validate', () => {
-        describe('On DI instance', () => {
+        describe('Instance', () => {
             beforeEach(()  => {
                 di.setProjection({'decorator.iService': 'decorator.Raz'});
             });
 
-            it('should be null', () => {
+            it('should be null using DI', () => {
                should.not.exist(DI.getProjection('decorator.iService'))
             });
 
-            it('should exist on the instance', () => {
+            it('should exist', () => {
                di.getProjection('decorator.iService').should.equals('decorator.Raz');
             });
         });
 
-        describe('On DI class', () => {
+        describe('Class', () => {
             beforeEach(()  => {
                 DI.setProjection({'decorator.iService': 'decorator.Xaz'});
             });
@@ -56,13 +56,14 @@ describe('Projections', () => {
         });
     });
 
-    describe('On DI instance', () => {
+    describe('Instance', () => {
         describe('Initial', () => {
             beforeEach(() => {
                 instance = di.get('decorator.$foo');
             });
 
             it('should not have projected the injectable', () => {
+                instance.should.be.instanceof(fixtures.Foo);
                 instance.service.should.equal('decorator.iService');
             });
         });
