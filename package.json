@@ -1,6 +1,6 @@
 {
   "name": "di-xxl",
-  "version": "1.0.0-rc.5",
+  "version": "1.0.0-rc.6",
   "description": "Javscript dependency injection library",
   "main": "di.js",
   "scripts": {
