@@ -2,6 +2,8 @@
 
 ## Javascript Dependency Injection library written in ES2015 
 
+Checkout [this page](https://scaljeri.github.io/di-xxl/) in action
+
 ### Build the page
 
     $> ./node_modules/.bin/browserify main.js -o bundle.js -t [ babelify --presets [ es2015 stage-0 ] ]
