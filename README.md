@@ -1,8 +1,4 @@
-[![CircleCI](https://circleci.com/gh/scaljeri/di-xxl/tree/master.svg?style=svg)](https://circleci.com/gh/scaljeri/di-xxl/tree/master)
-[![Inline docs](http://inch-ci.org/github/scaljeri/di-xxl.svg?branch=master)](http://inch-ci.org/github/scaljeri/di-xxl)
-
-[![Coverage Status][coveralls-image]][coveralls-url] 
-
+[![CircleCI](https://circleci.com/gh/scaljeri/di-xxl/tree/master.svg?style=svg)](https://circleci.com/gh/scaljeri/di-xxl/tree/master) [![Inline docs](http://inch-ci.org/github/scaljeri/di-xxl.svg?branch=master)](http://inch-ci.org/github/scaljeri/di-xxl) [![Coverage Status](https://coveralls.io/repos/github/scaljeri/di-xxl/badge.svg?branch=master)](https://coveralls.io/github/scaljeri/di-xxl?branch=master) 
 [![Code Climate][code-climate-image]][code-climate-url]
 
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/scaljeri/javascript-dependency-injection?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
