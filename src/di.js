@@ -388,7 +388,7 @@ export class DI {
      * @returns {*} The processed entity (See {@link DI.ACTIONS})
      */
     static get (name, config) {
-        let descriptor = typeof name === 'string' ? (this.getDescriptor(name) || this.lookupDescriptor(name, config)) : name;
+        let descriptor = typeof name === 'string' ? (this.getDescriptor((this.getProjection(name) || name)) || this.lookupDescriptor(name, config)) : name;
         let instance = null;
 
         if (descriptor) {

@@ -8,23 +8,23 @@ describe('Projections', () => {
         di = new DI();
     });
 
-    describe('Validate', () => {
+    describe('Validate for injectables', () => {
         describe('Instance', () => {
-            beforeEach(()  => {
+            beforeEach(() => {
                 di.setProjection({'decorator.iService': 'decorator.Raz'});
             });
 
             it('should be null using DI', () => {
-               should.not.exist(DI.getProjection('decorator.iService'))
+                should.not.exist(DI.getProjection('decorator.iService'))
             });
 
             it('should exist', () => {
-               di.getProjection('decorator.iService').should.equals('decorator.Raz');
+                di.getProjection('decorator.iService').should.equals('decorator.Raz');
             });
         });
 
         describe('Class', () => {
-            beforeEach(()  => {
+            beforeEach(() => {
                 DI.setProjection({'decorator.iService': 'decorator.Xaz'});
             });
 
@@ -54,52 +54,63 @@ describe('Projections', () => {
                 DI.removeProjection('decorator.iService');
             })
         });
-    });
 
-    describe('Instance', () => {
-        describe('Initial', () => {
-            beforeEach(() => {
-                instance = di.get('decorator.$foo');
-            });
-
-            it('should not have projected the injectable', () => {
-                instance.should.be.instanceof(fixtures.Foo);
-                instance.service.should.equal('decorator.iService');
-            });
-        });
-
-        describe('#setProjection', () => {
-            beforeEach(() => {
-                di.setProjection({'decorator.iService': 'decorator.Maz'});
-                instance = di.get('decorator.$foo')
-            });
-
-            it('should have projected the injectable', () => {
-                instance.service.should.be.instanceOf(fixtures.Maz);
-            });
-
-            describe('Updated', () => {
+        describe('Instance', () => {
+            describe('Initial', () => {
                 beforeEach(() => {
-                    di.setProjection({'decorator.iService': 'decorator.mode'});
+                    instance = di.get('decorator.$foo');
+                });
+
+                it('should not have projected the injectable', () => {
+                    instance.should.be.instanceof(fixtures.Foo);
+                    instance.service.should.equal('decorator.iService');
+                });
+            });
+
+            describe('#setProjection', () => {
+                beforeEach(() => {
+                    di.setProjection({'decorator.iService': 'decorator.Maz'});
                     instance = di.get('decorator.$foo')
                 });
 
                 it('should have projected the injectable', () => {
-                    instance.service.should.be.instanceOf(fixtures.Baz);
+                    instance.service.should.be.instanceOf(fixtures.Maz);
                 });
 
-            });
+                describe('Updated', () => {
+                    beforeEach(() => {
+                        di.setProjection({'decorator.iService': 'decorator.mode'});
+                        instance = di.get('decorator.$foo')
+                    });
 
-            describe('#removeProjection', () => {
-                beforeEach(() => {
-                    di.removeProjection('decorator.iService');
-                    instance = di.get('decorator.$foo')
+                    it('should have projected the injectable', () => {
+                        instance.service.should.be.instanceOf(fixtures.Baz);
+                    });
+
                 });
 
-                it('should not have projected the injectable', () => {
-                    instance.service.should.equal('decorator.iService');
+                describe('#removeProjection', () => {
+                    beforeEach(() => {
+                        di.removeProjection('decorator.iService');
+                        instance = di.get('decorator.$foo')
+                    });
+
+                    it('should not have projected the injectable', () => {
+                        instance.service.should.equal('decorator.iService');
+                    });
                 });
             });
         });
     });
+
+    describe('Base Entity', () => {
+        beforeEach(() => {
+            di.setProjection({'decorator.$foo': 'decorator.maz'});
+            instance = di.get('decorator.$foo');
+        });
+
+        it('should have been projected', () => {
+            instance.should.be.instanceof(fixtures.Maz);
+        })
+    })
 });
