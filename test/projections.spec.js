@@ -69,8 +69,8 @@ describe('Projections', () => {
 
             describe('#setProjection', () => {
                 beforeEach(() => {
-                    di.setProjection({'decorator.iService': 'decorator.Maz'});
-                    instance = di.get('decorator.$foo')
+                    di.setProjection({'decorator.iService': 'decorator.a.b.c.Maz'});
+                    instance = di.get('decorator.$foo', {lookup: DI.DIRECTIONS.CHILD_TO_PARENT})
                 });
 
                 it('should have projected the injectable', () => {
@@ -111,6 +111,23 @@ describe('Projections', () => {
 
         it('should have been projected', () => {
             instance.should.be.instanceof(fixtures.Maz);
-        })
-    })
+        });
+    });
+
+    describe('For own properties only', () => {
+        beforeEach(() => {
+            const list = Object.create({'aaa': 'bbb'});
+            list.ccc = 'ddd';
+
+            di.setProjection(list);
+        });
+
+        it('should have set own properties', () => {
+           di.getProjection('ccc').should.equal('ddd');
+        });
+
+        it('should not have added inherited properties', () => {
+            should.not.exist(di.getProjection('aaa'));
+        });
+    });
 });

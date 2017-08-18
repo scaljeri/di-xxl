@@ -2,14 +2,14 @@ import {DI, chai, should} from './helpers';
 import * as fixtures from './fixtures/decorators';
 
 describe('Constructor parameter', () => {
-    const di = new DI();
-    let instance;
+    let di, instance;
 
-    before(() => {
+    beforeEach(() => {
+        di = new DI();
     });
 
     describe('As Array', () => {
-        before(() => {
+        beforeEach(() => {
             instance = di.get('decorator.$foo', {params: [1,2,3,4]});
         });
 
@@ -24,13 +24,24 @@ describe('Constructor parameter', () => {
     });
 
     describe('As Object', () => {
-        before(() => {
+        beforeEach(() => {
             instance = di.get('decorator.booargs', {params: {val1: 3, val2: 4}});
         });
 
         it('should have received the params', () => {
             instance.val1.should.equals(3);
             instance.val2.should.equals(4);
+        });
+
+        describe('Width destructuring', ()=> {
+            beforeEach(() => {
+                instance = di.get('DecoratorZoo', {params: {name: 'Jeanluca', age: 30}});
+            });
+
+            it('should have passed in the arguments', () => {
+                instance.name.should.equal('Jeanluca');
+                instance.age.should.equal(30);
+            });
         });
 
         /*

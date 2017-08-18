@@ -356,7 +356,7 @@ export class DI {
     /**
      * See{@link DI.get}
      */
-    get (name, config) {
+    get(name, config) {
         return DI.get.call(this, name, config);
     }
 
@@ -387,7 +387,7 @@ export class DI {
      * @param {array} [config.params] List of arguments (e.g: used to create an instance)
      * @returns {*} The processed entity (See {@link DI.ACTIONS})
      */
-    static get (name, config) {
+    static get(name, config) {
         let descriptor = typeof name === 'string' ? (this.getDescriptor((this.getProjection(name) || name)) || this.lookupDescriptor(name, config)) : name;
         let instance = null;
 
@@ -398,7 +398,7 @@ export class DI {
 
             if (descriptor.singleton && descriptor.instance) {
                 instance = descriptor.instance;
-            } else {
+            } else if (descriptor.name) {
                 instance = createInstance.call(this, descriptor, config);
             }
         }
@@ -410,7 +410,7 @@ export class DI {
      * See {@link DI.set}
      * @returns {object} DI instance
      */
-    set (descriptor) {
+    set(descriptor) {
         return DI.set.call(this, descriptor);
     }
 
@@ -419,7 +419,7 @@ export class DI {
      * @param {descriptor} descriptor defaults (Checkout {@link DI.constructor} for all descriptor properties)
      * @returns {function} DI class
      */
-    static set (descriptor) {
+    static set(descriptor) {
         Injectable(descriptor).call(this, descriptor.ref);
 
         return this;
@@ -516,7 +516,7 @@ function lookup(config, locator, relocator) {
     if (projection) {
         [ns, name] = splitContract(projection.toLowerCase());
         ns = ns.split('.');
-        position = lookup ? ns.length : 0;
+        position = isBubbling ? ns.length : 0;
 
         fullName = `${(ns.slice(0, position).join('.'))}.${name}`
             .replace(/^\./, '');
@@ -557,9 +557,9 @@ function createBaseInstance(base) {
     let instance;
 
     if (canActionDoCreate(base)) {
-        instance = Array.isArray(base.params) ? new base.ref(...(base.params || [])) : new base.ref(base.params);
+        instance = base.params ? (Array.isArray(base.params) ? new base.ref(...(base.params)) : new base.ref(base.params)) : new base.ref();
     } else if (base.action === DI.ACTIONS.INVOKE) {
-        instance = Array.isArray(base.params) ? base.ref(...(base.params || [])) : base.ref(base.params);
+        instance = base.params ? (Array.isArray(base.params) ? base.ref(...(base.params)) : base.ref(base.params)) : base.ref();
     } else {
         instance = base.params ? Object.assign(base.ref, base.params) : base.ref;
     }
@@ -579,7 +579,7 @@ function createBaseInstance(base) {
  */
 function injectIntoBase(baseFullName, base, projections, instances, instance) {
     base.inject.forEach(dep => {
-        const descriptor = this.lookupDescriptor(projections[dep.name] || dep.name),
+        const descriptor = this.lookupDescriptor(projections[dep.name] || dep.name, {lookup: base.lookup}),
             fullName = fullNameFor(descriptor);
 
         if (base.accept.length && !~base.accept.indexOf(descriptor.role)) {
@@ -615,20 +615,17 @@ function createInstance(descriptor, config) {
     let instance, instances = (descriptor.instances || {});
 
     // Make sure the original descriptor is not altered
-    const base = Object.assign({accept: [], reject: [], params: [], projections: {}}, descriptor, config),
+    const base = Object.assign({accept: [], reject: [], projections: {}}, descriptor, config),
         baseFullName = fullNameFor(base),
         projections = base.projections;
 
-    if (base.ref) {
-        instances[baseFullName] = createBaseInstance(base, descriptor);
-        instance = instances[baseFullName].instance;
+    instances[baseFullName] = createBaseInstance(base);
+    instance = instances[baseFullName].instance;
 
-        if (base.singleton) {
-            descriptor.instance = instance;
-        } else if (typeof base.ref === 'object') {
-            instance = Object.create(base.ref);
-        }
-
+    if (base.singleton) {
+        descriptor.instance = instance;
+    } else if (typeof base.ref === 'object') {
+        instance = Object.create(base.ref);
     }
 
     if ((base.inject || []).length) {
@@ -650,10 +647,9 @@ function inheritance(descriptor, config) {
     if (descriptor.inherit) {
         const parent = this.lookupDescriptor(descriptor.inherit, config);
         descriptor = Object.assign({}, parent, descriptor);
+        descriptor.inherit = parent.inherit;
 
-        if (parent.inherit) {
-            descriptor = inheritance.call(this.descriptor, config);
-        }
+        descriptor = inheritance.call(this, descriptor, config);
     }
 
     return descriptor;

@@ -7,18 +7,31 @@ describe('Inherit', () => {
     describe('Property', () => {
         beforeEach(() => {
             di = new DI();
-            di.setProjection({ 'decorator.iService': 'decorator.Mooz'});
+            di.set({name: 'inherit.glo', ref: {}, inherit: 'decorator.bar'});
+            di.setProjection({'decorator.iService': 'decorator.Mooz'});
 
             instance = di.get('decorator.bar');
         });
 
-        it('should exist', () => {
-            should.exist(instance.service);
+        describe('One level deep', () => {
+            it('should exist', () => {
+                should.exist(instance.service);
+            });
+
+            it('should have the inherited service', () => {
+                instance.service.should.be.instanceOf(fixtures.Mooz);
+                instance.service.service.should.be.instanceOf(fixtures.Maz);
+            });
         });
 
-        it('should have the inherited service', () => {
-            instance.service.should.be.instanceOf(fixtures.Mooz);
-            instance.service.service.should.be.instanceOf(fixtures.Maz);
+        describe('Two levels deep', () => {
+            beforeEach(() => {
+                instance = di.get('inherit.glo');
+            });
+
+            it('should have inherited from level 2', () => {
+                instance.service.should.be.instanceof(fixtures.Mooz);
+            });
         });
     });
 

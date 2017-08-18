@@ -6,7 +6,7 @@ describe('DI - Factory', () => {
     let factory, instance;
 
     before(() => {
-        DI.set({
+        di.set({
             name: 'foo',
             ns: 'factory',
             ref: fixtures.Foo,
@@ -99,11 +99,21 @@ describe('DI - Factory', () => {
     describe('Singletons', () => {
         let instance;
         beforeEach(() => {
-            instance = DI.get('factory.bar');
+            instance = di.get('factory.bar');
         });
 
         it('should create singletons', () => {
-           instance.creator().should.eql(DI.get('factory.foo'));
+           instance.creator().should.eql(di.get('factory.foo'));
         });
+    });
+
+    describe('None existing', () => {
+        beforeEach(() => {
+            factory = DI.getFactory('factory.foo');
+        });
+
+        it('should return null', () => {
+            should.not.exist(factory());
+        })
     });
 });

@@ -67,3 +67,8 @@ export class Buzu extends Wooz {}
 
 @Injectable({name: 'decorator.basic'})
 class Basic {}
+
+@Injectable()
+class DecoratorZoo {
+    constructor({name, age}) { this.name = name; this.age = age; }
+}
