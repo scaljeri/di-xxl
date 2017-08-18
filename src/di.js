@@ -462,10 +462,10 @@ export class DI {
 }
 
 /**
- * Seperate the namespace from the entity name
+ * Separate the namespace from the entity name
  *
  * @private
- * @param {string} name entity name plus the namespace (if any)
+ * @param {string} name Entity name plus the namespace (if any)
  * @returns {Array} [namespace: string, name: string]
  */
 function splitContract(fullName) {
@@ -475,6 +475,13 @@ function splitContract(fullName) {
     return [(parts.join('.') || ''), name];
 }
 
+/**
+ * Concat the namespace and the entity name
+ *
+ * @private
+ * @param descriptor
+ * @returns {string} entity name
+ */
 function fullNameFor(descriptor) {
     return descriptor ? (typeof descriptor === 'string' ? descriptor : (descriptor.ns ? `${descriptor.ns}.` : '') + descriptor.name).toLowerCase() : null;
 }
