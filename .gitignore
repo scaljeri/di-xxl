@@ -12,3 +12,4 @@ dist
 bundle.js
 docs/
 yarn.lock
+bench/history.json
