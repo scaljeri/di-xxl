@@ -2,7 +2,7 @@
   "name": "di-xxl",
   "version": "1.0.0-rc.8",
   "description": "Javscript dependency injection library",
-  "main": "di.js",
+  "main": "./src/di.js",
   "scripts": {
     "build": "mkdir -p dist && ./node_modules/.bin/babel ./src/di.js --out-file dist/di.js && ./node_modules/.bin/uglifyjs dist/di.js -o dist/di.min.js",
     "lint": "./node_modules/.bin/eslint -c .eslintrc ./src/di.js",

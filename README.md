@@ -296,9 +296,10 @@ A lot more advanced use-cases are available inside the [unit test](https://githu
 
 #### Installation ####
 
-Install this library with `yarn` 
+Install this library with `yarn` or `npm`
 
-    $> yarn add di-xxl@beta
+    $> yarn add di-xxl
+    $> npm install di-xxl
     
 #### Commands ####
 Convert **DI--XXL into  an ES5 library + minified version in `./dist` 
