@@ -10,3 +10,8 @@
 config.gypi
 CVS
 npm-debug.log
+.circlci
+node_modules
+src
+test
+.gitignore
