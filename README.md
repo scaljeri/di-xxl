@@ -303,7 +303,7 @@ Install this library with `yarn` or `npm`
     $> npm install di-xxl
     
 #### Commands ####
-Convert **DI--XXL into  an UMD and ES5 library + a minified version in `./dist` 
+Convert **DI--XXL** into  an UMD and ES5 library + a minified version in `./dist` 
 
     $> yarn build
     
@@ -341,7 +341,12 @@ There are a couple of ways to run this library in the browser.
    
     $> ./node_modules/.bin/browserify ./src/di.js -o bundle.js -t [ babelify --presets [ es2015 stage-0 ] ]
     
-  b) If you use [RequireJS](http://requirejs.org/) you should use the [UMD](https://github.com/umdjs/umd) file which you can find inside the `dist` directory
+  b) If you use [RequireJS](http://requirejs.org/) you should use the [UMD](https://github.com/umdjs/umd) file which
+   you can find inside the `dist` directory. Without RequireJS DI and its decorators are globally available
+   
+    di.DI.set(...)
+    di.Injectable(..)
+    di.Inject(..)
   
   
 Checkout the [demo](https://github.com/scaljeri/di-xxl/tree/gh-pages) ([main.js](https://github.com/scaljeri/di-xxl/blob/gh-pages/main.js))
