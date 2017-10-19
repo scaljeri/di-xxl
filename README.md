@@ -299,10 +299,11 @@ A lot more advanced use-cases are available inside the [unit test](https://githu
 Install this library with `yarn` or `npm`
 
     $> yarn add di-xxl
+    
     $> npm install di-xxl
     
 #### Commands ####
-Convert **DI--XXL into  an ES5 library + minified version in `./dist` 
+Convert **DI--XXL into  an UMD and ES5 library + a minified version in `./dist` 
 
     $> yarn build
     
@@ -328,10 +329,21 @@ Run benchmarks on different aspects of **DI-XXL**
     $> yarn doc
     
 ### Run in the browser
-If you want to run this library in the browser build it with browserify using [babelify](https://github.com/babel/babelify) 
+There are a couple of ways to run this library in the browser. 
 
-    $> ./node_modules/.bin/browserify main.js -o bundle.js -t [ babelify --presets [ es2015 stage-0 ] ]
+  a) If you use `import` or `require` in you project
+  
+    import { DI } from 'di-xxl';
+   
+    var di = require('di-xxl');
+   
+   you need to `browserify` it first using [babelify](https://github.com/babel/babelify) 
+   
+    $> ./node_modules/.bin/browserify ./src/di.js -o bundle.js -t [ babelify --presets [ es2015 stage-0 ] ]
     
+  b) If you use [RequireJS](http://requirejs.org/) you should use the [UMD](https://github.com/umdjs/umd) file which you can find inside the `dist` directory
+  
+  
 Checkout the [demo](https://github.com/scaljeri/di-xxl/tree/gh-pages) ([main.js](https://github.com/scaljeri/di-xxl/blob/gh-pages/main.js))
     
 [coveralls-image]: https://coveralls.io/github/scaljeri/javascript-dependency-injection?branch=master
