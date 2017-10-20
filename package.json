@@ -1,6 +1,6 @@
 {
   "name": "di-xxl",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Javscript dependency injection library",
   "main": "./dist/di.umd.js",
   "module": "./dist/di.min.js",

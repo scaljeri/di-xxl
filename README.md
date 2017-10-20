@@ -1,11 +1,8 @@
 [![CircleCI](https://circleci.com/gh/scaljeri/di-xxl/tree/master.svg?style=svg)](https://circleci.com/gh/scaljeri/di-xxl/tree/master) [![Inline docs](http://inch-ci.org/github/scaljeri/di-xxl.svg?branch=master)](http://inch-ci.org/github/scaljeri/di-xxl) [![Coverage Status](https://coveralls.io/repos/github/scaljeri/di-xxl/badge.svg?branch=master)](https://coveralls.io/github/scaljeri/di-xxl?branch=master) 
-[![Code Climate][code-climate-image]][code-climate-url]
 
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/scaljeri/javascript-dependency-injection?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 ## Javascript Dependency Injection library 
-
-You can find a demo, documentation and code coverage [here](http://scaljeri.github.io/di-xxl/)
 
 **DI-XXL** is a dependency injection library facilitating lazy initialization and loose coupling. 
 It is generic, because it can inject everything into anything in multiple ways. Together with support 
@@ -367,23 +364,14 @@ There are a couple of ways to run this library in the browser.
         ...
     </script> 
   
-Checkout the [demo](https://github.com/scaljeri/di-xxl/tree/gh-pages) ([main.js](https://github.com/scaljeri/di-xxl/blob/gh-pages/main.js))
     
+[DEMO](https://npm.runkit.com/di-xxl)
+
 [coveralls-image]: https://coveralls.io/github/scaljeri/javascript-dependency-injection?branch=master
 [coveralls-url]: https://coveralls.io/repos/github/scaljeri/javascript-dependency-injection/badge.svg?branch=master
 
 [depstat-url]: https://david-dm.org/scaljeri/di-xxl
 [depstat-image]: https://david-dm.org/scaljeri/di-xxl.svg
-
-[_depstat-dev-url]: https://david-dm.org/scaljeri/di-xxl#info=devDependencies
-[_depstat-dev-image]: https://david-dm.org/scaljeri/di-xxl.svg#info=devDependencies
-
-[depstat-dev-url]: https://david-dm.org/scaljeri/di-xxl#info=devDependencies
-[depstat-dev-image]: https://david-dm.org/scaljeri/di-xxl/dev-status.svg
-
-[code-climate-image]: https://codeclimate.com/github/scaljeri/di-xxl/badges/gpa.svg
-[code-climate-url]: https://codeclimate.com/github/scaljeri/di-xxl
-
 
 [coveralls-image]: https://coveralls.io/repos/github/scaljeri/di-xxl/badge.svg?branch=master
 [coveralls-url]: https://coveralls.io/github/scaljeri/di-xxl?branch=master
