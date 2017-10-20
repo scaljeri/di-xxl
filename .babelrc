@@ -1,7 +1,6 @@
 {
   "comments": false,
   "presets": [
-    "stage-0",
     "env"
   ],
   "plugins": [

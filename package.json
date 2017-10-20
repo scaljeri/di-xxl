@@ -1,6 +1,6 @@
 {
   "name": "di-xxl",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Javscript dependency injection library",
   "main": "./dist/di.umd.js",
   "module": "./dist/di.min.js",
@@ -9,7 +9,7 @@
   "scripts": {
     "build": "mkdir -p dist && ./node_modules/.bin/npm-run-all build:*",
     "build:es5": "./node_modules/.bin/babel ./src/di.js -o dist/di.js && ./node_modules/.bin/uglifyjs -o dist/di.min.js dist/di.js",
-    "build:umd": "./node_modules/.bin/babel --plugins transform-es2015-modules-umd ./src/di.js -o ./dist/di.umd.js && ./node_modules/.bin/uglifyjs -o dist/di.umd.min.js dist/di.umd.js",
+    "build:umd": "./node_modules/.bin/babel --module-id xxl --plugins transform-es2015-modules-umd ./src/di.js -o ./dist/di.umd.js && ./node_modules/.bin/uglifyjs -o dist/di.umd.min.js dist/di.umd.js",
     "lint": "./node_modules/.bin/eslint -c .eslintrc ./src/di.js",
     "doc": "./node_modules/.bin/jsdoc src/di.js -c jsdoc.json --destination docs && open docs/index.html",
     "prepublish": "yarn build",
