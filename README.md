@@ -332,7 +332,7 @@ There are a couple of ways to run this library in the browser.
   
     import { DI } from 'di-xxl';
    
-    var di = require('di-xxl');
+    var DI = require('di-xxl').DI;
    
    you need to `browserify` it first. For es2015 use [babelify](https://github.com/babel/babelify) 
    
