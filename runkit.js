@@ -1,5 +1,4 @@
-var di = require('di-xxl');
-var DI = di.DI;
+var DI = require('di-xxl').DI;
 
 function Foo(base) {
     return {
