@@ -19,7 +19,7 @@ test
 .DS_Store
 .coveralls.yml
 jsdoc.json
-brench
+bench
 .nycrc
 .jshintrc
 .gitignore

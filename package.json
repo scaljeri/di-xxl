@@ -1,13 +1,13 @@
 {
   "name": "di-xxl",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "Javscript dependency injection library",
   "main": "./dist/di.umd.js",
   "module": "./dist/di.min.js",
   "es2015": "./src/di.js",
   "tonicExampleFilename": "runkit.js",
   "scripts": {
-    "build": "mkdir -p dist && ./node_modules/.bin/npm-run-all build:*",
+    "build": "rm -rf dist && mkdir -p dist && ./node_modules/.bin/npm-run-all build:*",
     "build:es5": "./node_modules/.bin/babel ./src/di.js -o dist/di.js && ./node_modules/.bin/uglifyjs -o dist/di.min.js dist/di.js",
     "build:umd": "./node_modules/.bin/babel --module-id xxl --plugins transform-es2015-modules-umd ./src/di.js -o ./dist/di.umd.js && ./node_modules/.bin/uglifyjs -o dist/di.umd.min.js dist/di.umd.js",
     "lint": "./node_modules/.bin/eslint -c .eslintrc ./src/di.js",
