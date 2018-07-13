@@ -24,7 +24,7 @@ In its most basic form a registration of an entity like a class, object or funct
 `Foo` gets registered here and will be accessible by the name `foo`. The `descriptor` object needs at least 
 a `name` and a `ref`erence. Next, use `get` to retrieve an instance of `Foo` 
 
-    const foo = DI.get('foo');
+    const foo = DI.get('foo'); // const foo = new Foo();
     
 ### Parameters
 Above, the instance was created without parameters, but they can be added to the descriptor object as well
@@ -46,27 +46,33 @@ But when provided, the default parameters are ignored
     
     
 ### Injection 
-In theory you can inject anything into almost everything :)  Circular dependencies do not exist, because it is not 
+In theory you can inject anything into almost everything :) Circular dependencies do not exist, because it is not 
 possible to inject into a constructor. Keep your constructors empty or as small as possible! 
+
+So, to inject `Foo` into `Bar`
     
-So, to inject `foo` into an object do
-    
-    const app = {};
+    class Bar {}
         
     const descriptor = {
-        name: 'app',
-        ref: app,
+        name: 'bar',
+        ref: Bar,
         inject: [{property: 'foo', name: 'foo'}]
     };
     DI.set(descriptor);
         
       
-    const myApp = DI.get('app');
+    // First create an instance of Bar, then set an instance of Foo; `myApp.foo = foo` 
+    const myApp = DI.get('bar'); 
     myApp.foo instanceof Foo; // --> true
-        
+     
+So, to inject `Foo` into `Bar` **DI-XXL** simply does
+
+    const bar = new Bar();
+    bar.foo = this.get('foo');
+       
 ### ACTIONS
 Anything can be registered, like classes, objects, but also normal functions (not constructors).
-If a function is not a constructor you need to instruct **DI-XXL** what it should; return the function or call it first
+If a function is not a constructor you need to instruct **DI-XXL** what it should do, return the function or call it first
 and return the output
 
     const descriptor = {
@@ -158,15 +164,25 @@ it can be rewritten with **DI-XXL** using Factories
     descriptor = {
         name: 'bar',
         ref: Bar,
-        inject: [{property: 'creator', factory: 'foo'}]
+        inject: [{property: 'creator', factory: 'foo'}] // Each entity has a factory!
     }
 
 The factory function, which produces instances of `Foo` is injected into the `creator` property of `bar`
 
+    const bar = DI.get('bar');
+    const foo = bar.creator({params: [1,2]}); // new Foo(1,2)
+    
+Everything registered in **DI-XXL** has by default a factory. For example
+
+    class Bar { /* ... */ }
+    DI.set({name: 'xyz', ref: Bar});
+    const factory = DI.getFactory('xyz', { params: [1,2]});
+    factory({params: [3,4]}) // -> new Bar(3,4)
+
 ### Projections
 Projections let you map an entity name to an other
 
-    DI.setProjection({'foo': 'bar'})
+    DI.setProjection({'foo': 'bar'}); // Is the same: 
 
     const something = DI.get('foo'); 
     
@@ -198,7 +214,7 @@ namespaces are implemented:
     DI.get('user.overview.profile');
   
 The `list` and `source` entities, although exactly specified, will be searched for within the namespace from the root up.
-It means that **DI-XXL** will look for `list` using the following names
+It means that **DI-XXL** will look for `list` using the following entity names
 
     list               --> no
     user.list          --> no
@@ -208,13 +224,13 @@ This allows you to redefine entities without replacing the original
 
     DI.set({ name: 'user.list', ....});
     
-This time the the search for `list` looks like
+This time the search for `list` looks like
 
     list       --> no
     user.list  --> yes
     
-It will not find `user.widgets.list`. It is best used preferably only during initialization.
-This is the default lookup direction (`DI.DIRECTIONS.PARENT_TO_CHILD), but you can reverse the lookup
+It will not find `user.widgets.list`. This is the default lookup direction (`DI.DIRECTIONS.PARENT_TO_CHILD), 
+but you can reverse the lookup
 
     DI.get('user.overview.profile', {lookup: DI.DIRECTIONS.CHILD_TO_PARENT});
     
