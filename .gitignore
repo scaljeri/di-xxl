@@ -6,10 +6,10 @@ node_modules
 /doc/
 /.coveralls.yml
 coverage
-dist
 .DS_Store
 .nyc_output
 bundle.js
 docs/
 yarn.lock
 bench/history.json
+yarn-error.log

@@ -1,4 +1,4 @@
-import {Injectable, Inject} from '../../src/di';
+import {Injectable, Inject} from '../../dist/di';
 
 @Injectable({
     name: 'decorator.$foo'

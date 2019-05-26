@@ -30,3 +30,4 @@ yarn.lock
 .nyc_output
 coverage
 .idea
+./src

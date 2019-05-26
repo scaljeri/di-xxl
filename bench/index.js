@@ -1,4 +1,4 @@
-import {DI} from '../src/di';
+import {DI} from '../dist/di';
 import * as fixtures from '../test/fixtures/decorators';
 
 compare("Classes vs Objects", () => {

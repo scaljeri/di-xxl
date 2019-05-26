@@ -5,7 +5,10 @@
     "functions": 99,
     "branches": 99,
     "include": [
-      "src/*.js"
+      "dist/*.js"
+    ],
+    "exclude": [
+      "dist/*.d.js"
     ],
     "reporter": [
       "lcov",

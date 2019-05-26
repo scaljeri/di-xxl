@@ -1,0 +1,16 @@
+{
+    "extends": [
+      "tslint:latest",
+      "tslint-config-prettier"
+    ],
+    "rules": {
+      "ordered-imports": false,
+      "interface-name": [true, "never-prefix"],
+      "no-implicit-dependencies": [true, "dev"],
+      "prefer-object-spread": false,
+      "no-shadowed-variable": false,
+      "jsdoc-format": false,
+      "no-bitwise": false,
+      "one-variable-per-declaration": false
+    }
+  }
