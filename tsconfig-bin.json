@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+        "outDir": "./bin",
+        "target": "es5",
+        "lib": ["es2015", "es2017", "dom"],
+        "noImplicitAny": false,
+        "removeComments": true,
+        "experimentalDecorators": true,
+        "declaration": false
+    },
+    "include": [
+        "./scripts/**/*"
+    ]
+}

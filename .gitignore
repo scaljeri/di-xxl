@@ -13,3 +13,7 @@ docs/
 yarn.lock
 bench/history.json
 yarn-error.log
+testsrc
+tsconfig-test.json
+bin
+dist

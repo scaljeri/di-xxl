@@ -26,7 +26,7 @@ export interface DIDescriptor {
  * \@Injectable({name: 'foo'})
  * class Foo { ... }
  */
-export function Injectable(descriptor: DIDescriptor) {
+export function Injectable(descriptor: Partial<DIDescriptor>) {
     const settings = descriptor ? (typeof descriptor === 'string' ? {name: descriptor} : descriptor) : {};
 
     return function decorator(ref: any) {

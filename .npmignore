@@ -31,3 +31,4 @@ yarn.lock
 coverage
 .idea
 ./src
+./scripts
