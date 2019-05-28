@@ -229,7 +229,7 @@ This time the search for `list` looks like
     list       --> no
     user.list  --> yes
     
-It will not find `user.widgets.list`. This is the default lookup direction (`DI.DIRECTIONS.PARENT_TO_CHILD), 
+It will not find `user.widgets.list`. This is the default lookup direction (`DI.DIRECTIONS.PARENT_TO_CHILD`), 
 but you can reverse the lookup
 
     DI.get('user.overview.profile', {lookup: DI.DIRECTIONS.CHILD_TO_PARENT});
@@ -287,7 +287,8 @@ Which is equivalent to
         inject: [{property: 'addService', name: 'foo'}]
     });
     
-    
+Please note that this will not work out of the box when you're using Typescript. Read about `di-inject` below to work around this issue!
+
 The `@Injectable` statements are directly executed, meaning that they are immediately available
 
     import {ID} from 'di-xxl';
@@ -304,6 +305,41 @@ Ok, if you really really really have to do this you can of course do it ... your
     const bar = DI.get('bar', {params});
     
  
+ ### di-inject
+
+Unfortunately you cannot use the decorators in combination with Typescript. 
+Typescript ignores files which are not used directly, for example
+
+file: `foo.ts`
+
+    @Injectable({name: 'foo'})
+    class Foo {
+        sum(a, b) { return a + b }
+    }
+
+file `index.ts`
+
+    import { DI } from 'di-xxl';
+
+    const foo = DI.get('foo'); // -> foo === undefined
+
+Now, when Typescript compiles `index.ts` it has no notion of `Foo`, so it ignores that file, meaning the `@Injectable` is never executed. This can be fixed to use `Foo` inside `index.ts`
+
+    import { DI } from 'di-xxl';
+    import { Foo } from './foo';
+    Foo;
+
+    const foo = DI.get('foo'); // -> foo === Foo instance
+
+  This exactly what `./node_modules/.bin/di-inject` does
+
+      di-inject [base] [entry-file] [glob]
+
+for example
+
+     $> di-inject ./src index.ts '**/*.ts'
+
+
 ### More information
 A lot more advanced use-cases are available inside the [unit test](https://github.com/scaljeri/javascript-dependency-injection/blob/master/test/di.spec.js) files.
 
@@ -342,44 +378,14 @@ Run benchmarks on different aspects of **DI-XXL**
     $> yarn doc
     
 ### Run in the browser
-There are a couple of ways to run this library in the browser. 
-
-  a) If you use `import` or `require` in you project
-  
-    import { DI } from 'di-xxl';
-   
-    var DI = require('di-xxl').DI;
-   
-   you need to `browserify` it first. For es2015 use [babelify](https://github.com/babel/babelify) 
+There are a couple of ways to run this library in the browser. If you're project doesn't support
+`import` or `require` use `browserify`. For es2015 use [babelify](https://github.com/babel/babelify) 
    
     $> ./node_modules/.bin/browserify index.js -o bundle.js -t [ babelify --presets [ env ] ]
     
   and for es5 you only need to do
   
     $> ./node_modules/.bin/browserify index.js -o bundle.js
-    
-  b) With RequireJs you have to use the [UMD](https://github.com/umdjs/umd) [named module](http://requirejs.org/docs/api.html#modulename) 
-  
-      requirejs.config({
-          paths: {
-              xxl: './node_modules/di-xxl/dist/di.umd.min'
-          }
-      });
-  
-      requirejs(['xxl'], function(xxl) {
-          var DI = xxl.DI;
-          ...
-      });
-      
-   
-  c) or without any loaders by simply adding a script element
-   
-    <script src="./node_modules/di-xxl/dist/di.umd.min.js"></script>
-    <script>
-        var DI = xxl.DI;
-        ...
-    </script> 
-  
     
 [DEMO](https://npm.runkit.com/di-xxl)
 
