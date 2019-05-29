@@ -26,10 +26,10 @@ export interface DIDescriptor {
  * \@Injectable({name: 'foo'})
  * class Foo { ... }
  */
-export function Injectable(descriptor: Partial<DIDescriptor>) {
+export function Injectable(descriptor: Partial<DIDescriptor>): any {
     const settings = descriptor ? (typeof descriptor === 'string' ? {name: descriptor} : descriptor) : {};
 
-    return function decorator(ref: any) {
+    return function decorator(ref: any): any {
         const descriptor = Object.assign(DESCRIPTORS.get(ref) || {}, settings);
         DESCRIPTORS.delete(ref); // Cleanup, because a class can be registered multiple times
 
@@ -71,8 +71,10 @@ export function Injectable(descriptor: Partial<DIDescriptor>) {
  *     }
  * }
  */
-export function Inject(config: Partial<DIInject>) {
-    return function decorator(ref, property, settings) {
+export function Inject(config: Partial<DIInject> | string): any {
+    return (ref: Object,
+            property: string,
+            settings: TypedPropertyDescriptor<any> = {}): any => {
         const descriptor = DESCRIPTORS.get(ref.constructor) || {inject: []};
 
         if (typeof config === 'string') {
