@@ -323,7 +323,8 @@ file `index.ts`
 
     const foo = DI.get('foo'); // -> foo === undefined
 
-Now, when Typescript compiles `index.ts` it has no notion of `Foo`, so it ignores that file, meaning the `@Injectable` is never executed. This can be fixed to use `Foo` inside `index.ts`
+Now, when Typescript compiles `index.ts` it has no notion of `Foo`, so it ignores that file, 
+meaning the `@Injectable` is never executed. This can be fixed to use `Foo` inside `index.ts`
 
     import { DI } from 'di-xxl';
     import { Foo } from './foo';
@@ -331,9 +332,23 @@ Now, when Typescript compiles `index.ts` it has no notion of `Foo`, so it ignore
 
     const foo = DI.get('foo'); // -> foo === Foo instance
 
-  This exactly what `./node_modules/.bin/di-inject` does
+  This exactly what `./node_modules/.bin/di-node` does
 
-      di-inject [base] [entry-file] [glob]
+    Options:
+      --compile, -c  Inject DI stuff and compiles. Default argument is `tsc`
+      --base, -b     Base path to the root of the source files
+      --debug, -d    Enable debug messages
+      --entry, -e    Entry filename                                      
+      --pattern, -p  Glob patterns specifying filenames with wildcard characters,
+                     defaults to '**/*.ts'
+      --output, -o   Output file relative to `base`, defaults to `<entry-filename>-di.ts`.
+
+    Examples:
+      $> di-node.ts ./src/index.ts                                     -- Builds new file with injected code and executes it
+      $> di-node.ts -c -b ./src -e index.ts -p '**/*.ts' -o out.ts     -- Compiles all code with `tsc` and writes the output to `./src/out.ts`
+      $> di-node.ts -c 'yarn build' -b ./src -e index.ts -o out.ts     -- Same as above, except `yarn build` is used instead of `tsc`
+  
+
 
 for example
 
