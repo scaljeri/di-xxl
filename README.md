@@ -305,7 +305,7 @@ Ok, if you really really really have to do this you can of course do it ... your
     const bar = DI.get('bar', {params});
     
  
- ### di-inject
+ ### `di-node` to the rescue
 
 Unfortunately you cannot use the decorators in combination with Typescript. 
 Typescript ignores files which are not used directly, for example
@@ -335,20 +335,19 @@ meaning the `@Injectable` is never executed. This can be fixed to use `Foo` insi
   This exactly what `./node_modules/.bin/di-node` does
 
     Options:
+      --help         Show help                                                                                               [boolean]
+      --version      Show version number                                                                                     [boolean]
       --compile, -c  Inject DI stuff and compiles. Default argument is `tsc`
-      --base, -b     Base path to the root of the source files
-      --debug, -d    Enable debug messages
-      --entry, -e    Entry filename                                      
-      --pattern, -p  Glob patterns specifying filenames with wildcard characters,
-                     defaults to '**/*.ts'
-      --output, -o   Output file relative to `base`, defaults to `<entry-filename>-di.ts`.
+      --base, -b     Base path to the root of the source files                                                                [string]
+      --debug, -d    Enable debug messages                                                                                   [boolean]
+      --entry, -e    Entry filename                                                                                           [string]
+      --pattern, -p  Glob patterns specifying filenames with wildcard characters, defaults to **/*.ts                         [string]
+      --output, -o   Output file relative to `base. Defaults to `<entryfile>`-di.ts`                                          [string]
 
     Examples:
-      $> di-node.ts ./src/index.ts                                     -- Builds new file with injected code and executes it
-      $> di-node.ts -c -b ./src -e index.ts -p '**/*.ts' -o out.ts     -- Compiles all code with `tsc` and writes the output to `./src/out.ts`
-      $> di-node.ts -c 'yarn build' -b ./src -e index.ts -o out.ts     -- Same as above, except `yarn build` is used instead of `tsc`
-  
-
+      di-node -b ./src -e index.ts -p '**/*.ts' -o out.ts     -- Builds new file with injected code
+      di-node -c -b ./src -e index.ts -p '**/*.ts' -o out.ts  -- Compiles all code with `tsc`
+      di-node -c 'yarn build' -b ./src -e index.ts -o out.ts  -- Compiles all code with `tsc`
 
 for example
 
