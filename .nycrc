@@ -23,6 +23,6 @@
     "cache": false,
     "all": false,
     "sourceMap": false,
-    "instrument": false,
+    "instrument": true,
     "report-dir": "./coverage"
 }

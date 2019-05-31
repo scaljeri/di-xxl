@@ -305,10 +305,10 @@ Ok, if you really really really have to do this you can of course do it ... your
     const bar = DI.get('bar', {params});
     
  
- ### `di-node` to the rescue
+ ### `di` executable to the rescue
 
-Unfortunately you cannot use the decorators in combination with Typescript. 
-Typescript ignores files which are not used directly, for example
+Unfortunately you cannot use the decorators in combination with Typescript 
+out of the box. Typescript ignores files which are not used directly, for example
 
 file: `foo.ts`
 
@@ -332,7 +332,7 @@ meaning the `@Injectable` is never executed. This can be fixed to use `Foo` insi
 
     const foo = DI.get('foo'); // -> foo === Foo instance
 
-  This exactly what `./node_modules/.bin/di-node` does
+  This exactly what `./node_modules/.bin/di` does
 
     Options:
       --help         Show help                                                                                               [boolean]
@@ -345,14 +345,17 @@ meaning the `@Injectable` is never executed. This can be fixed to use `Foo` insi
       --output, -o   Output file relative to `base. Defaults to `<entryfile>`-di.ts`                                          [string]
 
     Examples:
-      di-node -b ./src -e index.ts -p '**/*.ts' -o out.ts     -- Builds new file with injected code
-      di-node -c -b ./src -e index.ts -p '**/*.ts' -o out.ts  -- Compiles all code with `tsc`
-      di-node -c 'yarn build' -b ./src -e index.ts -o out.ts  -- Compiles all code with `tsc`
+      $> di ./src/main.ts                                   -- Run main.ts using ts-node
+      $> di -c ./src/main.ts                                -- Compiles the code using tsc
+      $> di -b ./src -e index.ts -p '**/*.ts' -o out.ts     -- Run the code 
+      $> di -c -b ./src -e index.ts -p '**/*.ts' -o out.ts  -- Compiles all code with `tsc`
+      $> di -c 'yarn build' -b ./src -e index.ts -o out.ts  -- Compiles all code with `tsc`
 
-for example
+It is a wrapper around `ts-node` (to execute the code) and `tsc` (to compile the code) and creates 
+a new file with the fix. The output file naming is as follows
 
-     $> di-inject ./src index.ts '**/*.ts'
-
+    $> di ./src/main.ts           // -> output file: ./src/main-di.ts
+    $> di ./src/main.ts -o out.ts // -> output file: ./src/out.ts
 
 ### More information
 A lot more advanced use-cases are available inside the [unit test](https://github.com/scaljeri/javascript-dependency-injection/blob/master/test/di.spec.js) files.
