@@ -61,7 +61,7 @@ const readFile = util.promisify(fs.readFile);
 const writeFile = util.promisify(fs.writeFile);
 
 const base = args.base as string || path.dirname(args.entry as string) || '.';
-const entry = path.basename(args.entry as string);
+const entry = args.entry; // path.basename(args.entry as string);
 const pattern = args.pattern;
 const outfile = path.join(base, args.output || `${entry.replace(/\.ts/, '')}-di.ts`);
 const compile = args.compile as (string | boolean | null);
@@ -72,9 +72,9 @@ if (!fs.existsSync(path.join(base, entry))) {
     process.exit(0);
 }
 
-if (fs.existsSync(outfile)) {
-    fs.unlinkSync(outfile);
-}
+// if (fs.existsSync(outfile)) {
+//     fs.unlinkSync(outfile);
+// }
 
 (async () => {
     await inject();
@@ -144,10 +144,11 @@ function inject(): Promise<void> {
         log(`Glob file search: ${basePattern}`);
         glob(basePattern, {}, async (er, files) => {
             let entryContent = await readFile(path.join(base || '', entry), 'utf8');
+            let start = yargs.base ? path.dirname(path.relative(yargs.base, entry)): path.dirname(entry); 
 
             for (const file of files) {
                 if (path.join(base, entry) !== file.replace(/^\.\//, '')) {
-                    const name = file.replace('.ts', '').replace(base, '.');
+                    const name = path.relative(base, file).replace('.ts', '');
                     const re = new RegExp(`(from ['"]${name}['"]);`, 'm');
                     const contents = await readFile(file, 'utf8');
 
@@ -157,19 +158,36 @@ function inject(): Promise<void> {
                         } else {
                             log(`Injecting ${file}`);
                             const className = contents.match(/export class ([^ ]+)/)[1];
-                            entryContent = `import { ${className} } from './${path.relative(base, name)}';${className};\n` + entryContent;
+
+                            console.log(start, name);
+                            let pathTo = path.relative(start, name);
+                            if (!pathTo.match(/^\./)) {
+                                pathTo = `./${pathTo}`;
+                            }
+                            entryContent = `import { ${className} } from '${pathTo}';${className};\n` + entryContent;
                         }
                     }
                 }
             }
 
-            await writeFile(outfile, `${output}\n\n${entryContent}`);
-
-            log(`Output written to ${outfile}`);
+            if (hasChanged(`${output}\n\n${entryContent}`, outfile)) {
+                await writeFile(outfile, `${output}\n\n${entryContent}`);
+                log(`Output written to ${outfile}`);
+            } 
 
             resolve();
         });
     });
+}
+
+function hasChanged(contents: string, outfile: string): boolean {
+    let oldContents;
+
+    if (fs.existsSync(outfile)) {
+        oldContents = fs.readFileSync(outfile, 'utf8');
+    }
+
+    return contents !== oldContents;
 }
 
 function log(msg: string): void {

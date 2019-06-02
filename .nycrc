@@ -5,8 +5,7 @@
     "functions": 99,
     "branches": 99,
     "include": [
-        "test/**/*.ts",
-        "src/**/*.ts"
+        "test/**/*.ts"
     ],
     "exclude": [
       "**/*.js"
