@@ -1,4 +1,4 @@
-import {Injectable} from '../../dist/di';
+import {Injectable} from '../../src/di';
 
 @Injectable({
     ns: 'a.b.c',

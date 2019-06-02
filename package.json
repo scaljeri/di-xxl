@@ -16,6 +16,7 @@
     "doc": "./node_modules/.bin/jsdoc src/di.ts -c jsdoc.json --destination docs && open docs/index.html",
     "prepublish": "yarn build",
     "test": "cross-env NODE_ENV=test ./node_modules/.bin/nyc mocha",
+    "test:mocha": "./node_modules/.bin/mocha -require ts-node/register \"test/**/*.ts\"",
     "bench": "./node_modules/.bin/babel-node ./node_modules/.bin/bencha"
   },
   "repository": {

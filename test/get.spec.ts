@@ -1,4 +1,4 @@
-import {DI, chai, should} from './helpers';
+import {DI, chai, should, describe, it, before} from './helpers';
 import * as fixtures from './fixtures/decorators';
 
 describe('DI - Decorators', () => {
@@ -29,7 +29,7 @@ describe('DI - Decorators', () => {
             });
         });
 
-        describe('Foo - #map', () => {
+        describe('Foo - #mapxxxxxxx', () => {
             before(() => {
                 di.setProjection({
                     'decorator.iService': 'decorator.Maz'

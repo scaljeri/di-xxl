@@ -1,4 +1,4 @@
-import {Injectable, Inject} from '../../dist/di';
+import {Injectable, Inject} from '../../src/di';
 
 @Injectable({
     name: 'decorator.$foo'
@@ -8,7 +8,7 @@ export class Foo {
     service;
 
     constructor() {
-        this.args = arguments;
+        this['args'] = arguments;
     }
 }
 
@@ -27,15 +27,15 @@ export class Baz extends Foo {}
     role: 'x'
 })
 export class Maz {
-    constructor() { this.args = arguments; }
+    constructor() { this['args'] = arguments; }
 }
 
 @Injectable({ns: 'decorator'})
 export class BooArgs {
     // new Foo({$model: modelInstance});
     constructor({val1, val2}) {
-        this.val1 = val1;
-        this.val2 = val2;
+        this['val1'] = val1;
+        this['val2'] = val2;
     }
 }
 
@@ -45,7 +45,7 @@ export class BooArgs {
 export class Mooz {
     @Inject('decorator.Maz')
     setService(service) {
-        this.service = service
+        this['service'] = service
     }
 }
 
@@ -55,7 +55,7 @@ export class Mooz {
 export class Wooz {
     @Inject({ factory: true, name: 'decorator.Mooz'})
     setFactory(factory) {
-        this.factory = factory
+        this['factory'] = factory;
     }
 }
 
@@ -70,5 +70,5 @@ class Basic {}
 
 @Injectable()
 class DecoratorZoo {
-    constructor({name, age}) { this.name = name; this.age = age; }
+    constructor({name, age}) { this['name'] = name; this['age'] = age; }
 }

@@ -1,4 +1,4 @@
-import {DI, chai, should} from './helpers';
+import {DI, chai, should, describe, before, it } from './helpers';
 import * as fixtures from './fixtures/decorators';
 
 describe('Roles', () => {
@@ -25,7 +25,7 @@ describe('Roles', () => {
                 it('should have dependency', () => {
                     (function(){
                         instance = di.get('decorator.$foo', { accept: ['y']});
-                    }).should.throw(`'decorator.maz' has role 'x', which is not whitelisted by 'decorator.$foo`);
+                    })['should'].throw(`'decorator.maz' has role 'x', which is not whitelisted by 'decorator.$foo`);
                 });
 
             });
@@ -47,7 +47,7 @@ describe('Roles', () => {
         it('should throw a reject error', () => {
             (function(){
                 instance = di.get('decorator.$Foo', { reject: ['x']});
-            }).should.throw(`decorator.maz' has role 'x', which is blacklisted by 'decorator.$foo`);
+            })['should'].throw(`decorator.maz' has role 'x', which is blacklisted by 'decorator.$foo`);
         });
     });
 });

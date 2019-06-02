@@ -4,6 +4,9 @@ const PROJECTIONS = new Map();
 export interface DIInject {
     property: string;
     name: string;
+    lazy?: boolean;
+    factory?: boolean;
+
 }
 
 export interface DIDescriptor {
@@ -14,7 +17,11 @@ export interface DIDescriptor {
     params?: any[];
     inject?: DIInject[];
     action?: any;
+    accept?: string[];
+    reject?: string[];
+    role?: string;
     singleton?: boolean;
+    instances?: any[];       // TODO: move to private interface (include `lookup` too!)
 }
 
 
@@ -26,11 +33,11 @@ export interface DIDescriptor {
  * \@Injectable({name: 'foo'})
  * class Foo { ... }
  */
-export function Injectable(descriptor: Partial<DIDescriptor>): any {
-    const settings = descriptor ? (typeof descriptor === 'string' ? {name: descriptor} : descriptor) : {};
+export function Injectable(descriptor?: string | Partial<DIDescriptor>): any {
+    const settings = descriptor ? (typeof descriptor === 'string' ? { name: descriptor } : descriptor) : {};
 
     return function decorator(ref: any): any {
-        const descriptor = Object.assign(DESCRIPTORS.get(ref) || {}, settings);
+        const descriptor = Object.assign(DESCRIPTORS.get(ref) || { }, settings);
         DESCRIPTORS.delete(ref); // Cleanup, because a class can be registered multiple times
 
         descriptor.ref = ref;
@@ -72,13 +79,13 @@ export function Injectable(descriptor: Partial<DIDescriptor>): any {
  * }
  */
 export function Inject(config: Partial<DIInject> | string): any {
-    return (ref: Object,
-            property: string,
-            settings: TypedPropertyDescriptor<any> = {}): any => {
-        const descriptor = DESCRIPTORS.get(ref.constructor) || {inject: []};
+    return (ref: object,
+        property: string,
+        settings: TypedPropertyDescriptor<any> = {}): any => {
+        const descriptor = DESCRIPTORS.get(ref.constructor) || { inject: [] };
 
         if (typeof config === 'string') {
-            config = {name: config};
+            config = { name: config };
         }
 
         config.property = property;
@@ -177,7 +184,7 @@ export class DI {
      * @returns {object} descriptor
      */
     public static getDescriptor(name: string, ns?: string, descriptor = DESCRIPTORS) {
-        return descriptor.get(fullNameFor({name, ns}));
+        return descriptor.get(fullNameFor({ name, ns }));
     }
 
 
@@ -199,20 +206,20 @@ export class DI {
         * @param {object} [config.lookup] Lookup direction (See {@Link DI.DIRECTIONS})
         * @returns {object} Descriptor
         */
-       public static lookupDescriptor(name: string, config = {}) {
-           const settings = Object.assign({}, this.defaults, config, {name});
-   
-           const descriptor = lookup(settings,
-               name => {
-                   return this.getDescriptor(name);
-               },
-               name => {
-                   return this.getProjection(name);
-               }
-           );
-   
-           return descriptor;
-       }
+    public static lookupDescriptor(name: string, config = {}) {
+        const settings = Object.assign({}, this.defaults, config, { name });
+
+        const descriptor = lookup(settings,
+            name => {
+                return this.getDescriptor(name);
+            },
+            name => {
+                return this.getProjection(name);
+            }
+        );
+
+        return descriptor;
+    }
 
 
     /**
@@ -235,71 +242,72 @@ export class DI {
         * @param {object} config Descriptor defaults (Checkout {@link DI#constructor} for all descriptor properties)
         * @returns {function(...[*])}
         */
-       public static getFactory(name, config = {params: []}) {
-           const descriptor = Object.assign({}, (typeof name === 'string' ? this.lookupDescriptor(name, config) || {} : name), config);
-   
-           return (...params) => {
-               return this.get(name, params.length ? Object.assign(descriptor, {params}) : descriptor);
-           };
-       }
+    public static getFactory(name, config = { params: [] }) {
+        const descriptor = Object.assign({}, (typeof name === 'string' ? this.lookupDescriptor(name, config) || {} : name), config);
 
-           /**
-     * Returns the projection identified by the given __name__. However, it will not
-     * traverse the namespace
-     *
-     * @param {string} name entity name (it can include the namespace)
-     * @param {string} [ns] namespace
-     * @returns {object} descriptor
-     */
-    public static getProjection(name: string, ns?: string, projections = PROJECTIONS) {
-        return projections.get(fullNameFor({name, ns}));
+        return (...params) => {
+            return this.get(name, params.length ? Object.assign(descriptor, { params }) : descriptor);
+        };
     }
 
-        /**
-     * Returns the processed entity using of {@link DI.ACTIONS}. Use __config__ to
-     * overwrite one or more descriptor values. Below is an example in which __params__ is replaced.
-     *
-     * @example
-     * class Foo {
-        *     constructor(base) { this.base = base; }
-        *     addToBase(num) { return this.base + num; }
-        * }
-        *
-        * const descriptor = {
-        *     name: 'foo',
-        *     ref: Foo,
-        *     action: DI.ACTIONS.CREATE,
-        *     params: [100]
-        * };
-        * di.set(descriptor);
-        *
-        * di.get('foo').addToBase(1); // --> 101
-        * di.get('foo', {params: [1]}).addToBase(1); // --> 2
-        *
-        * @param {string} name name of the descriptor
-        * @param {object} [config] configuration
-        * @param {number} [config.lookup] Direction of namespace traversal (See {@link DI.DIRECTIONS})
-        * @param {array} [config.params] List of arguments (e.g: used to create an instance)
-        * @returns {*} The processed entity (See {@link DI.ACTIONS})
-        */
-       public static get(name: string, config?: any) {
-           let descriptor = typeof name === 'string' ? (this.getDescriptor((this.getProjection(name) || name)) || this.lookupDescriptor(name, config)) : name;
-           let instance = null;
-   
-           if (descriptor) {
-               if (descriptor.inherit) {
-                   descriptor = inheritance.call(this, descriptor, config);
-               }
-   
-               if (descriptor.singleton && descriptor.instance) {
-                   instance = descriptor.instance;
-               } else if (descriptor.name) {
-                   instance = createInstance.call(this, descriptor, config);
-               }
-           }
-   
-           return instance;
-       }
+    /**
+* Returns the projection identified by the given __name__. However, it will not
+* traverse the namespace
+*
+* @param {string} name entity name (it can include the namespace)
+* @param {string} [ns] namespace
+* @returns {object} descriptor
+*/
+    public static getProjection(name: string, ns?: string, projections = PROJECTIONS) {
+        return projections.get(fullNameFor({ name, ns }));
+    }
+
+    /**
+ * Returns the processed entity using of {@link DI.ACTIONS}. Use __config__ to
+ * overwrite one or more descriptor values. Below is an example in which __params__ is replaced.
+ *
+ * @example
+ * class Foo {
+    *     constructor(base) { this.base = base; }
+    *     addToBase(num) { return this.base + num; }
+    * }
+    *
+    * const descriptor = {
+    *     name: 'foo',
+    *     ref: Foo,
+    *     action: DI.ACTIONS.CREATE,
+    *     params: [100]
+    * };
+    * di.set(descriptor);
+    *
+    * di.get('foo').addToBase(1); // --> 101
+    * di.get('foo', {params: [1]}).addToBase(1); // --> 2
+    *
+    * @param {string} name name of the descriptor
+    * @param {object} [config] configuration
+    * @param {number} [config.lookup] Direction of namespace traversal (See {@link DI.DIRECTIONS})
+    * @param {array} [config.params] List of arguments (e.g: used to create an instance)
+    * @returns {*} The processed entity (See {@link DI.ACTIONS})
+    */
+    public static get(name: string | Partial<DIDescriptor>, config?: Partial<DIDescriptor>) {
+        // Find descriptor for `name`
+        let descriptor = typeof name === 'string' ? (this.getDescriptor((this.getProjection(name) || name)) || this.lookupDescriptor(name, config)) : name;
+        let instance = null;
+
+        if (descriptor) {
+            if (descriptor.inherit) {
+                descriptor = inheritance.call(this, descriptor, config);
+            }
+
+            if ((descriptor.singleton || descriptor.action === DI.ACTIONS.NONE) && descriptor.instance) {
+                instance = descriptor.instance;
+            } else if (descriptor.name) {
+                instance = createInstance.call(this, descriptor, config);
+            }
+        }
+
+        return instance;
+    }
 
 
     /**
@@ -355,7 +363,7 @@ export class DI {
      * @returns {function} DI class
      */
     public static removeDescriptor(name: string, ns?: string, descriptors = DESCRIPTORS) {
-        descriptors.delete(fullNameFor({name, ns}));
+        descriptors.delete(fullNameFor({ name, ns }));
 
         return this;
     }
@@ -397,7 +405,7 @@ export class DI {
      * @param {number} [descriptor.lookup] Lookup direction. See {@link DI.DIRECTIONS} (default: __PARENT_TO_CHILD__)
      **/
     constructor(descriptor = {}) {
-        this.defaults = Object.assign({lookup: DI.DIRECTIONS.PARENT_TO_CHILD}, descriptor);
+        this.defaults = Object.assign({ lookup: DI.DIRECTIONS.PARENT_TO_CHILD }, descriptor);
 
         this.projections = new Map();
         this.descriptors = new Map();
@@ -419,7 +427,7 @@ export class DI {
     /**
      * See {@link DI.lookupDescriptor}
      */
-    public lookupDescriptor(name: string, config?:any) {
+    public lookupDescriptor(name: string, config?: any) {
         return DI.lookupDescriptor.call(this, name, config);
     }
 
@@ -463,7 +471,7 @@ export class DI {
      * @returns {object} DI instance
      */
     public removeDescriptor(name: string) {
-        this.descriptors.set(fullNameFor({name}), null);
+        this.descriptors.set(fullNameFor({ name }), null);
 
         return this;
     }
@@ -471,7 +479,7 @@ export class DI {
     /**
      * See{@link DI.get}
      */
-    public get(name: string, config?: any) {
+    public get(name: string, config?: Partial<DIDescriptor>) {
         return DI.get.call(this, name, config);
     }
 
@@ -486,7 +494,7 @@ export class DI {
     /**
      * See {@link DI.getFactory}
      */
-    public getFactory(name: string, config: any) {
+    public getFactory(name: string, config?: any) {
         return DI.getFactory(name, config);
     }
 }
@@ -528,7 +536,7 @@ function fullNameFor(descriptor: Partial<DIDescriptor>) {
 function lookup(config: any, locator: any, relocator: any) {
     let name, ns, position;
 
-    ({name, ns, position} = config);
+    ({ name, ns, position } = config);
 
     const isBubbling = config.lookup === DI.DIRECTIONS.CHILD_TO_PARENT;
 
@@ -558,7 +566,7 @@ function lookup(config: any, locator: any, relocator: any) {
         position = position + (isBubbling ? -1 : 1);
 
         if (position >= 0 && position <= ns.length) {
-            return lookup({name, ns, position, lookup: config.lookup}, locator, relocator);
+            return lookup({ name, ns, position, lookup: config.lookup }, locator, relocator);
         }
     }
 
@@ -594,7 +602,7 @@ function createBaseInstance(base: any) {
         instance = base.params ? Object.assign(base.ref, base.params) : base.ref;
     }
 
-    return {instance, descriptor: base};
+    return { instance, descriptor: base };
 }
 
 /**
@@ -609,7 +617,7 @@ function createBaseInstance(base: any) {
  */
 function injectIntoBase(baseFullName: any, base: any, projections: any, instances: any, instance: any) {
     base.inject.forEach(dep => {
-        const descriptor = this.lookupDescriptor(projections[dep.name] || dep.name, {lookup: base.lookup});
+        const descriptor = this.lookupDescriptor(projections[dep.name] || dep.name, { lookup: base.lookup });
         const fullName = fullNameFor(descriptor);
 
         if (base.accept.length && !~base.accept.indexOf(descriptor.role)) {
@@ -619,12 +627,26 @@ function injectIntoBase(baseFullName: any, base: any, projections: any, instance
         }
 
         const injectable = dep.factory ? DI.getFactory(descriptor) :
-            descriptor ? (instances[fullName] || (instances[fullName] = this.get(descriptor, {instances}))) : dep.name;
+            descriptor ? instances[fullName] : dep.name;
 
         if (typeof instance[dep.property] === 'function') {
-            instance[dep.property](injectable);
+            instance[dep.property](injectable || this.get(descriptor, {instances}));
+        } else if (injectable) {
+                instance[dep.property] = injectable;
+        } else if (dep.lazy === undefined || dep.lazy) {
+            let memory;
+            // instance[dep.property] = (instances[fullName] = this.get(descriptor, { instances }));
+            Object.defineProperty(instance, dep.property, {
+                get: () => {
+                    if (!memory)  {
+                        memory = this.get(descriptor); // , { instances });
+                    }
+
+                    return memory;
+                }
+            });
         } else {
-            instance[dep.property] = injectable;
+            instance[dep.property] = (instances[fullName] = this.get(descriptor, { instances }));
         }
     });
 }
@@ -638,12 +660,12 @@ function injectIntoBase(baseFullName: any, base: any, projections: any, instance
  * @returns {*} processed entity
  */
 function createInstance(descriptor: any, config: any) {
-    let instance; 
+    let instance;
     const instances = (descriptor.instances || {});
 
 
     // Make sure the original descriptor is not altered
-    const base = Object.assign({accept: [], reject: [], projections: {}}, descriptor, config);
+    const base = Object.assign({ accept: [], reject: [], projections: {} }, descriptor, config);
     const baseFullName = fullNameFor(base);
     const projections = base.projections;
 

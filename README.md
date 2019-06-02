@@ -61,11 +61,22 @@ So, to inject `Foo` into `Bar`
     DI.set(descriptor);
         
       
+This will assign an instance of `Foo` to the `foo` property of Bar on first usage. 
+This is lazy initialization, which can be turn off with the `lazy: false`
+
+     const descriptor = {
+        name: 'bar',
+        ref: Bar,
+        inject: [{property: 'foo', name: 'foo', lazy: false}]
+    };
+
+Now, the `bar` instance is created with all it properties injected
+
     // First create an instance of Bar, then set an instance of Foo; `myApp.foo = foo` 
     const myApp = DI.get('bar'); 
     myApp.foo instanceof Foo; // --> true
-     
-So, to inject `Foo` into `Bar` **DI-XXL** simply does
+
+**DI-XXL** initializes `bar` as follows
 
     const bar = new Bar();
     bar.foo = this.get('foo');
@@ -246,6 +257,18 @@ with one exception, the first attempt is always the exact name provided
        user.overview.profile
        profile
        user.profile
+
+### Roles 
+Each entity can have a role and a `reject` and `accept` list of roles.....
+     const descriptor = {
+        name: 'service.user',
+        ...
+        role: 'service'
+        accept: ['service'],
+        reject: ['component']
+     }
+
+If you specify `accept` all injected entities need to have a role present in the list!
 
 ### @Decorators    
 As of this writing you have to use a couple of babel plugins to get `@decorators` up and running, 

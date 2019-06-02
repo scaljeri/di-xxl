@@ -1,4 +1,4 @@
-import {DI, chai, should} from './helpers';
+import {DI, chai, should, describe, it, before} from './helpers';
 import * as fixtures from './fixtures/decorators';
 
 describe('#register', () => {

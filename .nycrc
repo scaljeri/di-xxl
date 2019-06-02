@@ -5,24 +5,25 @@
     "functions": 99,
     "branches": 99,
     "include": [
-      "dist/*.js"
+        "test/**/*.ts",
+        "src/**/*.ts"
     ],
     "exclude": [
-      "dist/*.d.js"
+      "**/*.js"
     ],
     "reporter": [
       "lcov",
       "text-summary"
     ],
     "require": [
-        "babel-register"
+      "ts-node/register"
     ],
     "extension": [
-      ".js"
+      ".ts"
     ],
     "cache": false,
     "all": false,
-    "sourceMap": false,
+    "sourceMap": true,
     "instrument": true,
     "report-dir": "./coverage"
 }
