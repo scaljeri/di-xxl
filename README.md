@@ -330,7 +330,7 @@ Ok, if you really really really have to do this you can of course do it ... your
  
  ### `di` executable to the rescue
 
-Unfortunately you cannot use the decorators in combination with Typescript 
+Unfortunately you cannot use the @decorators in combination with Typescript 
 out of the box. Typescript ignores files which are not used directly, for example
 
 file: `foo.ts`
@@ -371,14 +371,35 @@ meaning the `@Injectable` is never executed. This can be fixed to use `Foo` insi
       $> di ./src/main.ts                                   -- Run main.ts using ts-node
       $> di -c ./src/main.ts                                -- Compiles the code using tsc
       $> di -b ./src -e index.ts -p '**/*.ts' -o out.ts     -- Run the code 
+      $> di -b ./src index.ts -- --thread 10                -- Run `ts-node ./src/index-di.ts --thread 10` 
       $> di -c -b ./src -e index.ts -p '**/*.ts' -o out.ts  -- Compiles all code with `tsc`
       $> di -c 'yarn build' -b ./src -e index.ts -o out.ts  -- Compiles all code with `tsc`
 
-It is a wrapper around `ts-node` (to execute the code) and `tsc` (to compile the code) and creates 
+It is a wrapper around `ts-node` (to execute the code)
+
+    $> di ./src/index.ts
+
+or to compile
+
+    $> di -c ./src/index.ts
+ 
+or any tool   
+
+    $> di -c 'yarn build' ./src/index.ts
+   
+With `--` you can also pass arguments to these processes
+
+    $> di ./src/index.ts -- -theads 10   // -> `ts-node ./src/index-di.ts --threads 10
+    
+Finally, to pass arguments to the `ts-node` or whatever program you want to use    
 a new file with the fix. The output file naming is as follows
 
     $> di ./src/main.ts           // -> output file: ./src/main-di.ts
     $> di ./src/main.ts -o out.ts // -> output file: ./src/out.ts
+    
+If no output file (`-o`) is defined, the input filename is used and post-fixed with `-di` 
+    
+    ./src/index.ts --> ./src/index-di.ts
 
 ### More information
 A lot more advanced use-cases are available inside the [unit test](https://github.com/scaljeri/javascript-dependency-injection/blob/master/test/di.spec.js) files.

@@ -51,6 +51,7 @@ const args = yargs(mainArgs)
     .example(`$0 -b ./src -e index.ts -p \'**/*.ts\' -o out.ts`, '-- Builds new file with injected code')
     .example(`$0 -c -b ./src -e index.ts -p \'**/*.ts\' -o out.ts`, '-- Compiles all code with `tsc`')
     .example(`$0 -c 'yarn build' -b ./src -e index.ts -o out.ts`, '-- Compiles all code with `tsc`')
+    .example(`$0 -b ./src index.ts -- --thread 10`, '-- Runs `ts-node ./src/index-di.ts --thread 10`')
     .wrap(130) // yargs.terminalWidth())
     .argv;
 
@@ -144,7 +145,7 @@ function inject(): Promise<void> {
         log(`Glob file search: ${basePattern}`);
         glob(basePattern, {}, async (er, files) => {
             let entryContent = await readFile(path.join(base || '', entry), 'utf8');
-            let start = yargs.base ? path.dirname(path.relative(yargs.base, entry)): path.dirname(entry); 
+            let start = args.base ? path.dirname(path.relative(args.base, entry)): path.dirname(entry);
 
             for (const file of files) {
                 if (path.join(base, entry) !== file.replace(/^\.\//, '')) {
