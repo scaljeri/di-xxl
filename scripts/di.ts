@@ -13,7 +13,7 @@ const mainArgs = getMainArguments();
 const subArgs = getSubArguments();
 
 const args = yargs(mainArgs)
-    .option('compile', {
+    .option('command', {
         alias: 'c',
         demand: false,
         description: 'Inject DI stuff and compiles. Default argument is `tsc`'
@@ -50,7 +50,8 @@ const args = yargs(mainArgs)
     })
     .example(`$0 -b ./src -e index.ts -p \'**/*.ts\' -o out.ts`, '-- Builds new file with injected code')
     .example(`$0 -c -b ./src -e index.ts -p \'**/*.ts\' -o out.ts`, '-- Compiles all code with `tsc`')
-    .example(`$0 -c 'yarn build' -b ./src -e index.ts -o out.ts`, '-- Compiles all code with `tsc`')
+    .example(`$0 -c 'yarn build' -b ./src -e index.ts -o out.ts`, '-- Run command `yarn build`')
+    .example(`$0 -c yarn -b ./src -e index.ts -o out.ts -- build`, '-- Same as above')
     .example(`$0 -b ./src index.ts -- --thread 10`, '-- Runs `ts-node ./src/index-di.ts --thread 10`')
     .wrap(130) // yargs.terminalWidth())
     .argv;
@@ -61,14 +62,14 @@ sanitizeInput(yargs);
 const readFile = util.promisify(fs.readFile);
 const writeFile = util.promisify(fs.writeFile);
 
-const base = args.base as string || path.dirname(args.entry as string) || '.';
-const entry = args.entry; // path.basename(args.entry as string);
+const base = args.base;
+const entry = args.entry; 
 const pattern = args.pattern;
-const outfile = path.join(base, args.output || `${entry.replace(/\.ts/, '')}-di.ts`);
-const compile = args.compile as (string | boolean | null);
+const outfile = args.outfile as string;
+const command = args.command as string;
 const debug = args.debug;
 
-if (!fs.existsSync(path.join(base, entry))) {
+if (!fs.existsSync(entry)) {
     console.log(`Ooops, input file '${path.join(base, entry)}' does not exist`);
     process.exit(0);
 }
@@ -79,27 +80,18 @@ if (!fs.existsSync(path.join(base, entry))) {
 
 (async () => {
     await inject();
-
-    if (compile) {
-        await compileCode();
-    } else {
-        await runCode();
-    }
+    await runCommand();
 })();
 
 // ================================================
 
-function compileCode(): Promise<void> {
+function runCommand(): Promise<void> {
     let cmd;
     let opts = [];
-    if (compile !== true) {
-        [cmd, ...opts] = (compile as string).split(' ');
-    } else {
-        cmd = 'tsc';
-    }
+    [cmd, ...opts] = command.split(' ');
 
     const tsNode = spawn(cmd, [...opts, ...subArgs]);
-    log(`Compiling: ${cmd} ${opts.join(' ')} ${subArgs.join(' ')}`);
+    log(`Running: ${cmd} ${opts.join(' ')} ${subArgs.join(' ')}`);
 
     return new Promise(r => {
         tsNode.on('close', (code) => {
@@ -116,27 +108,6 @@ function compileCode(): Promise<void> {
     })
 }
 
-function runCode(): Promise<void> {
-    const tsNode = spawn('./node_modules/.bin/ts-node', [outfile, ...subArgs]);
-
-    log(`Running: ./node_modules/.bin/ts-node ${outfile} ${subArgs.join(' ')}`);
-
-    return new Promise(r => {
-        tsNode.on('close', (code) => {
-            log(`child process exited with code ${code}`);
-            r();
-        });
-
-        tsNode.stdout.on('data', (data) => {
-            console.log('' + data);
-        });
-
-        tsNode.stderr.on('data', (data) => {
-            console.error('' + data);
-        });
-    })
-}
-
 function inject(): Promise<void> {
     let output = '';
 
@@ -144,8 +115,8 @@ function inject(): Promise<void> {
     return new Promise(resolve => {
         log(`Glob file search: ${basePattern}`);
         glob(basePattern, {}, async (er, files) => {
-            let entryContent = await readFile(path.join(base || '', entry), 'utf8');
-            let start = args.base ? path.dirname(path.relative(args.base, entry)): path.dirname(entry);
+            let entryContent = await readFile(entry, 'utf8');
+            let start = path.relative(base, path.dirname(entry)) ; //args.base ? path.dirname(path.relative(args.base, './src/' + entry)): path.dirname(entry);
 
             for (const file of files) {
                 if (path.join(base, entry) !== file.replace(/^\.\//, '')) {
@@ -160,7 +131,6 @@ function inject(): Promise<void> {
                             log(`Injecting ${file}`);
                             const className = contents.match(/export class ([^ ]+)/)[1];
 
-                            console.log(start, name);
                             let pathTo = path.relative(start, name);
                             if (!pathTo.match(/^\./)) {
                                 pathTo = `./${pathTo}`;
@@ -174,7 +144,9 @@ function inject(): Promise<void> {
             if (hasChanged(`${output}\n\n${entryContent}`, outfile)) {
                 await writeFile(outfile, `${output}\n\n${entryContent}`);
                 log(`Output written to ${outfile}`);
-            } 
+            } else {
+                log(`Task skipped, content identical with existing file content (${outfile})`);
+            }
 
             resolve();
         });
@@ -234,6 +206,20 @@ function sanitizeInput(yargs: Argv<{}>): void {
         if (!args.entry) {
             yargs.showHelp();
             process.exit(0);
+        }
+
+        args.base = args.base || path.dirname(args.entry) || '.';
+        args.entry = fs.existsSync(path.join(args.base, args.entry)) ? path.join(args.base, args.entry) : args.entry;
+
+        // path.dirname(outifle) === path.dirname(entry) !! otherwise imports will break
+        args.outfile = args.outfile ? path.join(path.dirname(args.entry), path.basename(args.outfile as string)) : `${args.entry.replace(/\.ts/, '')}-di.ts`;
+
+        if (args.command === undefined) {
+            args.command = 'ts-node';
+            subArgs.unshift(args.outfile as string);
+        }
+        if (args.command === true) {
+            args.command = 'tsc';
         }
     }
 }

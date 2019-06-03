@@ -360,7 +360,7 @@ meaning the `@Injectable` is never executed. This can be fixed to use `Foo` insi
     Options:
       --help         Show help                                                                                               [boolean]
       --version      Show version number                                                                                     [boolean]
-      --compile, -c  Inject DI stuff and compiles. Default argument is `tsc`
+      --command, -c  After injecting dependencies, it runs the command. Default argument is `tsc`
       --base, -b     Base path to the root of the source files                                                                [string]
       --debug, -d    Enable debug messages                                                                                   [boolean]
       --entry, -e    Entry filename                                                                                           [string]
@@ -369,11 +369,13 @@ meaning the `@Injectable` is never executed. This can be fixed to use `Foo` insi
 
     Examples:
       $> di ./src/main.ts                                   -- Run main.ts using ts-node
-      $> di -c ./src/main.ts                                -- Compiles the code using tsc
+      $> di -c ./src/main.ts                                -- Compiles the code using `tsc`
       $> di -b ./src -e index.ts -p '**/*.ts' -o out.ts     -- Run the code 
       $> di -b ./src index.ts -- --thread 10                -- Run `ts-node ./src/index-di.ts --thread 10` 
       $> di -c -b ./src -e index.ts -p '**/*.ts' -o out.ts  -- Compiles all code with `tsc`
-      $> di -c 'yarn build' -b ./src -e index.ts -o out.ts  -- Compiles all code with `tsc`
+      $> di -c 'yarn build' -b ./src -e index.ts -o out.ts  -- Injects and runs `yarn build`
+      $> di -c yarn -b ./src -e index.ts -o out.ts -- build  -- Same as above
+
 
 It is a wrapper around `ts-node` (to execute the code)
 
