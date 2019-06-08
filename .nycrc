@@ -1,28 +1,22 @@
 {
-    "check-coverage": false,
-    "lines": 99,
-    "statements": 99,
-    "functions": 99,
-    "branches": 99,
-    "include": [
-        "test/**/*.ts"
-    ],
-    "exclude": [
-      "**/*.js"
-    ],
-    "reporter": [
-      "lcov",
-      "text-summary"
-    ],
-    "require": [
-      "ts-node/register"
+  "include": [
+      "src/**/*.ts",
+      "test/**/*.ts"
     ],
     "extension": [
       ".ts"
     ],
-    "cache": false,
-    "all": false,
+    "require": [
+      "ts-node/register"
+    ],
+    "reporter": [
+      "lcov",
+      "text-summary",
+      "html"
+    ],
     "sourceMap": true,
     "instrument": true,
+    "cache": false,
+    "all": false,
     "report-dir": "./coverage"
 }

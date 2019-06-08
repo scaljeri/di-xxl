@@ -289,7 +289,7 @@ export class DI {
     * @param {array} [config.params] List of arguments (e.g: used to create an instance)
     * @returns {*} The processed entity (See {@link DI.ACTIONS})
     */
-    public static get(name: string | Partial<DIDescriptor>, config?: Partial<DIDescriptor>) {
+    public static get<T = any>(name: string | Partial<DIDescriptor>, config?: Partial<DIDescriptor>): T {
         // Find descriptor for `name`
         let descriptor = typeof name === 'string' ? (this.getDescriptor((this.getProjection(name) || name)) || this.lookupDescriptor(name, config)) : name;
         let instance = null;
@@ -479,7 +479,7 @@ export class DI {
     /**
      * See{@link DI.get}
      */
-    public get(name: string, config?: Partial<DIDescriptor>) {
+    public get<T = any>(name: string, config?: Partial<DIDescriptor>): T {
         return DI.get.call(this, name, config);
     }
 
