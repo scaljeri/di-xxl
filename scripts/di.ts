@@ -61,7 +61,7 @@ const args = yargs(mainArgs)
         description: 'List of paths, files or classes to exclude'
     })
     .example(`$0 -b ./src -f index.ts -p \'**/*.ts\' -o out.ts`, '-- Builds new file with injected code')
-    .example(`$0 -c -b ./src -f index.ts -p \'**/*.ts\' -o out.ts`, '-- Compiles all code with `tsc`')
+    .example(`$0 -c -b ./src -f index.ts -p \'**/*.ts\' -o out.ts`, '-- Build and run the new file with `ts-node`')
     .example(`$0 -c 'yarn build' -b ./src -e index.ts -o out.ts`, '-- Run command `yarn build`')
     .example(`$0 -c yarn -b ./src -f index.ts -o out.ts -- build`, '-- Same as above')
     .example(`$0 -b ./src index.ts -- --thread 10`, '-- Runs `ts-node ./src/index-di.ts --thread 10`')
@@ -94,7 +94,10 @@ if (!fs.existsSync(file)) {
 
 (async () => {
     await inject();
-    await runCommand();
+
+    if (command) {
+        await runCommand();
+    }
 })();
 
 // ================================================
@@ -246,21 +249,17 @@ function sanitizeInput(yargs: Argv<{}>): void {
             yargs.showHelp();
             process.exit(0);
         }
+    }
 
-        args.base = args.base || path.dirname(args.file) || '.';
-        args.file = fs.existsSync(path.join(args.base, args.file)) ? path.join(args.base, args.file) : args.file;
+    args.base = args.base || path.dirname(args.file) || '.';
+    args.file = fs.existsSync(path.join(args.base, args.file)) ? path.join(args.base, args.file) : args.file;
 
-        // path.dirname(outifle) === path.dirname(file) !! otherwise imports will break
-        args.outfile = args.outfile ? path.join(path.dirname(args.file), path.basename(args.outfile as string)) : `${args.file.replace(/\.ts/, '')}-di.ts`;
+    // path.dirname(outifle) === path.dirname(file) !! otherwise imports will break
+    args.outfile = args.outfile ? path.join(path.dirname(args.file), path.basename(args.outfile as string)) : `${args.file.replace(/\.ts/, '')}-di.ts`;
 
-        if (args.command === undefined) {
-            args.command = 'ts-node';
-            subArgs.unshift(args.outfile as string);
-        }
-
-        if (args.command === true) {
-            args.command = 'tsc';
-        }
+    if (args.command === true) {
+        args.command = 'ts-node';
+        subArgs.unshift(args.outfile as string);
     }
 }
 

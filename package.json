@@ -1,6 +1,6 @@
 {
   "name": "di-xxl",
-  "version": "1.1.24",
+  "version": "1.1.25",
   "description": "Dependency injection library",
   "main": "./dist/di.min.js",
   "types": "dist/di.d.ts",
