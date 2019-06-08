@@ -80,8 +80,8 @@ const pattern = args.pattern;
 const outfile = args.outfile as string;
 const command = args.command as string;
 const debug = args.debug;
-const includes = (args.include || '').split(/,|\s+/g);
-const excludes = (args.exclude || '').split(/,|\s+/g);
+const includes = args.include ? args.include.split(/,|\s+/g) : [];
+const excludes = args.exclude ? args.exclude.split(/,|\s+/g) : [];
 
 if (!fs.existsSync(file)) {
     console.log(`Ooops, input file '${path.join(base, file)}' does not exist`);
