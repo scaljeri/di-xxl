@@ -155,15 +155,11 @@ function inject(): Promise<void> {
                             let exclude = false;
 
                             if (includes.length > 0) {
-                                include = includes.includes(className) || includes.filter(i => pathTo.match(i)).length > 0;
+                                include = includes.includes(className) || includes.filter(i => file.match(i)).length > 0;
                             }
 
                             if (excludes.length > 0) {
-                                exclude = excludes.includes(className) || 
-                                ( 
-                                    // excludes.filter(i => pathTo.match(i)).length > 0 ||
-                                    excludes.filter(i => file.match(i)).length > 0
-                                )
+                                exclude = excludes.includes(className) || excludes.filter(i => file.match(i)).length > 0;
 
                                 if (exclude) {
                                     log(`Exclude ${file}`);
