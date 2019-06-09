@@ -42,8 +42,9 @@ These `params` will be used when none are given when the instance of Foo is requ
 
 But when provided, the default parameters are ignored
     
-    DI.get('foo', {params: [999]}); // -> new Foo(999)
+    DI.get<Foo>('foo', {params: [999]}); // -> Returns new Foo(999)
     
+In the above example, `DI.get` is typed, telling it what the returned value is, to make consuming the output easier and more obvious.
     
 ### Injection 
 In theory you can inject anything into almost everything :) Circular dependencies do not exist, because it is not 

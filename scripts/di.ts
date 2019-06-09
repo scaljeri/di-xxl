@@ -168,7 +168,12 @@ function inject(): Promise<void> {
 
                             if (include && !exclude) {
                                 log(`Adding ${file}`);
-                                entryContent = `import { ${className} } from '${pathTo}';${className};\n` + entryContent;
+
+                                if (entryContent.match(className)) {
+                                    entryContent = entryContent + `\n${className}`;
+                                } else {
+                                    entryContent = `import { ${className} } from '${pathTo}';${className};\n` + entryContent;
+                                }
                             }
                         }
                     }
