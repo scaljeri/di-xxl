@@ -169,7 +169,7 @@ function inject(): Promise<void> {
                             if (include && !exclude) {
                                 log(`Adding ${file}`);
 
-                                if (entryContent.match(className)) {
+                                if (entryContent.match(new RegExp(`\\b${className}\\b`))) {
                                     entryContent = entryContent + `\n${className}`;
                                 } else {
                                     entryContent = `import { ${className} } from '${pathTo}';${className};\n` + entryContent;
