@@ -25,6 +25,18 @@ In its most basic form a registration of an entity like a class, object or funct
 a `name` and a `ref`erence. Next, use `get` to retrieve an instance of `Foo` 
 
     const foo = DI.get('foo'); // const foo = new Foo();
+
+NOTE (Because I've made this mistake so many times:) Don't use DI inside the constructor!!!!
+
+    class Bar {
+         @Inject('foo') foo;
+
+         constructor() {
+             this.foo.do(); // --> Error, this.foo is undefined
+         }
+    }
+
+Dependencies are injected after the Bar instances is created (Below you can find more about @decorators)
     
 ### Parameters
 Above, the instance was created without parameters, but they can be added to the descriptor object as well
