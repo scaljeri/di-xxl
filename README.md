@@ -341,7 +341,7 @@ Ok, if you really really really have to do this you can of course do it ... your
     const bar = DI.get('bar', {params});
     
  
- ### `di` executable to the rescue
+### `di` executable to the rescue
 
 Unfortunately you cannot use the @decorators in combination with Typescript 
 out of the box. Typescript ignores files which are not used directly, for example
@@ -360,7 +360,7 @@ file `index.ts`
     const foo = DI.get('foo'); // -> foo === undefined
 
 Now, when Typescript compiles `index.ts` it has no notion of `Foo`, so it ignores that file, 
-meaning the `@Injectable` is never executed. This can be fixed to use `Foo` inside `index.ts`
+meaning the `@Injectable` is never executed. This can be fixed by using `Foo` inside `index.ts`
 
     import { DI } from 'di-xxl';
     import { Foo } from './foo';
@@ -368,53 +368,37 @@ meaning the `@Injectable` is never executed. This can be fixed to use `Foo` insi
 
     const foo = DI.get('foo'); // -> foo === Foo instance
 
-  This exactly what `./node_modules/.bin/di` does
+  This is exactly what `./node_modules/.bin/di` does
 
     Options:
       --help         Show help                                                                                               [boolean]
       --version      Show version number                                                                                     [boolean]
-      --command, -c  After injecting dependencies, it runs the command. Default argument is `tsc`
+      --command, -c  After injecting dependencies, it runs the command. Default argument is is `ts-node`
       --base, -b     Base path to the root of the source files                                                                [string]
-      --debug, -d    Enable debug messages                                                                                   [boolean]
+      --debug, -d    Enable debug messages                                                                                    [boolean]
       --entry, -e    Entry filename                                                                                           [string]
+      --include, -i  List of paths/files to include                                                                           [string]
       --pattern, -p  Glob patterns specifying filenames with wildcard characters, defaults to **/*.ts                         [string]
       --output, -o   Output file relative to `base. Defaults to `<entryfile>`-di.ts`                                          [string]
 
     Examples:
       $> di ./src/main.ts                                   -- Run main.ts using ts-node
-      $> di -c ./src/main.ts                                -- Compiles the code using `tsc`
+      $> di -c ./src/main.ts                                -- This runs the code using `ts-node`
       $> di -b ./src -e index.ts -p '**/*.ts' -o out.ts     -- Run the code 
       $> di -b ./src index.ts -- --thread 10                -- Run `ts-node ./src/index-di.ts --thread 10` 
       $> di -c -b ./src -e index.ts -p '**/*.ts' -o out.ts  -- Compiles all code with `tsc`
       $> di -c 'yarn build' -b ./src -e index.ts -o out.ts  -- Injects and runs `yarn build`
       $> di -c yarn -b ./src -e index.ts -o out.ts -- build  -- Same as above
 
+Here is a more complex example
 
-It is a wrapper around `ts-node` (to execute the code)
+      $> di -d -c tsc -b ./src -i 'frontend,shared' -e 'Foo,Bar' frontend/main.ts -- -p tsconfig-frontend.json
 
-    $> di ./src/index.ts
+Note that the `-c` has an argument now, `tsc`. It will run that command and append verything after `--` which gives
 
-or to compile
+    tsc -p tsconfig-frontend.json
 
-    $> di -c ./src/index.ts
- 
-or any tool   
-
-    $> di -c 'yarn build' ./src/index.ts
-   
-With `--` you can also pass arguments to these processes
-
-    $> di ./src/index.ts -- -theads 10   // -> `ts-node ./src/index-di.ts --threads 10
-    
-Finally, to pass arguments to the `ts-node` or whatever program you want to use    
-a new file with the fix. The output file naming is as follows
-
-    $> di ./src/main.ts           // -> output file: ./src/main-di.ts
-    $> di ./src/main.ts -o out.ts // -> output file: ./src/out.ts
-    
-If no output file (`-o`) is defined, the input filename is used and post-fixed with `-di` 
-    
-    ./src/index.ts --> ./src/index-di.ts
+Also note that `di` creates a new file called `frontend/main-di.ts` which you might want to add to `.gitignore`
 
 ### More information
 A lot more advanced use-cases are available inside the [unit test](https://github.com/scaljeri/javascript-dependency-injection/blob/master/test/di.spec.js) files.

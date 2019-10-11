@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 import * as yargs from 'yargs'
 import { glob } from 'glob';
 import * as fs from 'fs';
@@ -77,11 +75,11 @@ const writeFile = util.promisify(fs.writeFile);
 const base = args.base;
 const file = args.file;
 const pattern = args.pattern;
-const outfile = args.outfile as string;
+const outfile = args.output;
 const command = args.command as string;
 const debug = args.debug;
-const includes = args.include ? args.include.split(/,|\s+/g) : [];
-const excludes = args.exclude ? args.exclude.split(/,|\s+/g) : [];
+const includesRe = transformToRegex(base, args.include, path.dirname(file));
+const excludesRe = args.exclude ? transformToRegex(base, args.exclude) : /^\b$/;
 
 if (!fs.existsSync(file)) {
     console.log(`Ooops, input file '${path.join(base, file)}' does not exist`);
@@ -126,17 +124,15 @@ function runCommand(): Promise<void> {
 }
 
 function inject(): Promise<void> {
-    let output = '';
-
     const basePattern = args.pattern ? pattern : `${path.join(base, '**/*.ts')}`;
     return new Promise(resolve => {
         log(`Glob file search: ${basePattern}`);
-        glob(basePattern, {}, async (er, files) => {
+        glob(basePattern, {}, async (err, files) => {
             let entryContent = await readFile(file, 'utf8');
             let start = path.relative(base, path.dirname(file)); //args.base ? path.dirname(path.relative(args.base, './src/' + entry)): path.dirname(entry);
 
             for (const file of files) {
-                if (path.join(base, file) !== file.replace(/^\.\//, '')) {
+                if (file.match(includesRe) && !file.match(excludesRe) ) {
                     const name = path.relative(base, file).replace('.ts', '');
                     const re = new RegExp(`(from ['"]${name}['"]);`, 'm');
                     const contents = await readFile(file, 'utf8');
@@ -151,22 +147,8 @@ function inject(): Promise<void> {
                             if (!pathTo.match(/^\./)) {
                                 pathTo = `./${pathTo}`;
                             }
-                            let include = true;
-                            let exclude = false;
 
-                            if (includes.length > 0) {
-                                include = includes.includes(className) || includes.filter(i => file.match(i)).length > 0;
-                            }
-
-                            if (excludes.length > 0) {
-                                exclude = excludes.includes(className) || excludes.filter(i => file.match(i)).length > 0;
-
-                                if (exclude) {
-                                    log(`Exclude ${file}`);
-                                }
-                            }
-
-                            if (include && !exclude) {
+                            if (!className.match(excludesRe)) {
                                 log(`Adding ${file}`);
 
                                 if (entryContent.match(new RegExp(`\\b${className}\\b`))) {
@@ -174,17 +156,19 @@ function inject(): Promise<void> {
                                 } else {
                                     entryContent = `import { ${className} } from '${pathTo}';${className};\n` + entryContent;
                                 }
+                            } else {
+                                log(`Exclude ${file}`);
                             }
                         }
                     }
                 }
             }
 
-            if (hasChanged(`${output}\n\n${entryContent}`, outfile)) {
-                await writeFile(outfile, `${output}\n\n${entryContent}`);
+            if (hasChanged(`${entryContent}`, outfile)) {
+                await writeFile(outfile, `${entryContent}`);
                 log(`Output written to ${outfile}`);
             } else {
-                log(`Task skipped, content identical with existing file content (${outfile})`);
+                log(`Task skipped, content unchanged (${outfile})`);
             }
 
             resolve();
@@ -256,11 +240,20 @@ function sanitizeInput(yargs: Argv<{}>): void {
     args.file = fs.existsSync(path.join(args.base, args.file)) ? path.join(args.base, args.file) : args.file;
 
     // path.dirname(outifle) === path.dirname(file) !! otherwise imports will break
-    args.outfile = args.outfile ? path.join(path.dirname(args.file), path.basename(args.outfile as string)) : `${args.file.replace(/\.ts/, '')}-di.ts`;
+    args.output = args.output ? path.join(path.dirname(args.file), path.basename(args.output as string)) : `${args.file.replace(/\.ts/, '')}-di.ts`;
 
     if (args.command === true) {
         args.command = 'ts-node';
-        subArgs.unshift(args.outfile as string);
+        subArgs.unshift(args.output as string);
     }
 }
 
+// Build array of paths without duplicates
+function transformToRegex(base: string, list: string, addition = ''): RegExp {
+    const items = [...(list ? list.split(/,|\s+/g) : []), addition].filter(dir => !!dir);
+
+     let output = items.join('|');
+     output += '|' + items.map(str => path.join(base, path.relative(base, str).replace('../', ''))).join('|');
+
+     return RegExp(output === '|' ? '.*' : output);
+}
