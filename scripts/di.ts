@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import * as yargs from 'yargs'
 import { glob } from 'glob';
 import * as fs from 'fs';
