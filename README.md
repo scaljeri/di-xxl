@@ -322,6 +322,10 @@ Which is equivalent to
         ref: Bar,
         inject: [{property: 'addService', name: 'foo'}]
     });
+
+The `@Inject` also accepts an object instead of just the name/string
+
+    @Inject({ name: 'foo', lazy: false }) addService;
     
 Please note that this will not work out of the box when you're using Typescript. Read about `di-inject` below to work around this issue!
 
