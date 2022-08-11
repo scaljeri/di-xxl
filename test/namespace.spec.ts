@@ -86,7 +86,7 @@ describe('Objects - ACTIONS.NONE', () => {
             di.get('a.b.c.d.foo').ns.should.equal('a.b.c.d');
         });
 
-        it('should lookup the main instance (PARENT_TO_CHILD', () => {
+        it('should lookup the main instance (PARENT_TO_CHILD)', () => {
             di.get('a.b.c.d.e.foo').should.eql({ns: ''});
         });
 

@@ -9,11 +9,13 @@ It is generic, because it can inject everything into anything in multiple ways. 
 for namespaces, decorators, factory functions, projections and lazy initialization it is a powerful 
 tool ready for complex situations.
 
-In its most basic form a registration of an entity like a class, object or function is done like this
+In its most basic form a registration of an entity like a class, object or function is done as follows
 
     import {DI} from 'di-xxl';
     
-    class Foo {}
+    class Foo {
+        doMagic() { ... }
+    }
     
     const descriptor = {
         name: 'foo',
@@ -22,30 +24,30 @@ In its most basic form a registration of an entity like a class, object or funct
     
     DI.set(descriptor)
     
-`Foo` gets registered here and will be accessible now by the name `foo`. The `descriptor` object needs at least 
+Class `Foo` is registered here and is now accessible by the name `foo`. The `descriptor` object needs at least 
 a `name` and a `ref`erence. Use `get` to retrieve an instance of `Foo` 
 
-    const foo = DI.get('foo'); // const foo = new Foo();
+    const foo = DI.get('foo'); // This is equivalent to: `const foo = new Foo()`
 
-NOTE (Because I've made this mistake many times:) **Don't use DI inside the constructor!!!!**
+NOTE (Because I've made this mistake many times:) **Don't use DI inside the body of the constructor!!!!**
 
     class Bar {
          @Inject('foo') foo;
 
          constructor() {
-             this.foo.do(); // --> Error, this.foo is undefined
+             this.foo.doMagic(); // --> Error, this.foo is undefined
          }
     }
 
 Dependencies are injected after the Bar instances is created (Below you can find more about @decorators)
     
 ### Parameters
-The example above showed the creation of an instance without parameters, so here is an exmaple where the instance is created using params
+The example above shows the creation of an instance without parameters, but you can provide constructor arguments
     
     const descriptor = {
         name 'foo', 
         ref: Foo,
-        params: [10, 20]
+        params: [10, 20] // -> constructor arguments
     }
     DI.set(descriptor);
     
@@ -74,7 +76,7 @@ So, to inject `Foo` into `Bar`
     };
     DI.set(descriptor);
         
-This will assign an instance of `Foo` to the `foo` property of Bar on first usage. Lazy initialization
+This will assign an instance of `Foo` to the `foo` property of Bar. Lazy initialization
 is used here, meaning that Foo will be created when it is used for the first time. To disable this 
 feature set the `lazy` option to `false` 
 
@@ -85,7 +87,7 @@ feature set the `lazy` option to `false`
     };
 
 ### ACTIONS
-Anything can be registered, like classes, objects, but also normal functions (not constructors).
+Anything can be registered, like classes, objects, but also normal functions.
 If a function is not a constructor you need to instruct **DI-XXL** what it should do, return the function or call it first
 and return the output
 
@@ -114,7 +116,7 @@ In the last example **DI-XXL** will invoke the reference using the provided para
     double(2); // -> 14
 
 ### Singletons
-To turn a class into a singleton, add the singleton flag to the descriptor
+To turn a class into a singleton add the singleton flag to the descriptor
 
     const descriptor = {
         name: 'foo',
@@ -159,34 +161,9 @@ In case you have almost identical descriptors for two different entities, one ca
     }
 
 ### Factories
-When a class produce instances of an other class
- 
-     class Bar {
-         getFoo(input) {
-             return new Foo(input);
-         }
-     }
-     
-it can be rewritten with **DI-XXL** using Factories
-
-    class Bar {
-        getInstance() {
-            return this.creator();
-        }        
-    }
-     
-    descriptor = {
-        name: 'bar',
-        ref: Bar,
-        inject: [{property: 'creator', factory: 'foo'}] // Each entity has a factory!
-    }
-
-The factory function, which produces instances of `Foo`, is injected into the `creator` property of `bar`
-
-    const bar = DI.get('bar');
-    const foo = bar.creator({params: [1,2]}); // new Foo(1,2)
-    
-Everything registered in **DI-XXL** has by default a factory. For example
+For each registered entity **DI-XXL** creates a factory; a produces of instances (or whatever
+the action type is) from that entity. In the following example, the factory function creates 
+instances of Bar
 
     class Bar { /* ... */ }
     DI.set({name: 'xyz', ref: Bar});
@@ -194,12 +171,25 @@ Everything registered in **DI-XXL** has by default a factory. For example
     let bar = factory()            // -> new Bar(1,2)
     bar = factory({params: [3,4]}) // -> new Bar(3,4)
 
+Factories can also be injected
+
+    descriptor = {
+        name: 'bar',
+        ref: Bar,
+        inject: [{property: 'creator', factory: 'foo'}]
+    }
+
+This produces `Bar` instances with a `Foo` factory
+
+    const bar = DI.get('bar');
+    const foo = bar.creator({params: [1,2]}); // new Foo(1,2)
+
 ### Projections
-Projections let you map an entity name to an other
+Projections let you map an entity name to another name. For example
 
-    DI.setProjection({'foo': 'bar'}); // Is the same: 
+    DI.setProjection({'foo': 'bar'});
 
-    const something = DI.get('foo'); 
+    const something = DI.get('foo');  // same as `DI.get('bar')
     
 results in `something instanceof Bar`. Projections can be used, for example, to change the behaviour of you application dynamically, based on user action.
 
@@ -226,18 +216,17 @@ with `user.overview` being the namespace. Try to keep your entity names unique w
         
     DI.get('user.overview.profile');
   
-The `list` and `source` entities, although exactly specified, will be searched for within the namespace from the root up.
-It means that **DI-XXL** will look for `list` using the following entity names
+The `list` and `source` entities, although exactly specified, will be searched for within the namespace from the root up. It means that **DI-XXL** will look for `list` using the following entity names
 
     list               --> no
     user.list          --> no
     user.widgets.list  --> yes
     
-This allows you to redefine entities without replacing the original
+This allows you to redefine entities without replacing the original. If we would define a list as `user.list`
 
     DI.set({ name: 'user.list', ....});
     
-This time the search for `list` looks like
+the above `list` search is now as follows
 
     list       --> no
     user.list  --> yes
@@ -253,13 +242,13 @@ So far we have only talked about the entities from the `inject` list, but this s
        user.profile
        profile
        
-    // DI.DIRECTIONS.PARENT_TO_CHIDL
+    // DI.DIRECTIONS.PARENT_TO_CHILD (DEFAULT!)
        user.overview.profile
        profile
        user.profile
 
 ### Roles 
-Each entity can have a `role` and a `reject` and `accept` list of roles
+Each entity can have one `role` and list of `reject` and `accept` roles
 
      const descriptor = {
         name: 'service.user',
@@ -319,7 +308,7 @@ The `@Inject` also accepts an object instead of just the name/string
 
 The `@Injectable` statements are directly executed, meaning that they are immediately available
 
-    import {ID} from 'di-xxl';
+    import {ID} from 'di-xxl'; // `bar` is already available!
     
     let bar = DI.get('bar', {params: [100]});
     bar.add(1); // -> 101
@@ -330,8 +319,7 @@ Checkout the unit tests fixtures [file](https://github.com/scaljeri/di-xxl/blob/
 Ok, if you really really really have to do this you can of course do it ... yourself :)
 
     const params = [DI.get('foo'), 10];
-    const bar = DI.get('bar', {params});
-    
+    const bar = DI.get('bar', {params}); // same as: `new Bar(fooInstance, 10)`
  
 ### `di` executable to the rescue
 
@@ -379,7 +367,7 @@ But if only compiling is what you need and not running the code with `ts-node` y
 
     $> di -c tsc ./src/index.ts
 
-And if you need, for example, to specifiy a custom configfile for tsc do
+And if you need, for example, to specifiy a custom config file for `tsc` do
 
     $> di -c tsc ./src/index.ts -- -p my-special-tsconfig.json
 
@@ -447,7 +435,7 @@ Run benchmarks on different aspects of **DI-XXL**
     $> yarn bench 
     
 ### Run in the browser
-There are a couple of ways to run this library in the browser. If you're project doesn't support
+There are a couple of ways to run this library in the browser. If your project doesn't support
 `import` or `require` use `browserify`. For es2015 use [babelify](https://github.com/babel/babelify) 
    
     $> ./node_modules/.bin/browserify index.js -o bundle.js -t [ babelify --presets [ env ] ]
@@ -467,3 +455,17 @@ There are a couple of ways to run this library in the browser. If you're project
 [coveralls-image]: https://coveralls.io/repos/github/scaljeri/di-xxl/badge.svg?branch=master
 [coveralls-url]: https://coveralls.io/github/scaljeri/di-xxl?branch=master
 
+## TODO
+  * Support multiple roles
+
+       const descriptor = {
+           name: 'service.user',
+           ...
+           role: ['service', 'component', 'admin'],
+           accept: ['service'],
+           reject: ['component']
+        }
+
+Above the value of `role` is an array of roles. For backwards compatibility the original `string` version should be supported too!
+
+    
