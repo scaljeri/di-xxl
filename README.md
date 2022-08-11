@@ -457,15 +457,16 @@ There are a couple of ways to run this library in the browser. If your project d
 
 ## TODO
   * Support multiple roles
-
-       const descriptor = {
-           name: 'service.user',
+```
+    const descriptor = {
+     name: 'service.user',
            ...
            role: ['service', 'component', 'admin'],
            accept: ['service'],
            reject: ['component']
         }
-
+```
 Above the value of `role` is an array of roles. For backwards compatibility the original `string` version should be supported too!
 
+  * Fix CircleCI. 
     
